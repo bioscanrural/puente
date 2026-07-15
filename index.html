@@ -1,0 +1,1428 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>PuenT</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Bai+Jamjuree:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#122C4A; --navy-2:#1B3A5C; --green:#5BAF3C; --blue:#2BA6DE;
+  --cream:#F6F5F1; --paper:#FFFFFF; --ink:#1B2430; --muted:#5B6472; --line:#E4E1D8;
+  --danger:#C4472C;
+}
+*{box-sizing:border-box; margin:0; padding:0;}
+body{font-family:'Manrope',sans-serif; background:var(--cream); color:var(--ink); min-height:100vh;}
+h1,h2,h3,.display{font-family:'Bai Jamjuree',sans-serif;}
+button{font-family:inherit; cursor:pointer; border:none;}
+input,select,textarea{font-family:inherit; font-size:14.5px;}
+
+/* ---- App shell ---- */
+#app{max-width:480px; margin:0 auto; min-height:100vh; background:var(--cream); position:relative; padding-bottom:78px;}
+.topbar{
+  position:sticky; top:0; z-index:20; background:rgba(246,245,241,0.92); backdrop-filter:blur(8px);
+  border-bottom:1px solid var(--line); padding:16px 20px; display:flex; align-items:center; justify-content:space-between;
+}
+.brand{font-weight:800; font-size:18px; color:var(--navy);}
+.brand .t{color:var(--green);}
+.role-chip{font-size:11.5px; font-weight:700; padding:5px 11px; border-radius:100px; background:white; border:1px solid var(--line); color:var(--navy-2);}
+.screen{padding:22px 20px 20px; animation:fade .25s ease;}
+@keyframes fade{from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);}}
+.hidden{display:none !important;}
+
+/* ---- Typography helpers ---- */
+.page-title{font-size:23px; font-weight:700; color:var(--navy); margin-bottom:6px;}
+.page-sub{font-size:14px; color:var(--muted); margin-bottom:22px; line-height:1.5;}
+.kicker{font-size:11.5px; font-weight:800; letter-spacing:.07em; text-transform:uppercase; color:var(--blue); margin-bottom:6px;}
+
+/* ---- Buttons ---- */
+.btn{width:100%; padding:14px; border-radius:14px; font-weight:700; font-size:15px; text-align:center; transition:transform .1s;}
+.btn:active{transform:scale(0.98);}
+.btn-primary{background:var(--navy); color:white;}
+.btn-green{background:var(--green); color:white;}
+.btn-ghost{background:white; color:var(--navy); border:1.5px solid var(--line);}
+.btn-sm{width:auto; padding:9px 16px; font-size:13px; border-radius:10px;}
+.btn-block-row{display:flex; gap:10px;}
+
+/* ---- Cards / inputs ---- */
+.card{background:var(--paper); border:1px solid var(--line); border-radius:18px; padding:18px; margin-bottom:14px;}
+.field{margin-bottom:14px;}
+.field label{display:block; font-size:12.5px; font-weight:700; color:var(--navy-2); margin-bottom:6px;}
+.field input, .field select, .field textarea{
+  width:100%; padding:12px 13px; border:1.5px solid var(--line); border-radius:11px; background:white; color:var(--ink);
+}
+.field input:focus, .field select:focus, .field textarea:focus{outline:none; border-color:var(--blue);}
+
+/* ---- Role select ---- */
+.role-select-grid{display:flex; flex-direction:column; gap:12px; margin-top:26px;}
+.role-btn{
+  background:white; border:1.5px solid var(--line); border-radius:16px; padding:18px; text-align:left;
+  display:flex; align-items:center; gap:14px;
+}
+.role-btn .ic{width:44px; height:44px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:20px; color:white; flex-shrink:0;}
+.role-btn .tt{font-weight:700; font-size:15.5px; color:var(--navy);}
+.role-btn .ss{font-size:12.5px; color:var(--muted); margin-top:2px;}
+
+/* ---- Bottom nav ---- */
+.bottomnav{
+  position:fixed; bottom:0; left:50%; transform:translateX(-50%); width:100%; max-width:480px;
+  background:white; border-top:1px solid var(--line); display:flex; z-index:30;
+  padding:8px 6px calc(8px + env(safe-area-inset-bottom));
+}
+.navbtn{flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; padding:6px 2px; border-radius:10px; background:transparent; color:var(--muted); font-size:10.5px; font-weight:700;}
+.navbtn .ic{font-size:19px;}
+.navbtn.active{color:var(--navy);}
+
+/* ---- Product grid ---- */
+.prod-grid{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+.prod-card{background:white; border:1px solid var(--line); border-radius:16px; overflow:hidden;}
+.prod-photo{height:88px; background:linear-gradient(135deg,#eef1ea,#e3ece9); display:flex; align-items:center; justify-content:center; font-size:34px; overflow:hidden;}
+.prod-photo img{width:100%; height:100%; object-fit:cover; display:block;}
+.prod-body{padding:11px 12px;}
+.prod-name{font-size:13px; font-weight:700; color:var(--navy); line-height:1.25; margin-bottom:3px;}
+.prod-price{font-size:14px; font-weight:800; color:var(--ink);}
+.prod-tag{font-size:10px; color:var(--muted); margin-top:3px;}
+.prod-comm{display:inline-block; margin-top:6px; font-size:10.5px; font-weight:700; color:var(--green); background:#EAF5E3; padding:2px 8px; border-radius:100px;}
+
+/* ---- List rows ---- */
+.list-row{display:flex; align-items:center; gap:12px; background:white; border:1px solid var(--line); border-radius:14px; padding:13px 14px; margin-bottom:10px;}
+.list-row .av{width:40px; height:40px; border-radius:11px; display:flex; align-items:center; justify-content:center; font-size:18px; color:white; flex-shrink:0;}
+.list-row .main{flex:1; min-width:0;}
+.list-row .main .t{font-size:14px; font-weight:700; color:var(--navy);}
+.list-row .main .s{font-size:12px; color:var(--muted); margin-top:1px;}
+.list-row .chev{color:var(--line); font-size:18px;}
+
+/* ---- Badges / pills ---- */
+.pill{display:inline-flex; align-items:center; gap:5px; font-size:11.5px; font-weight:700; padding:5px 11px; border-radius:100px;}
+.pill-green{background:#EAF5E3; color:var(--green);}
+.pill-blue{background:#E7F4FB; color:var(--blue);}
+.pill-navy{background:#EAEFF4; color:var(--navy-2);}
+.pill-danger{background:#FBEAE6; color:var(--danger);}
+
+/* ---- Filter chips ---- */
+.chiprow{display:flex; gap:8px; overflow-x:auto; padding-bottom:4px; margin-bottom:16px;}
+.chiprow::-webkit-scrollbar{display:none;}
+.chip{white-space:nowrap; font-size:12.5px; font-weight:700; padding:8px 14px; border-radius:100px; background:white; border:1.5px solid var(--line); color:var(--muted);}
+.chip.active{background:var(--navy); color:white; border-color:var(--navy);}
+
+/* ---- Stat grid ---- */
+.stat-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:20px;}
+.stat-box{background:white; border:1px solid var(--line); border-radius:14px; padding:14px;}
+.stat-box .v{font-family:'Bai Jamjuree'; font-size:21px; font-weight:700; color:var(--navy);}
+.stat-box .l{font-size:11.5px; color:var(--muted); margin-top:2px;}
+
+/* progress */
+.progress-track{background:var(--cream); border-radius:100px; height:6px; overflow:hidden; margin-top:8px;}
+.progress-fill{height:100%; background:var(--green); border-radius:100px;}
+
+/* code / QR block */
+.code-block{
+  background:var(--navy); border-radius:18px; padding:26px 20px; text-align:center; color:white; margin:18px 0;
+}
+.qr-fake{
+  width:150px; height:150px; margin:0 auto 14px; background:white; border-radius:12px; padding:10px;
+  display:grid; grid-template-columns:repeat(7,1fr); grid-template-rows:repeat(7,1fr); gap:3px;
+}
+.qr-fake div{background:var(--navy); border-radius:2px;}
+.code-text{font-family:'Bai Jamjuree'; font-size:22px; font-weight:700; letter-spacing:.06em; margin-bottom:4px;}
+.code-label{font-size:12px; color:rgba(255,255,255,0.6);}
+
+/* toast */
+#toast{
+  position:fixed; bottom:96px; left:50%; transform:translateX(-50%) translateY(20px); max-width:420px; width:calc(100% - 40px);
+  background:var(--navy); color:white; padding:13px 18px; border-radius:14px; font-size:13.5px; font-weight:600;
+  opacity:0; pointer-events:none; transition:all .25s ease; z-index:60; text-align:center;
+}
+#toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+
+.empty{text-align:center; padding:50px 20px; color:var(--muted);}
+.empty .ic{font-size:34px; margin-bottom:10px;}
+.empty .t{font-weight:700; color:var(--navy); margin-bottom:4px;}
+.empty .s{font-size:13px;}
+
+.divider{height:1px; background:var(--line); margin:18px 0;}
+.link-back{
+  font-size:13.5px; font-weight:700; color:var(--navy-2); display:inline-flex; align-items:center; gap:6px;
+  margin-bottom:16px; background:white; border:1.5px solid var(--line); padding:9px 16px 9px 13px;
+  border-radius:100px; box-shadow:0 1px 3px rgba(18,44,74,0.06); cursor:pointer; user-select:none;
+  transition:background .15s ease, transform .1s ease;
+}
+.link-back:active{transform:scale(0.97); background:var(--cream);}
+.two-col{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+
+/* ---- Splash ---- */
+#splash{
+  position:fixed; inset:0; z-index:100; background:linear-gradient(160deg, var(--navy) 0%, var(--navy-2) 55%, #16324f 100%);
+  display:flex; flex-direction:column; align-items:center; justify-content:center; padding:32px;
+  transition:opacity .5s ease, visibility .5s ease;
+}
+#splash.hide{opacity:0; visibility:hidden; pointer-events:none;}
+.splash-glow{
+  position:absolute; width:340px; height:340px; border-radius:50%;
+  background:radial-gradient(circle, rgba(91,175,60,0.28) 0%, rgba(43,166,222,0.12) 45%, transparent 70%);
+  filter:blur(6px);
+}
+.splash-logo-wrap{
+  width:132px; height:132px; border-radius:32px; background:white; display:flex; align-items:center; justify-content:center;
+  box-shadow:0 18px 40px rgba(0,0,0,0.35); margin-bottom:26px; position:relative; overflow:hidden;
+  animation:splashPop .7s cubic-bezier(.2,.9,.25,1.15) both;
+}
+.splash-logo-wrap img{width:100%; height:100%; object-fit:cover;}
+@keyframes splashPop{from{opacity:0; transform:scale(.75) translateY(10px);} to{opacity:1; transform:scale(1) translateY(0);}}
+.splash-word{font-family:'Bai Jamjuree',sans-serif; font-weight:700; font-size:34px; color:white; letter-spacing:.01em; position:relative; animation:splashFade .7s ease .15s both;}
+.splash-word .t{color:var(--green);}
+.splash-tag{font-size:14px; color:rgba(255,255,255,0.72); text-align:center; margin-top:10px; line-height:1.5; max-width:280px; position:relative; animation:splashFade .7s ease .3s both;}
+@keyframes splashFade{from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:translateY(0);}}
+.splash-dots{display:flex; gap:7px; position:absolute; bottom:56px; animation:splashFade .7s ease .45s both;}
+.splash-dots span{width:7px; height:7px; border-radius:50%; background:rgba(255,255,255,0.35);}
+.splash-dots span:nth-child(1){background:var(--green);}
+.splash-dots span:nth-child(2){background:var(--blue);}
+.splash-hint{position:absolute; bottom:26px; font-size:11.5px; color:rgba(255,255,255,0.4); animation:splashFade .7s ease .6s both;}
+
+/* ---- Feed público ---- */
+.feed-hero{background:linear-gradient(160deg, var(--navy) 0%, var(--navy-2) 100%); border-radius:0 0 26px 26px; padding:20px 20px 24px; margin:-1px -1px 18px; color:white;}
+.feed-city{display:inline-flex; align-items:center; gap:6px; font-size:11.5px; font-weight:700; background:rgba(255,255,255,0.12); padding:5px 12px; border-radius:100px; margin-bottom:12px;}
+.feed-title{font-family:'Bai Jamjuree',sans-serif; font-size:22px; font-weight:700; line-height:1.25; margin-bottom:6px;}
+.feed-sub{font-size:13px; color:rgba(255,255,255,0.7); line-height:1.5;}
+.feed-prod-card{background:white; border:1px solid var(--line); border-radius:16px; overflow:hidden; cursor:pointer;}
+.feed-prod-card .prod-photo{height:110px;}
+.feed-vendor{display:flex; align-items:center; gap:6px; font-size:10.5px; color:var(--navy-2); font-weight:700; margin-top:6px;}
+.feed-vendor .dot{width:6px; height:6px; border-radius:50%; background:var(--green); flex-shrink:0;}
+.share-btn{
+  width:100%; margin-top:8px; padding:8px; border-radius:10px; background:#EAF5E3; color:var(--green);
+  font-size:12px; font-weight:700; display:flex; align-items:center; justify-content:center; gap:6px;
+}
+
+/* ---- Feed tabs ---- */
+.feed-tabs{display:flex; gap:8px; margin-bottom:16px;}
+.feed-tab{flex:1; text-align:center; padding:10px; border-radius:12px; background:white; border:1.5px solid var(--line); font-size:13px; font-weight:700; color:var(--muted);}
+.feed-tab.active{background:var(--navy); color:white; border-color:var(--navy);}
+
+/* ---- Locales (publicidad de comercios) ---- */
+.local-card{background:white; border:1px solid var(--line); border-radius:18px; overflow:hidden; margin-bottom:16px;}
+.local-cover{height:130px; position:relative; background:linear-gradient(135deg,#eef1ea,#e3ece9);}
+.local-cover img{width:100%; height:100%; object-fit:cover; display:block;}
+.local-badge{
+  position:absolute; top:10px; left:10px; background:rgba(18,44,74,0.88); color:white; font-size:10.5px; font-weight:700;
+  padding:5px 10px; border-radius:100px; display:flex; align-items:center; gap:5px;
+}
+.local-badge .dot{width:6px; height:6px; border-radius:50%; background:var(--green);}
+.local-body{padding:15px 16px;}
+.local-name{font-family:'Bai Jamjuree',sans-serif; font-size:16.5px; font-weight:700; color:var(--navy); margin-bottom:3px;}
+.local-meta{font-size:12.5px; color:var(--muted); line-height:1.5; margin-bottom:10px;}
+.local-stats{display:flex; gap:8px; margin-bottom:12px;}
+.local-stat{background:var(--cream); border-radius:10px; padding:7px 11px; font-size:11.5px; font-weight:700; color:var(--navy-2);}
+
+/* ---- Actividad del vendedor ---- */
+.actividad-card{margin-bottom:16px;}
+.actividad-title{font-weight:700; font-size:14.5px; margin-bottom:5px;}
+.actividad-txt{font-size:12.5px; color:var(--muted); line-height:1.5; margin-bottom:12px;}
+.actividad-bar{height:7px; border-radius:100px; background:rgba(0,0,0,0.08); overflow:hidden; margin-bottom:12px;}
+.actividad-fill{height:100%; border-radius:100px; background:var(--green);}
+.actividad-ok .actividad-title{color:var(--green);}
+.actividad-riesgo{background:#FFF6E6; border-color:#F3D48B;}
+.actividad-riesgo .actividad-title{color:#8A5A00;}
+.actividad-riesgo .actividad-fill{background:#E7A31C;}
+.actividad-vencido{background:#FDEDEC; border-color:#F3B9B4;}
+.actividad-vencido .actividad-title{color:#B3261E;}
+</style>
+</head>
+<body>
+
+<div id="splash" onclick="hideSplash()">
+  <div class="splash-glow"></div>
+  <div class="splash-logo-wrap">
+    <img src="https://raw.githubusercontent.com/UL360/home/refs/heads/main/imagenes/logo%20Puente.png" alt="ElPuente">
+  </div>
+  <div class="splash-word">Puen<span class="t">T</span></div>
+  <div class="splash-tag">El puente entre vendedores y comercios locales</div>
+  <div class="splash-dots"><span></span><span></span><span></span></div>
+  <div class="splash-hint">Tocá para continuar</div>
+</div>
+
+<div id="app">
+
+  <div class="topbar" id="topbar">
+    <div class="brand">Puen<span class="t">T</span></div>
+    <span class="role-chip" id="roleChip">Sin rol</span>
+  </div>
+
+  <!-- ============ SCREEN: FEED PUBLICO (INICIAL) ============ -->
+  <div class="screen" id="screen-feed">
+    <div class="feed-hero">
+      <div class="feed-city">📍 La Paz, Entre Ríos</div>
+      <div class="feed-title" id="feedHeroTitle">Lo que están vendiendo hoy en tu ciudad</div>
+      <div class="feed-sub" id="feedHeroSub">Productos cargados por vendedores locales. Elegís, le escribís al vendedor y lo tenés hoy.</div>
+    </div>
+    <div class="feed-tabs">
+      <button class="feed-tab active" id="tabProductos" onclick="setFeedTab('productos')">🛍️ Productos</button>
+      <button class="feed-tab" id="tabLocales" onclick="setFeedTab('locales')">🏬 Locales</button>
+    </div>
+
+    <div id="feedProductosView">
+      <div class="chiprow" id="feedChips"></div>
+      <div class="prod-grid" id="feedGrid"></div>
+    </div>
+
+    <div id="feedLocalesView" class="hidden">
+      <p class="page-sub" style="margin-bottom:14px;">Comercios de La Paz que ya suman vendedores y venden más gracias a ElPuente.</p>
+      <div id="localesGrid"></div>
+    </div>
+
+    <div class="divider"></div>
+    <button class="btn btn-primary" onclick="showScreen('home')">Ingresar / Registrarme</button>
+    <p style="text-align:center; font-size:12px; color:var(--muted); margin-top:10px;">Vendedores, comercios y clientes entran desde acá.</p>
+  </div>
+
+  <!-- ============ SCREEN: HOME / ROLE SELECT ============ -->
+  <div class="screen hidden" id="screen-home">
+    <div class="link-back" onclick="showScreen('feed')">← Ver productos sin ingresar</div>
+    <div class="kicker">Bienvenido</div>
+    <h1 class="page-title">Oportunidades para toda la ciudad</h1>
+    <p class="page-sub">Ingresá a tu cuenta o registrate para empezar a usar la plataforma.</p>
+
+    <button class="btn btn-ghost" style="display:flex; align-items:center; justify-content:center; gap:10px; margin-bottom:12px;" onclick="loginConGoogle()">
+      <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.9 32.6 29.4 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.1 8 3l6-6C34.5 5.5 29.6 3.5 24 3.5 12.7 3.5 3.5 12.7 3.5 24S12.7 44.5 24 44.5 44.5 35.3 44.5 24c0-1.2-.1-2.4-.3-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.6 19 12.5 24 12.5c3.1 0 5.8 1.1 8 3l6-6C34.5 5.5 29.6 3.5 24 3.5c-7.9 0-14.6 4.5-17.7 11.2z"/><path fill="#4CAF50" d="M24 44.5c5.4 0 10.2-1.8 13.9-4.9l-6.4-5.4c-2 1.4-4.6 2.3-7.5 2.3-5.4 0-9.9-3.4-11.5-8.2l-6.5 5C9.3 40 16.1 44.5 24 44.5z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.7 2-2 3.7-3.7 5l6.4 5.4C41.4 35.4 44.5 30.2 44.5 24c0-1.2-.1-2.4-.9-3.5z"/></svg>
+      Continuar con Google
+    </button>
+    <div style="text-align:center; font-size:12px; color:var(--muted); margin-bottom:20px;">— o registrate por primera vez —</div>
+
+    <div class="role-select-grid" style="margin-top:0;">
+      <button class="role-btn" onclick="goRegister('vendedor')">
+        <div class="ic" style="background:var(--green)">🛍️</div>
+        <div><div class="tt">Registrarme como Vendedor</div><div class="ss">Armo mi catálogo y vendo</div></div>
+      </button>
+      <button class="role-btn" onclick="goRegister('comercio')">
+        <div class="ic" style="background:var(--blue)">🏬</div>
+        <div><div class="tt">Registrarme como Comercio</div><div class="ss">Escaneo códigos y facturo</div></div>
+      </button>
+      <button class="role-btn" onclick="goRegister('cliente')">
+        <div class="ic" style="background:var(--navy)">🙋</div>
+        <div><div class="tt">Registrarme como Cliente</div><div class="ss">Busco productos de mi ciudad</div></div>
+      </button>
+    </div>
+  </div>
+
+  <!-- ============ SCREEN: REGISTRO ============ -->
+  <div class="screen hidden" id="screen-register">
+    <div class="link-back" onclick="goHome()">← Volver</div>
+    <div class="kicker" id="regKicker">Registro</div>
+    <h1 class="page-title" id="regTitle">Registro</h1>
+    <p class="page-sub" id="regSub"></p>
+    <div id="regFields"></div>
+    <button class="btn btn-primary" onclick="submitRegister()">Continuar</button>
+  </div>
+
+  <!-- ============ VERIFICACION SMS ============ -->
+  <div class="screen hidden" id="screen-verify">
+    <div class="link-back" onclick="volverDeVerify()">← Volver</div>
+    <div class="kicker" id="verifyKicker">Verificación</div>
+    <h1 class="page-title" id="verifyTitle">Confirmá tu teléfono</h1>
+    <p class="page-sub">Te enviamos un código de 4 dígitos por mensaje de texto a <b id="verifyTelefono"></b>.</p>
+    <div class="card">
+      <div class="field"><label>Código recibido</label>
+        <input id="verifyCodigo" inputmode="numeric" maxlength="4" placeholder="0000" style="letter-spacing:.3em; font-size:20px; text-align:center; font-weight:700;">
+      </div>
+    </div>
+    <button class="btn btn-primary" id="verifyBtn" onclick="verificarCodigo()">Verificar y crear cuenta</button>
+    <button class="btn btn-ghost" style="margin-top:10px" onclick="reenviarCodigo()">Reenviar código</button>
+  </div>
+
+  <!-- ============ VENDEDOR: CATALOGO ============ -->
+  <div class="screen hidden" id="screen-v-catalogo">
+    <div class="link-back" onclick="goHome()">← Salir</div>
+    <div class="kicker">Tu catálogo</div>
+    <h1 class="page-title">Hola, <span id="vNombre">Vendedor</span></h1>
+    <p class="page-sub">Estos son los productos que armaste. Compartilos por WhatsApp o generá un código cuando alguien quiera comprar.</p>
+    <div id="actividadBox"></div>
+    <button class="btn btn-green" style="margin-bottom:10px" onclick="irNuevoProducto()">+ Cargar nuevo producto</button>
+    <button class="btn btn-ghost" style="margin-bottom:16px" onclick="mostrarMiQR('vendedor')">Mostrar mi código QR</button>
+    <div id="vProdList"></div>
+  </div>
+
+  <!-- ============ VENDEDOR: NUEVO PRODUCTO ============ -->
+  <div class="screen hidden" id="screen-v-nuevo-producto">
+    <div class="link-back" onclick="showScreen('v-catalogo')">← Volver al catálogo</div>
+    <div class="kicker">Carga rápida</div>
+    <h1 class="page-title">Nuevo producto</h1>
+    <p class="page-sub">Todo producto en ElPuente tiene que pertenecer a un comercio local real. No podés cargar algo que no hayas arreglado con un negocio de la ciudad.</p>
+    <div class="card">
+      <div class="field">
+        <label>1. Comercio de origen (obligatorio)</label>
+        <select id="npComercio" onchange="onComercioChange()">
+          <option value="">Elegí el comercio…</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>¿El comercio no aparece en la lista? Escaneá su QR</label>
+        <div style="display:flex; gap:8px;">
+          <input id="npComercioQR" placeholder="Ej: CQR-0002" style="flex:1; text-transform:uppercase">
+          <button class="btn btn-ghost btn-sm" onclick="buscarComercioPorQR()">Buscar</button>
+        </div>
+      </div>
+      <div id="npComercioNuevoBox" class="hidden" style="background:var(--cream); border-radius:12px; padding:12px; margin-bottom:14px;">
+        <div class="page-sub" style="font-weight:700; color:var(--navy); margin-bottom:8px;">Sumar el comercio al sistema</div>
+        <p style="font-size:12px; color:var(--muted); margin-bottom:10px;">Para validar que es un comercio real, le vamos a mandar un código por SMS a su teléfono. Pedile que te lo pase para confirmar el alta.</p>
+        <div class="field"><label>Nombre del comercio</label><input id="npNuevoComercioNombre" placeholder="Ej: Almacén Don José"></div>
+        <div class="field"><label>Dirección</label><input id="npNuevoComercioDireccion" placeholder="Calle y número"></div>
+        <div class="field"><label>Teléfono del comercio (a verificar)</label><input id="npNuevoComercioTelefono" type="tel" placeholder="Ej: 344 5 123456"></div>
+        <div class="field">
+          <label>Rubro</label>
+          <select id="npNuevoComercioRubro">
+            <option>Deportes y aire libre</option><option>Indumentaria y calzado</option>
+            <option>Ferretería y construcción</option><option>Hogar y decoración</option>
+            <option>Tecnología</option><option>Alimentos y bebidas</option><option>Otros / varios</option>
+          </select>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="registrarComercioPasivo()">Enviar código de verificación</button>
+      </div>
+      <div class="divider"></div>
+      <div class="field">
+        <label>2. Foto de referencia</label>
+        <select id="npFoto">
+          <option value="🎣">🎣 Pesca / deportes</option>
+          <option value="👕">👕 Indumentaria</option>
+          <option value="🔧">🔧 Ferretería</option>
+          <option value="🏠">🏠 Hogar</option>
+          <option value="📱">📱 Tecnología</option>
+          <option value="🍞">🍞 Alimentos</option>
+        </select>
+      </div>
+      <div class="field"><label>Nombre del producto</label><input id="npNombre" placeholder="Ej: Caña de pescar 2.10m"></div>
+      <div class="field"><label>Precio acordado</label><input id="npPrecio" type="number" placeholder="Ej: 24000"></div>
+      <div class="field"><label>Comisión acordada (%)</label><input id="npComision" type="number" min="1" max="5" placeholder="Entre 1 y 5"></div>
+      <div class="field">
+        <label>Rubro (según el comercio elegido)</label>
+        <input id="npRubro" disabled placeholder="Elegí primero un comercio">
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="crearProducto()">Publicar en mi catálogo</button>
+  </div>
+
+  <!-- ============ VENDEDOR: SOLICITUDES ============ -->
+  <div class="screen hidden" id="screen-v-solicitudes">
+    <div class="link-back" onclick="showScreen('v-catalogo')">← Volver</div>
+    <div class="kicker">Solicitudes</div>
+    <h1 class="page-title">Clientes interesados</h1>
+    <p class="page-sub">Cuando un cliente pide un producto tuyo, aparece acá. Generale su código para que vaya al comercio.</p>
+    <div id="vSolicitudesList"></div>
+  </div>
+
+  <!-- ============ VENDEDOR: GENERAR CODIGO (resultado) ============ -->
+  <div class="screen hidden" id="screen-v-codigo">
+    <div class="link-back" onclick="showScreen('v-solicitudes')">← Volver</div>
+    <div class="kicker">Listo para compartir</div>
+    <h1 class="page-title">Código generado</h1>
+    <p class="page-sub">Pasale esto al cliente por WhatsApp. Con eso va directo al comercio a buscar su producto.</p>
+    <div class="code-block">
+      <div class="qr-fake" id="qrFake"></div>
+      <div class="code-text" id="codigoTexto">EP-0000</div>
+      <div class="code-label">Válido por 48hs</div>
+    </div>
+    <div class="card" id="codigoDetalle"></div>
+    <button class="btn btn-primary" onclick="showScreen('v-catalogo')">Listo</button>
+  </div>
+
+  <!-- ============ VENDEDOR: ESTADISTICAS ============ -->
+  <div class="screen hidden" id="screen-v-stats">
+    <div class="link-back" onclick="showScreen('v-catalogo')">← Volver</div>
+    <div class="kicker">Tu progreso</div>
+    <h1 class="page-title">Estadísticas</h1>
+    <div class="stat-grid">
+      <div class="stat-box"><div class="v" id="statVentas">0</div><div class="l">Ventas confirmadas</div></div>
+      <div class="stat-box"><div class="v" id="statComision">$0</div><div class="l">Comisión ganada</div></div>
+      <div class="stat-box"><div class="v" id="statProductos">0</div><div class="l">Productos activos</div></div>
+      <div class="stat-box"><div class="v" id="statComercios">0</div><div class="l">Comercios sumados</div></div>
+    </div>
+    <div class="page-sub" style="margin-bottom:10px; font-weight:700; color:var(--navy);">Desafíos activos</div>
+    <div class="card">
+      <div style="display:flex; justify-content:space-between; font-size:13px; font-weight:600; margin-bottom:6px;">
+        <span>Cargá 3 productos</span><span id="desafioProdTxt" style="color:var(--muted)">0/3</span>
+      </div>
+      <div class="progress-track"><div class="progress-fill" id="desafioProdBar" style="width:0%"></div></div>
+    </div>
+    <div class="card">
+      <div style="display:flex; justify-content:space-between; font-size:13px; font-weight:600; margin-bottom:6px;">
+        <span>Conseguí tu primera venta</span><span id="desafioVentaTxt" style="color:var(--muted)">0/1</span>
+      </div>
+      <div class="progress-track"><div class="progress-fill" id="desafioVentaBar" style="width:0%"></div></div>
+    </div>
+  </div>
+
+  <!-- ============ MI QR DE IDENTIFICACION ============ -->
+  <div class="screen hidden" id="screen-mi-qr">
+    <div class="link-back" onclick="volverDeQR()">← Volver</div>
+    <div class="kicker">Tu código de identidad</div>
+    <h1 class="page-title" id="miQrTitle">Tu QR</h1>
+    <p class="page-sub" id="miQrSub"></p>
+    <div class="code-block">
+      <div class="qr-fake" id="miQrFake"></div>
+      <div class="code-text" id="miQrCodigo">VQR-0000</div>
+      <div class="code-label" id="miQrNombre">—</div>
+    </div>
+    <div class="card" style="text-align:center; font-size:12.5px; color:var(--muted);">
+      Mostrá esta pantalla para que te escaneen. Es tu identificación fija: siempre es el mismo código.
+    </div>
+  </div>
+
+  <!-- ============ COMERCIO: PANEL ============ -->
+  <div class="screen hidden" id="screen-c-panel">
+    <div class="link-back" onclick="goHome()">← Salir</div>
+    <div class="kicker">Panel de comercio</div>
+    <h1 class="page-title"><span id="cNombre">Tu comercio</span></h1>
+    <button class="btn btn-ghost" style="margin-bottom:14px" onclick="mostrarMiQR('comercio')">Mostrar mi código QR</button>
+    <p class="page-sub">Cuando un cliente te presente un código, escribilo acá para confirmar la entrega.</p>
+    <div class="card">
+      <div class="field"><label>Código presentado por el cliente</label><input id="scanCodigo" placeholder="Ej: EP-1042" style="text-transform:uppercase"></div>
+      <button class="btn btn-primary" onclick="escanearCodigo()">Escanear / verificar código</button>
+    </div>
+    <div class="divider"></div>
+    <div class="page-sub" style="font-weight:700; color:var(--navy); margin-bottom:10px;">Sumar un vendedor</div>
+    <div class="card" style="text-align:center;">
+      <div class="qr-fake" style="margin:0 auto 12px;" id="scanFrameQR"></div>
+      <div style="font-size:12px; color:var(--muted); margin-bottom:12px;">Cámara simulada — en este prototipo escribí el código que te muestra el vendedor</div>
+      <div class="field" style="text-align:left;">
+        <label>Código de identidad del vendedor</label>
+        <input id="scanVendedorQR" placeholder="Ej: VQR-0001" style="text-transform:uppercase">
+      </div>
+      <button class="btn btn-green btn-sm" style="margin-bottom:16px" onclick="adherirPorQR()">Escanear y sumar</button>
+      <div class="field" style="margin-top:4px; text-align:left;">
+        <label>¿No tiene cuenta todavía? Cargalo vos</label>
+        <input id="addVendedorNombre" placeholder="Nombre del vendedor">
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="crearVendedorPasivo()">Registrar vendedor</button>
+    </div>
+    <div class="page-sub" style="font-weight:700; color:var(--navy); margin-bottom:10px;">Vendedores adheridos</div>
+    <div id="cVendedoresList"></div>
+    <div class="divider"></div>
+    <div class="page-sub" style="font-weight:700; color:var(--navy); margin-bottom:10px;">Historial de ventas confirmadas</div>
+    <div id="cHistorial"></div>
+  </div>
+
+  <!-- ============ COMERCIO: DETALLE DE ESCANEO ============ -->
+  <div class="screen hidden" id="screen-c-detalle">
+    <div class="link-back" onclick="showScreen('c-panel')">← Volver</div>
+    <div class="kicker">Detalle de la operación</div>
+    <h1 class="page-title">Confirmar entrega</h1>
+    <div class="card" id="cDetalleCard"></div>
+    <div class="field">
+      <label>¿Entregaste el producto original?</label>
+      <select id="cSustituto">
+        <option value="si">Sí, el producto original</option>
+        <option value="no">No, entregué un reemplazo similar</option>
+      </select>
+    </div>
+    <button class="btn btn-green" onclick="confirmarVenta()">Confirmar venta y acreditar comisión</button>
+  </div>
+
+  <!-- ============ CLIENTE: BUSCADOR ============ -->
+  <div class="screen hidden" id="screen-cl-buscador">
+    <div class="link-back" onclick="goHome()">← Salir</div>
+    <div class="kicker">Tu ciudad</div>
+    <h1 class="page-title">Buscá vendedores o productos</h1>
+    <div class="chiprow" id="rubroChips"></div>
+    <div id="clVendedoresList"></div>
+  </div>
+
+  <!-- ============ CLIENTE: CATALOGO DE VENDEDOR ============ -->
+  <div class="screen hidden" id="screen-cl-catalogo">
+    <div class="link-back" onclick="showScreen('cl-buscador')">← Volver al buscador</div>
+    <div class="list-row" style="margin-bottom:16px;">
+      <div class="av" style="background:var(--green)" id="clVendAvatar">🛍️</div>
+      <div class="main"><div class="t" id="clVendNombre">Vendedor</div><div class="s" id="clVendZona">Zona</div></div>
+    </div>
+    <div class="prod-grid" id="clProdGrid"></div>
+  </div>
+
+  <!-- ============ CLIENTE: DETALLE PRODUCTO ============ -->
+  <div class="screen hidden" id="screen-cl-producto">
+    <div class="link-back" onclick="showScreen('cl-catalogo')">← Volver</div>
+    <div class="card" style="text-align:center;">
+      <div class="prod-photo" style="height:120px; border-radius:14px; font-size:52px; margin-bottom:14px; overflow:hidden;" id="clPFoto">🎣</div>
+      <div class="page-title" id="clPNombre" style="font-size:19px;">Producto</div>
+      <div style="font-size:22px; font-weight:800; color:var(--navy); margin:6px 0;" id="clPPrecio">$0</div>
+      <span class="pill pill-navy" id="clPZona">Zona</span>
+    </div>
+    <p class="page-sub">El comercio donde retirarlo se confirma una vez que coordines la compra con tu vendedor.</p>
+    <button class="btn btn-primary" onclick="pedirProducto()">Quiero este producto</button>
+  </div>
+
+</div>
+
+<div class="bottomnav hidden" id="bottomnav"></div>
+<div id="toast"></div>
+
+<script>
+/* ================= ESTADO EN MEMORIA ================= */
+let state = {
+  role: null,
+  currentUser: null,
+  vendedores: [],
+  comercios: [],
+  clientes: [],
+  productos: [],
+  solicitudes: [],
+  ventas: [],
+  seq: 1,
+};
+
+const emojiByRubro = {
+  "Deportes y aire libre":"🎣","Indumentaria y calzado":"👕","Ferretería y construcción":"🔧",
+  "Hogar y decoración":"🏠","Tecnología":"📱","Alimentos y bebidas":"🍞"
+};
+
+/* --------- helper de fechas para datos demo --------- */
+function diasAtras(n){ const d = new Date(); d.setDate(d.getDate()-n); return d.toISOString(); }
+
+/* --------- seed de datos de ejemplo para que no arranque vacío --------- */
+function seed(){
+  state.vendedores.push({id:'v-demo', nombre:'Marcos Gómez', usuario:'marcos_pesca', ciudad:'La Paz', zona:'Zona Centro', qrPersonal:'VQR-DEMO', fechaAlta:diasAtras(20), ultimaVenta:diasAtras(3), diasExtra:0});
+  state.vendedores.push({id:'v-demo2', nombre:'Rocío Benítez', usuario:'rociobe', ciudad:'La Paz', zona:'Costanera', qrPersonal:'VQR-DEM2', fechaAlta:diasAtras(100), ultimaVenta:diasAtras(68), diasExtra:0});
+  state.vendedores.push({id:'v-demo3', nombre:'Ezequiel Duarte', usuario:'eze_duarte', ciudad:'La Paz', zona:'Barrio Norte', qrPersonal:'VQR-DEM3', fechaAlta:diasAtras(130), ultimaVenta:diasAtras(95), diasExtra:0});
+
+  state.comercios.push({id:'c-demo1', nombre:'Ferretería Don Aldo', ciudad:'La Paz', rubro:'Ferretería y construcción', qrPersonal:'CQR-DEM1', adheridos:['v-demo'], direccion:'Av. 9 de Julio 850', horario:'Lun a Sáb 8 a 13 y 17 a 20:30hs', img:'https://picsum.photos/seed/ferreteria/500/320', verificado:true});
+  state.comercios.push({id:'c-demo2', nombre:'Pesca Total', ciudad:'La Paz', rubro:'Deportes y aire libre', qrPersonal:'CQR-DEM2', adheridos:['v-demo'], direccion:'Costanera Sur 120', horario:'Todos los días 8 a 20hs', img:'https://picsum.photos/seed/pescatotal/500/320', verificado:true});
+  state.comercios.push({id:'c-demo3', nombre:'Indumentaria Sur', ciudad:'La Paz', rubro:'Indumentaria y calzado', qrPersonal:'CQR-DEM3', adheridos:['v-demo2'], direccion:'San Martín 430', horario:'Lun a Vie 9 a 13 y 16 a 20hs', img:'https://picsum.photos/seed/indusur/500/320', verificado:true});
+  state.comercios.push({id:'c-demo4', nombre:'Almacén La Costanera', ciudad:'La Paz', rubro:'Alimentos y bebidas', qrPersonal:'CQR-DEM4', adheridos:['v-demo2'], direccion:'Costanera Norte 45', horario:'Todos los días 8 a 21hs', img:'https://picsum.photos/seed/almacencostanera/500/320', verificado:true});
+  state.comercios.push({id:'c-demo5', nombre:'TecnoHogar', ciudad:'La Paz', rubro:'Tecnología', qrPersonal:'CQR-DEM5', adheridos:['v-demo3'], direccion:'Belgrano 210', horario:'Lun a Sáb 9 a 13 y 16 a 20hs', img:'https://picsum.photos/seed/tecnohogar/500/320', verificado:true});
+  state.comercios.push({id:'c-demo6', nombre:'Deco Hogar Norte', ciudad:'La Paz', rubro:'Hogar y decoración', qrPersonal:'CQR-DEM6', adheridos:['v-demo3'], direccion:'Barrio Norte, Ruta 11 km 3', horario:'Lun a Sáb 9 a 20hs', img:'https://picsum.photos/seed/decohogar/500/320', verificado:true});
+
+  state.productos.push({id:'p1', vendedorId:'v-demo', comercioId:'c-demo2', nombre:'Caña de pescar 2.10m', precio:24000, comision:4, rubro:'Deportes y aire libre', foto:'🎣', img:'https://picsum.photos/seed/canapesca/400/400'});
+  state.productos.push({id:'p2', vendedorId:'v-demo', comercioId:'c-demo1', nombre:'Taladro percutor 1/2"', precio:38500, comision:3, rubro:'Ferretería y construcción', foto:'🔧', img:'https://picsum.photos/seed/taladro/400/400'});
+  state.productos.push({id:'p3', vendedorId:'v-demo2', comercioId:'c-demo3', nombre:'Zapatillas urbanas', precio:31000, comision:5, rubro:'Indumentaria y calzado', foto:'👟', img:'https://picsum.photos/seed/zapatillas/400/400'});
+  state.productos.push({id:'p4', vendedorId:'v-demo2', comercioId:'c-demo4', nombre:'Canasta de picada regional', precio:12500, comision:4, rubro:'Alimentos y bebidas', foto:'🧺', img:'https://picsum.photos/seed/picada/400/400'});
+  state.productos.push({id:'p5', vendedorId:'v-demo3', comercioId:'c-demo5', nombre:'Auriculares bluetooth', precio:27500, comision:3, rubro:'Tecnología', foto:'🎧', img:'https://picsum.photos/seed/auriculares/400/400'});
+  state.productos.push({id:'p6', vendedorId:'v-demo3', comercioId:'c-demo6', nombre:'Set de mates artesanales', precio:15900, comision:5, rubro:'Hogar y decoración', foto:'🧉', img:'https://picsum.photos/seed/mates/400/400'});
+}
+seed();
+
+/* ================= HELPERS ================= */
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(()=>t.classList.remove('show'), 2600);
+}
+function showScreen(name){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.add('hidden'));
+  const el = document.getElementById('screen-'+name);
+  if(el) el.classList.remove('hidden');
+  window.scrollTo(0,0);
+  updateBottomNav(name);
+}
+function goHome(){
+  state.role = null;
+  document.getElementById('roleChip').textContent = 'Sin rol';
+  document.getElementById('bottomnav').classList.add('hidden');
+  showScreen('home');
+}
+function nextId(prefix){ return prefix + '-' + (state.seq++); }
+function genCodigo(){ return 'EP-' + (1000 + Math.floor(Math.random()*8999)); }
+
+function renderQR(container){
+  container.innerHTML='';
+  for(let i=0;i<49;i++){
+    const d = document.createElement('div');
+    if(Math.random() > 0.42) d.style.background = 'var(--navy)'; else d.style.background='transparent';
+    container.appendChild(d);
+  }
+}
+
+/* ================= BOTTOM NAV ================= */
+const navByRole = {
+  vendedor:[
+    {key:'v-catalogo', ic:'🗂️', label:'Catálogo'},
+    {key:'v-solicitudes', ic:'💬', label:'Pedidos'},
+    {key:'v-stats', ic:'📊', label:'Stats'},
+  ],
+  comercio:[
+    {key:'c-panel', ic:'🏬', label:'Panel'},
+  ],
+  cliente:[
+    {key:'cl-buscador', ic:'🔎', label:'Buscar'},
+  ]
+};
+function updateBottomNav(current){
+  const nav = document.getElementById('bottomnav');
+  if(!state.role || !navByRole[state.role]){ nav.classList.add('hidden'); return; }
+  nav.classList.remove('hidden');
+  nav.innerHTML = navByRole[state.role].map(item=>`
+    <button class="navbtn ${current===item.key?'active':''}" onclick="showScreen('${item.key}')">
+      <span class="ic">${item.ic}</span><span>${item.label}</span>
+    </button>`).join('');
+}
+
+/* ================= VERIFICACION SMS ================= */
+let pendingVerifyType = null; // 'vendedor' | 'comercio-amigo'
+let pendingComercioData = null;
+
+function enviarCodigoVerificacion(telefono, tipo){
+  pendingVerifyType = tipo || 'vendedor';
+  verifyCodeSent = String(1000 + Math.floor(Math.random()*8999));
+  document.getElementById('verifyTelefono').textContent = telefono;
+  document.getElementById('verifyCodigo').value = '';
+  if(pendingVerifyType === 'comercio-amigo'){
+    document.getElementById('verifyKicker').textContent = 'Validar comercio';
+    document.getElementById('verifyTitle').textContent = 'Confirmá el teléfono del comercio';
+    document.getElementById('verifyBtn').textContent = 'Verificar y sumar comercio';
+    toast('Código enviado por SMS al comercio (' + telefono + ')');
+  } else {
+    document.getElementById('verifyKicker').textContent = 'Verificación';
+    document.getElementById('verifyTitle').textContent = 'Confirmá tu teléfono';
+    document.getElementById('verifyBtn').textContent = 'Verificar y crear cuenta';
+    toast('Código enviado por SMS al ' + telefono);
+  }
+  showScreen('verify');
+  // En este prototipo mostramos el código para poder probar el flujo:
+  console.log('Código de verificación (solo prototipo):', verifyCodeSent);
+  setTimeout(()=> toast('Prototipo: tu código es ' + verifyCodeSent), 900);
+}
+
+function volverDeVerify(){
+  showScreen(pendingVerifyType === 'comercio-amigo' ? 'v-nuevo-producto' : 'register');
+}
+
+function reenviarCodigo(){
+  if(pendingVerifyType === 'comercio-amigo' && pendingComercioData) enviarCodigoVerificacion(pendingComercioData.telefono, 'comercio-amigo');
+  else if(pendingVendedorData) enviarCodigoVerificacion(pendingVendedorData.telefono, 'vendedor');
+}
+
+function verificarCodigo(){
+  const ingresado = document.getElementById('verifyCodigo').value.trim();
+  if(ingresado !== verifyCodeSent){ toast('Código incorrecto, probá de nuevo'); return; }
+
+  if(pendingVerifyType === 'comercio-amigo'){
+    const nuevo = {
+      id: nextId('c'), ...pendingComercioData, ciudad: state.currentUser.ciudad,
+      qrPersonal: 'CQR-' + (1000 + Math.floor(Math.random()*8999)),
+      adheridos: [state.currentUser.id], registradoPor: 'vendedor', telefonoVerificado: true, verificado: true
+    };
+    state.comercios.push(nuevo);
+    pendingComercioData = null;
+    toast('¡Teléfono verificado! "'+nuevo.nombre+'" ya es parte de ElPuente ✅');
+    renderVendedorCatalogo();
+    document.getElementById('npComercio').value = nuevo.id;
+    onComercioChange();
+    document.getElementById('npComercioNuevoBox').classList.add('hidden');
+    showScreen('v-nuevo-producto');
+    return;
+  }
+
+  const v = {id: nextId('v'), ...pendingVendedorData, telefonoVerificado:true, fechaAlta: new Date().toISOString(), ultimaVenta:null, diasExtra:0};
+  v.qrPersonal = 'VQR-' + v.id.split('-')[1].padStart(4,'0');
+  state.vendedores.push(v);
+  state.currentUser = v; state.role='vendedor';
+  document.getElementById('roleChip').textContent = '🛍️ Vendedor';
+  document.getElementById('vNombre').textContent = v.nombre;
+  toast('¡Teléfono verificado! Cuenta creada ✅');
+  renderVendedorCatalogo();
+  renderVendedorSolicitudes();
+  renderVendedorStats();
+  showScreen('v-catalogo');
+  updateBottomNav('v-catalogo');
+  pendingVendedorData = null;
+}
+
+function loginConGoogle(){
+  const eleccion = prompt('Prototipo — simulamos el login con Google.\n¿Con qué rol querés continuar?\n\nEscribí: vendedor, comercio o cliente');
+  const rol = (eleccion||'').trim().toLowerCase();
+  if(!['vendedor','comercio','cliente'].includes(rol)){ toast('Rol no reconocido, probá de nuevo'); return; }
+
+  if(rol==='vendedor'){
+    const v = {id: nextId('v'), nombre:'Cuenta de Google', dni:'—', telefono:'—', email:'usuario@gmail.com',
+      direccion:'—', ciudad:'La Paz', zona:'Zona Centro', foto:'🙂', telefonoVerificado:true, viaGoogle:true,
+      fechaAlta: new Date().toISOString(), ultimaVenta:null, diasExtra:0};
+    v.qrPersonal = 'VQR-' + v.id.split('-')[1].padStart(4,'0');
+    state.vendedores.push(v);
+    state.currentUser = v; state.role='vendedor';
+    document.getElementById('roleChip').textContent = '🛍️ Vendedor';
+    document.getElementById('vNombre').textContent = v.nombre;
+    toast('Ingresaste con Google ✅');
+    renderVendedorCatalogo(); renderVendedorSolicitudes(); renderVendedorStats();
+    showScreen('v-catalogo'); updateBottomNav('v-catalogo');
+  } else if(rol==='comercio'){
+    const c = {id: nextId('c'), nombre:'Comercio (Google)', ciudad:'La Paz', rubro:'Otros', viaGoogle:true, adheridos:[]};
+    c.qrPersonal = 'CQR-' + c.id.split('-')[1].padStart(4,'0');
+    state.comercios.push(c);
+    state.currentUser = c; state.role='comercio';
+    document.getElementById('roleChip').textContent = '🏬 Comercio';
+    document.getElementById('cNombre').textContent = c.nombre;
+    toast('Ingresaste con Google ✅');
+    renderComercioPanel(); showScreen('c-panel'); updateBottomNav('c-panel');
+  } else {
+    const cl = {id: nextId('cl'), nombre:'Cliente (Google)', ciudad:'La Paz', viaGoogle:true};
+    state.clientes.push(cl);
+    state.currentUser = cl; state.role='cliente';
+    document.getElementById('roleChip').textContent = '🙋 Cliente';
+    toast('Ingresaste con Google ✅');
+    renderClienteBuscador(); showScreen('cl-buscador'); updateBottomNav('cl-buscador');
+  }
+}
+
+/* ================= REGISTRO ================= */
+let pendingRole = null;
+function goRegister(role){
+  pendingRole = role;
+  const kick = document.getElementById('regKicker');
+  const title = document.getElementById('regTitle');
+  const sub = document.getElementById('regSub');
+  const fields = document.getElementById('regFields');
+
+  if(role==='vendedor'){
+    kick.textContent='Registro de vendedor';
+    title.textContent='Contanos sobre vos';
+    sub.textContent='Sin inscripción fiscal por ahora — pero sí necesitamos tus datos completos para que comercios y clientes confíen en vos.';
+    fields.innerHTML = `
+      <div class="card">
+        <div class="field"><label>Foto de perfil</label>
+          <select id="rFoto">
+            <option value="🙂">🙂 Genérico</option><option value="👨">👨</option><option value="👩">👩</option>
+            <option value="🧑">🧑</option><option value="👨‍🦱">👨‍🦱</option><option value="👩‍🦱">👩‍🦱</option>
+          </select>
+        </div>
+        <div class="field"><label>Nombre completo</label><input id="rNombre" placeholder="Nombre y apellido"></div>
+        <div class="field"><label>Nombre de usuario (único)</label><input id="rUsuario" placeholder="Ej: juan_pesca" autocapitalize="none"></div>
+        <div class="field"><label>DNI</label><input id="rDni" type="text" inputmode="numeric" placeholder="Sin puntos"></div>
+        <div class="two-col">
+          <div class="field"><label>Fecha de nacimiento</label><input id="rNacimiento" type="date"></div>
+          <div class="field"><label>Teléfono / WhatsApp</label><input id="rTelefono" type="tel" placeholder="Ej: 345 4123456"></div>
+        </div>
+        <div class="field"><label>Email</label><input id="rEmail" type="email" placeholder="tucorreo@ejemplo.com"></div>
+        <div class="field"><label>Dirección</label><input id="rDireccion" placeholder="Calle y número"></div>
+        <div class="two-col">
+          <div class="field"><label>Ciudad</label><input id="rCiudad" placeholder="Ej: La Paz" value="La Paz"></div>
+          <div class="field"><label>Zona de trabajo</label><input id="rZona" placeholder="Ej: Zona Centro"></div>
+        </div>
+        <div class="field" style="display:flex; align-items:flex-start; gap:10px;">
+          <input type="checkbox" id="rTyc" style="width:auto; margin-top:3px;">
+          <label style="font-weight:500; font-size:12.5px; color:var(--muted);" for="rTyc">Acepto los Términos y Condiciones y el tratamiento de mis datos.</label>
+        </div>
+      </div>`;
+  } else if(role==='comercio'){
+    kick.textContent='Registro de comercio';
+    title.textContent='Datos del comercio';
+    sub.textContent='Vos facturás como siempre. Necesitamos estos datos para identificarte y que los vendedores y clientes confíen en el local.';
+    fields.innerHTML = `
+      <div class="card">
+        <div class="field"><label>Nombre del comercio (único)</label><input id="rNombre" placeholder="Ej: Ferretería Don Aldo"></div>
+        <div class="field"><label>Razón social / Titular</label><input id="rRazonSocial" placeholder="Nombre del titular o razón social"></div>
+        <div class="field"><label>CUIT</label><input id="rCuit" inputmode="numeric" placeholder="Sin guiones"></div>
+        <div class="field"><label>Dirección del local</label><input id="rDireccion" placeholder="Calle, número y ciudad"></div>
+        <div class="two-col">
+          <div class="field"><label>Ciudad</label><input id="rCiudad" placeholder="Ej: La Paz" value="La Paz"></div>
+          <div class="field"><label>Rubro</label>
+            <select id="rRubro">
+              <option>Ferretería y construcción</option><option>Deportes y aire libre</option>
+              <option>Indumentaria y calzado</option><option>Hogar y decoración</option>
+              <option>Tecnología</option><option>Alimentos y bebidas</option>
+            </select>
+          </div>
+        </div>
+        <div class="two-col">
+          <div class="field"><label>Teléfono del local</label><input id="rTelefono" type="tel" placeholder="Fijo o WhatsApp"></div>
+          <div class="field"><label>Teléfono alternativo</label><input id="rTelefonoAlt" type="tel" placeholder="Opcional"></div>
+        </div>
+        <div class="field"><label>Correo electrónico</label><input id="rEmail" type="email" placeholder="local@ejemplo.com"></div>
+        <div class="field"><label>Horario de atención</label><input id="rHorario" placeholder="Ej: Lun a Vie 9 a 18hs"></div>
+        <div class="field" style="display:flex; align-items:flex-start; gap:10px;">
+          <input type="checkbox" id="rTyc" style="width:auto; margin-top:3px;">
+          <label style="font-weight:500; font-size:12.5px; color:var(--muted);" for="rTyc">Acepto los Términos y Condiciones y el tratamiento de mis datos.</label>
+        </div>
+      </div>`;
+  } else {
+    kick.textContent='Registro de cliente';
+    title.textContent='Un dato rápido';
+    sub.textContent='Con esto ya podés explorar catálogos completos de vendedores de tu ciudad.';
+    fields.innerHTML = `
+      <div class="card">
+        <div class="field"><label>Nombre</label><input id="rNombre" placeholder="Tu nombre"></div>
+        <div class="field"><label>Ciudad</label><input id="rCiudad" placeholder="Ej: La Paz" value="La Paz"></div>
+      </div>`;
+  }
+  showScreen('register');
+}
+
+let pendingVendedorData = null;
+let verifyCodeSent = null;
+
+function submitRegister(){
+  if(pendingRole==='vendedor'){
+    const nombre = document.getElementById('rNombre').value.trim();
+    const usuario = document.getElementById('rUsuario').value.trim();
+    const dni = document.getElementById('rDni').value.trim();
+    const telefono = document.getElementById('rTelefono').value.trim();
+    const email = document.getElementById('rEmail').value.trim();
+    const direccion = document.getElementById('rDireccion').value.trim();
+    const ciudad = document.getElementById('rCiudad').value.trim() || 'La Paz';
+    const zona = document.getElementById('rZona').value.trim() || 'Sin zona definida';
+    const nacimiento = document.getElementById('rNacimiento').value;
+    const foto = document.getElementById('rFoto').value;
+    const tyc = document.getElementById('rTyc').checked;
+
+    if(!nombre || !usuario || !dni || !telefono || !email || !direccion){
+      toast('Completá todos los datos obligatorios'); return;
+    }
+    const usuarioOcupado = state.vendedores.some(v => (v.usuario||'').toLowerCase() === usuario.toLowerCase());
+    if(usuarioOcupado){ toast('Ese nombre de usuario ya está en uso, elegí otro'); return; }
+    if(!tyc){ toast('Necesitás aceptar los Términos y Condiciones'); return; }
+
+    pendingVendedorData = {nombre, usuario, dni, telefono, email, direccion, ciudad, zona, nacimiento, foto};
+    enviarCodigoVerificacion(telefono, 'vendedor');
+    return;
+  }
+
+  const nombre = document.getElementById('rNombre').value.trim();
+  if(!nombre){ toast('Ingresá el nombre para continuar'); return; }
+
+  if(pendingRole==='comercio'){
+    const razonSocial = document.getElementById('rRazonSocial').value.trim();
+    const cuit = document.getElementById('rCuit').value.trim();
+    const direccion = document.getElementById('rDireccion').value.trim();
+    const ciudad = document.getElementById('rCiudad').value.trim() || 'La Paz';
+    const rubro = document.getElementById('rRubro').value;
+    const telefono = document.getElementById('rTelefono').value.trim();
+    const telefonoAlt = document.getElementById('rTelefonoAlt').value.trim();
+    const email = document.getElementById('rEmail').value.trim();
+    const horario = document.getElementById('rHorario').value.trim();
+    const tyc = document.getElementById('rTyc').checked;
+
+    if(!razonSocial || !direccion || !telefono || !email){
+      toast('Completá todos los datos obligatorios del local'); return;
+    }
+    const nombreOcupado = state.comercios.some(c => (c.nombre||'').toLowerCase() === nombre.toLowerCase());
+    if(nombreOcupado){ toast('Ya existe un comercio registrado con ese nombre, elegí otro'); return; }
+    if(!tyc){ toast('Necesitás aceptar los Términos y Condiciones'); return; }
+
+    const c = {id: nextId('c'), nombre, razonSocial, cuit, direccion, ciudad, rubro, telefono, telefonoAlt, email, horario, adheridos:[]};
+    c.qrPersonal = 'CQR-' + c.id.split('-')[1].padStart(4,'0');
+    state.comercios.push(c);
+    state.currentUser = c; state.role='comercio';
+    document.getElementById('roleChip').textContent = '🏬 Comercio';
+    document.getElementById('cNombre').textContent = nombre;
+    toast('¡Comercio registrado!');
+    renderComercioPanel();
+    showScreen('c-panel');
+  } else {
+    const ciudad = document.getElementById('rCiudad').value.trim() || 'La Paz';
+    const cl = {id: nextId('cl'), nombre, ciudad};
+    state.clientes.push(cl);
+    state.currentUser = cl; state.role='cliente';
+    document.getElementById('roleChip').textContent = '🙋 Cliente';
+    toast('¡Listo, ya podés explorar!');
+    renderClienteBuscador();
+    showScreen('cl-buscador');
+  }
+  updateBottomNav(state.role+ (state.role==='vendedor'?'-catalogo': state.role==='comercio'?'-panel':'-buscador'));
+}
+
+/* ================= VENDEDOR: CATALOGO ================= */
+function misProductos(){
+  return state.productos.filter(p=>p.vendedorId===state.currentUser.id);
+}
+function renderVendedorCatalogo(){
+  renderActividadCard();
+  // llenar select de comercios: solo comercios reales de la ciudad del vendedor
+  const sel = document.getElementById('npComercio');
+  const misComercios = state.comercios.filter(c => c.ciudad === state.currentUser.ciudad);
+  sel.innerHTML = `<option value="">Elegí el comercio…</option>` +
+    misComercios.map(c=>`<option value="${c.id}">${c.nombre}${c.verificado ? ' ✓' : ''} (${c.rubro})</option>`).join('');
+  document.getElementById('npComercioNuevoBox').classList.add('hidden');
+  document.getElementById('npRubro').value = '';
+
+  const list = document.getElementById('vProdList');
+  const productos = misProductos();
+  if(productos.length===0){
+    list.innerHTML = `<div class="empty"><div class="ic">🗂️</div><div class="t">Todavía no cargaste productos</div><div class="s">Sumá el primero para empezar a compartirlo.</div></div>`;
+    return;
+  }
+  list.innerHTML = `<div class="prod-grid">` + productos.map(p=>{
+    const com = state.comercios.find(c=>c.id===p.comercioId);
+    const foto = p.img ? `<img src="${p.img}" alt="${p.nombre}">` : p.foto;
+    return `
+      <div class="prod-card">
+        <div class="prod-photo">${foto}</div>
+        <div class="prod-body">
+          <div class="prod-name">${p.nombre}</div>
+          <div class="prod-price">$${p.precio.toLocaleString('es-AR')}</div>
+          <div class="prod-tag">${com ? com.nombre : 'Comercio no encontrado'}</div>
+          <div class="prod-comm">Comisión ${p.comision}%</div>
+          <button class="share-btn" onclick="compartirProducto('${p.id}')">📤 Compartir</button>
+        </div>
+      </div>`;
+  }).join('') + `</div>`;
+}
+
+/* ================= ACTIVIDAD DEL VENDEDOR ================= */
+const LIMITE_DIAS_INACTIVIDAD = 90;
+const DIAS_EXTRA_POR_PEDIDO = 30;
+const DIAS_AVISO_RIESGO = 30;
+
+function diasDesde(fechaIso){
+  if(!fechaIso) return 0;
+  return Math.floor((Date.now() - new Date(fechaIso).getTime()) / 86400000);
+}
+function estadoActividad(v){
+  const base = v.ultimaVenta || v.fechaAlta;
+  if(!base) return {dias:0, restantes:LIMITE_DIAS_INACTIVIDAD, limite:LIMITE_DIAS_INACTIVIDAD, estado:'activo'};
+  const dias = diasDesde(base);
+  const limite = LIMITE_DIAS_INACTIVIDAD + (v.diasExtra||0);
+  const restantes = limite - dias;
+  let estado = 'activo';
+  if(restantes <= 0) estado = 'vencido';
+  else if(restantes <= DIAS_AVISO_RIESGO) estado = 'en_riesgo';
+  return {dias, restantes, limite, estado};
+}
+function pedirMasDias(){
+  const v = state.currentUser;
+  v.diasExtra = (v.diasExtra||0) + DIAS_EXTRA_POR_PEDIDO;
+  toast('Listo — sumamos ' + DIAS_EXTRA_POR_PEDIDO + ' días más para que sigas vendiendo ✅');
+  renderVendedorCatalogo();
+}
+function renderActividadCard(){
+  const box = document.getElementById('actividadBox');
+  if(!box) return;
+  const v = state.currentUser;
+  const a = estadoActividad(v);
+  const base = v.ultimaVenta ? 'tu última venta' : 'tu registro';
+
+  if(a.estado === 'vencido'){
+    box.className = 'card actividad-card actividad-vencido';
+    box.innerHTML = `
+      <div class="actividad-title">⛔ Cuenta pausada por inactividad</div>
+      <div class="actividad-txt">Pasaron ${a.dias} días desde ${base} sin ninguna venta confirmada. Tu cuenta quedó pausada — no podés cargar productos nuevos hasta que pidas más días.</div>
+      <button class="btn btn-primary btn-sm" onclick="pedirMasDias()">Pedir ${DIAS_EXTRA_POR_PEDIDO} días más</button>`;
+  } else if(a.estado === 'en_riesgo'){
+    box.className = 'card actividad-card actividad-riesgo';
+    box.innerHTML = `
+      <div class="actividad-title">⚠️ Te quedan ${a.restantes} días</div>
+      <div class="actividad-txt">Si no confirmás una venta antes de que se acaben, tu cuenta se pausa automáticamente. Contá desde ${base}.</div>
+      <div class="actividad-bar"><div class="actividad-fill" style="width:${Math.max(4, 100*a.restantes/a.limite)}%"></div></div>
+      <button class="btn btn-ghost btn-sm" onclick="pedirMasDias()">Pedir ${DIAS_EXTRA_POR_PEDIDO} días más</button>`;
+  } else {
+    box.className = 'card actividad-card actividad-ok';
+    box.innerHTML = `
+      <div class="actividad-title">✅ Cuenta activa</div>
+      <div class="actividad-txt">Te quedan ${a.restantes} días de margen sin vender antes de que tu cuenta se pause (contando desde ${base}).</div>
+      <div class="actividad-bar"><div class="actividad-fill" style="width:${Math.max(4, 100*a.restantes/a.limite)}%"></div></div>`;
+  }
+}
+
+function irNuevoProducto(){
+  const a = estadoActividad(state.currentUser);
+  if(a.estado === 'vencido'){ toast('Tu cuenta está pausada por inactividad. Pedí más días desde tu catálogo.'); return; }
+  showScreen('v-nuevo-producto');
+}
+
+function onComercioChange(){
+  const id = document.getElementById('npComercio').value;
+  const c = state.comercios.find(x=>x.id===id);
+  document.getElementById('npRubro').value = c ? c.rubro : '';
+}
+
+function buscarComercioPorQR(){
+  const codigo = document.getElementById('npComercioQR').value.trim().toUpperCase();
+  if(!codigo){ toast('Ingresá el código del comercio'); return; }
+  const c = state.comercios.find(x=>x.qrPersonal === codigo);
+  if(!c){
+    toast('No encontramos ningún comercio con ese código. Podés sumarlo con sus datos reales abajo.');
+    document.getElementById('npComercioNuevoBox').classList.remove('hidden');
+    return;
+  }
+  if(!state.comercios.some(x=>x.id===c.id && x.ciudad===state.currentUser.ciudad)){
+    // ya existe, solo asegurar que esté en el select
+    renderVendedorCatalogo();
+  }
+  document.getElementById('npComercio').value = c.id;
+  onComercioChange();
+  document.getElementById('npComercioQR').value = '';
+  document.getElementById('npComercioNuevoBox').classList.add('hidden');
+  toast('Comercio "'+c.nombre+'" encontrado y seleccionado ✅');
+}
+
+function registrarComercioPasivo(){
+  const nombre = document.getElementById('npNuevoComercioNombre').value.trim();
+  const direccion = document.getElementById('npNuevoComercioDireccion').value.trim();
+  const telefono = document.getElementById('npNuevoComercioTelefono').value.trim();
+  const rubro = document.getElementById('npNuevoComercioRubro').value;
+  if(!nombre || !direccion || !telefono){ toast('Completá nombre, dirección y teléfono del comercio'); return; }
+  const nombreOcupado = state.comercios.some(c => (c.nombre||'').toLowerCase() === nombre.toLowerCase());
+  if(nombreOcupado){ toast('Ya existe un comercio con ese nombre, buscalo en la lista'); return; }
+
+  pendingComercioData = {nombre, direccion, telefono, rubro};
+  enviarCodigoVerificacion(telefono, 'comercio-amigo');
+}
+
+function crearProducto(){
+  const a = estadoActividad(state.currentUser);
+  if(a.estado === 'vencido'){ toast('Tu cuenta está pausada por inactividad. Pedí más días para poder publicar.'); return; }
+
+  const foto = document.getElementById('npFoto').value;
+  const nombre = document.getElementById('npNombre').value.trim();
+  const precio = parseFloat(document.getElementById('npPrecio').value);
+  const comision = parseFloat(document.getElementById('npComision').value);
+  const comercioId = document.getElementById('npComercio').value;
+
+  if(!comercioId){ toast('Elegí el comercio local al que pertenece este producto'); return; }
+  const comercio = state.comercios.find(c=>c.id===comercioId);
+  if(!comercio){ toast('Ese comercio ya no existe, elegí otro'); return; }
+  if(!nombre || !precio || !comision){ toast('Completá nombre, precio y comisión'); return; }
+
+  const p = {id: nextId('p'), vendedorId: state.currentUser.id, comercioId, nombre, precio, comision, rubro: comercio.rubro, foto};
+  state.productos.push(p);
+  document.getElementById('npNombre').value='';
+  document.getElementById('npPrecio').value='';
+  document.getElementById('npComision').value='';
+  toast('Producto publicado en el catálogo de "'+comercio.nombre+'" ✅');
+  renderVendedorCatalogo();
+  renderVendedorStats();
+  showScreen('v-catalogo');
+}
+
+function compartirProducto(prodId){
+  const p = state.productos.find(x=>x.id===prodId);
+  if(!p) return;
+  const v = state.vendedores.find(x=>x.id===p.vendedorId);
+  const texto = `${p.nombre} — $${p.precio.toLocaleString('es-AR')}\nLo tengo disponible a través de ElPuente. Te paso los detalles y coordinamos la entrega.\nVendedor: ${v ? v.nombre : ''}`;
+
+  if(navigator.share){
+    navigator.share({ title: p.nombre, text: texto }).catch(()=>{});
+  } else {
+    const url = 'https://wa.me/?text=' + encodeURIComponent(texto);
+    window.open(url, '_blank');
+  }
+}
+
+/* ================= VENDEDOR: SOLICITUDES ================= */
+function renderVendedorSolicitudes(){
+  const list = document.getElementById('vSolicitudesList');
+  const mias = state.solicitudes.filter(s=>s.vendedorId===state.currentUser.id && s.estado==='pendiente');
+  if(mias.length===0){
+    list.innerHTML = `<div class="empty"><div class="ic">💬</div><div class="t">No tenés solicitudes por ahora</div><div class="s">Compartí tu catálogo para que te lleguen pedidos.</div></div>`;
+    return;
+  }
+  list.innerHTML = mias.map(s=>{
+    const prod = state.productos.find(p=>p.id===s.productoId);
+    return `
+      <div class="list-row">
+        <div class="av" style="background:var(--navy)">🙋</div>
+        <div class="main">
+          <div class="t">${s.clienteNombre}</div>
+          <div class="s">Quiere: ${prod ? prod.nombre : '—'}</div>
+        </div>
+        <button class="btn btn-sm btn-green" onclick="generarCodigo('${s.id}')">Generar código</button>
+      </div>`;
+  }).join('');
+}
+
+function generarCodigo(solicitudId){
+  const s = state.solicitudes.find(x=>x.id===solicitudId);
+  const prod = state.productos.find(p=>p.id===s.productoId);
+  const com = state.comercios.find(c=>c.id===prod.comercioId);
+  const codigo = genCodigo();
+
+  const venta = {
+    id: nextId('t'), codigo, vendedorId: state.currentUser.id, productoId: prod.id,
+    comercioId: com.id, clienteNombre: s.clienteNombre, estado:'pendiente', comisionMonto: Math.round(prod.precio * prod.comision/100)
+  };
+  state.ventas.push(venta);
+  s.estado = 'con_codigo';
+
+  document.getElementById('codigoTexto').textContent = codigo;
+  renderQR(document.getElementById('qrFake'));
+  document.getElementById('codigoDetalle').innerHTML = `
+    <div class="field"><label>Cliente</label>${s.clienteNombre}</div>
+    <div class="field"><label>Producto</label>${prod.nombre} — $${prod.precio.toLocaleString('es-AR')}</div>
+    <div class="field"><label>Comercio (recién visible ahora)</label>${com.nombre}</div>
+    <div class="field"><label>Tu comisión</label><span class="pill pill-green">$${venta.comisionMonto.toLocaleString('es-AR')} (${prod.comision}%)</span></div>
+  `;
+  renderVendedorSolicitudes();
+  showScreen('v-codigo');
+}
+
+/* ================= VENDEDOR: STATS ================= */
+function renderVendedorStats(){
+  const mis = misProductos();
+  const misVentas = state.ventas.filter(v=>v.vendedorId===state.currentUser.id && v.estado==='confirmada');
+  const comisionTotal = misVentas.reduce((a,v)=>a+v.comisionMonto,0);
+  const comerciosUnicos = new Set(mis.map(p=>p.comercioId)).size;
+
+  document.getElementById('statVentas').textContent = misVentas.length;
+  document.getElementById('statComision').textContent = '$'+comisionTotal.toLocaleString('es-AR');
+  document.getElementById('statProductos').textContent = mis.length;
+  document.getElementById('statComercios').textContent = comerciosUnicos;
+
+  const prodGoal = Math.min(mis.length,3);
+  document.getElementById('desafioProdTxt').textContent = prodGoal+'/3';
+  document.getElementById('desafioProdBar').style.width = (prodGoal/3*100)+'%';
+
+  const ventaGoal = Math.min(misVentas.length,1);
+  document.getElementById('desafioVentaTxt').textContent = ventaGoal+'/1';
+  document.getElementById('desafioVentaBar').style.width = (ventaGoal/1*100)+'%';
+}
+
+/* ================= COMERCIO ================= */
+function renderComercioPanel(){
+  const frame = document.getElementById('scanFrameQR');
+  if(frame) renderQR(frame);
+  if(!state.currentUser.adheridos) state.currentUser.adheridos = [];
+  const misProds = state.productos.filter(p=>p.comercioId===state.currentUser.id);
+
+  // combinar: vendedores adheridos explícitamente + los que ya tienen productos cargados
+  const idsConProductos = [...new Set(misProds.map(p=>p.vendedorId))];
+  const todosIds = [...new Set([...state.currentUser.adheridos, ...idsConProductos])];
+
+  // vendedores existentes que todavía no están adheridos (ya no se usa un select: se busca por QR)
+  const list = document.getElementById('cVendedoresList');
+  if(todosIds.length===0){
+    list.innerHTML = `<div class="empty"><div class="ic">🤝</div><div class="t">Todavía no tenés vendedores</div><div class="s">Escaneá el QR de un vendedor, o esperá a que un vendedor te agregue.</div></div>`;
+  } else {
+    list.innerHTML = todosIds.map(id=>{
+      const v = state.vendedores.find(x=>x.id===id);
+      const count = misProds.filter(p=>p.vendedorId===id).length;
+      const pendiente = v && v.pasivo;
+      return `<div class="list-row"><div class="av" style="background:var(--green)">🛍️</div>
+        <div class="main"><div class="t">${v?v.nombre:'—'} ${pendiente?'<span class=\"pill pill-navy\" style=\"margin-left:6px\">Sin cuenta activa</span>':''}</div>
+        <div class="s">${count} producto(s) tuyos en su catálogo</div></div></div>`;
+    }).join('');
+  }
+  renderComercioHistorial();
+}
+
+function adherirPorQR(){
+  const codigo = document.getElementById('scanVendedorQR').value.trim().toUpperCase();
+  if(!codigo){ toast('Escaneá o ingresá el código del vendedor'); return; }
+  const v = state.vendedores.find(x=>x.qrPersonal === codigo);
+  if(!v){ toast('No encontramos ningún vendedor con ese código'); return; }
+  if(!state.currentUser.adheridos) state.currentUser.adheridos = [];
+  if(state.currentUser.adheridos.includes(v.id)){ toast(v.nombre + ' ya estaba sumado a tu comercio'); return; }
+  state.currentUser.adheridos.push(v.id);
+  document.getElementById('scanVendedorQR').value = '';
+  toast('¡'+v.nombre+' quedó vinculado con todos sus datos! ✅');
+  renderComercioPanel();
+}
+
+function mostrarMiQR(tipo){
+  const u = state.currentUser;
+  document.getElementById('miQrCodigo').textContent = u.qrPersonal;
+  document.getElementById('miQrNombre').textContent = u.nombre + (u.usuario ? ' · @'+u.usuario : '');
+  document.getElementById('miQrTitle').textContent = tipo==='vendedor' ? 'Tu QR de vendedor' : 'Tu QR de comercio';
+  document.getElementById('miQrSub').textContent = tipo==='vendedor'
+    ? 'Mostrale este QR a cualquier comercio. Al escanearlo, te suma como vendedor con tus datos ya cargados — sin tener que tipear nada.'
+    : 'Mostrale este QR a cualquier vendedor que quiera sumarte a su catálogo. Con esto ya te identifica automáticamente.';
+  renderQR(document.getElementById('miQrFake'));
+  window._qrVolverA = tipo==='vendedor' ? 'v-catalogo' : 'c-panel';
+  showScreen('mi-qr');
+}
+function volverDeQR(){
+  showScreen(window._qrVolverA || 'home');
+}
+
+function crearVendedorPasivo(){
+  const nombre = document.getElementById('addVendedorNombre').value.trim();
+  if(!nombre){ toast('Ingresá el nombre del vendedor'); return; }
+  const v = {id: nextId('v'), nombre, ciudad: state.currentUser.ciudad, zona:'A confirmar', pasivo:true};
+  state.vendedores.push(v);
+  if(!state.currentUser.adheridos) state.currentUser.adheridos = [];
+  state.currentUser.adheridos.push(v.id);
+  document.getElementById('addVendedorNombre').value = '';
+  toast('Vendedor cargado. Cuando se registre por su cuenta, va a ver este comercio disponible.');
+  renderComercioPanel();
+}
+function renderComercioHistorial(){
+  const hist = state.ventas.filter(v=>v.comercioId===state.currentUser.id && v.estado==='confirmada');
+  const el = document.getElementById('cHistorial');
+  if(hist.length===0){ el.innerHTML = `<div class="empty" style="padding:24px;"><div class="s">Todavía no confirmaste ninguna venta.</div></div>`; return; }
+  el.innerHTML = hist.map(v=>{
+    const prod = state.productos.find(p=>p.id===v.productoId);
+    const vend = state.vendedores.find(x=>x.id===v.vendedorId);
+    return `<div class="list-row"><div class="av" style="background:var(--navy)">✓</div>
+      <div class="main"><div class="t">${prod?prod.nombre:'—'}</div><div class="s">Vendedor: ${vend?vend.nombre:'—'} · Comisión $${v.comisionMonto.toLocaleString('es-AR')}</div></div></div>`;
+  }).join('');
+}
+
+function escanearCodigo(){
+  const codigo = document.getElementById('scanCodigo').value.trim().toUpperCase();
+  const venta = state.ventas.find(v=>v.codigo===codigo && v.comercioId===state.currentUser.id);
+  if(!venta){ toast('Código no encontrado para tu comercio'); return; }
+  if(venta.estado==='confirmada'){ toast('Este código ya fue confirmado antes'); return; }
+
+  const prod = state.productos.find(p=>p.id===venta.productoId);
+  const vend = state.vendedores.find(v=>v.id===venta.vendedorId);
+  window._ventaEscaneada = venta.id;
+  document.getElementById('cDetalleCard').innerHTML = `
+    <div class="field"><label>Cliente</label>${venta.clienteNombre}</div>
+    <div class="field"><label>Producto</label>${prod.nombre} — $${prod.precio.toLocaleString('es-AR')}</div>
+    <div class="field"><label>Vendedor a acreditar</label><span class="pill pill-green">${vend.nombre}</span></div>
+    <div class="field"><label>Comisión a acreditar</label>$${venta.comisionMonto.toLocaleString('es-AR')} (${prod.comision}%)</div>
+  `;
+  showScreen('c-detalle');
+}
+
+function confirmarVenta(){
+  const venta = state.ventas.find(v=>v.id===window._ventaEscaneada);
+  venta.estado = 'confirmada';
+  venta.sustituto = document.getElementById('cSustituto').value === 'no';
+  document.getElementById('scanCodigo').value='';
+  const vend = state.vendedores.find(v=>v.id===venta.vendedorId);
+  if(vend) vend.ultimaVenta = new Date().toISOString();
+  toast(venta.sustituto ? 'Venta confirmada con reemplazo — comisión original acreditada ✅' : 'Venta confirmada — comisión acreditada ✅');
+  renderComercioPanel();
+  showScreen('c-panel');
+}
+
+/* ================= CLIENTE ================= */
+let rubroFiltro = 'Todos';
+function renderClienteBuscador(){
+  const rubros = ['Todos', ...new Set(state.productos.map(p=>p.rubro))];
+  document.getElementById('rubroChips').innerHTML = rubros.map(r=>
+    `<button class="chip ${r===rubroFiltro?'active':''}" onclick="setRubroFiltro('${r}')">${r}</button>`
+  ).join('');
+
+  const vendedoresConProductos = [...new Set(state.productos
+    .filter(p=> rubroFiltro==='Todos' || p.rubro===rubroFiltro)
+    .map(p=>p.vendedorId))];
+
+  const list = document.getElementById('clVendedoresList');
+  if(vendedoresConProductos.length===0){
+    list.innerHTML = `<div class="empty"><div class="ic">🔎</div><div class="t">No hay vendedores en este rubro todavía</div></div>`;
+    return;
+  }
+  list.innerHTML = vendedoresConProductos.map(id=>{
+    const v = state.vendedores.find(x=>x.id===id);
+    const count = state.productos.filter(p=>p.vendedorId===id).length;
+    return `<div class="list-row" onclick="abrirCatalogoVendedor('${id}')" style="cursor:pointer">
+      <div class="av" style="background:var(--green)">🛍️</div>
+      <div class="main"><div class="t">${v.nombre}</div><div class="s">${v.zona} · ${count} producto(s)</div></div>
+      <div class="chev">›</div>
+    </div>`;
+  }).join('');
+}
+function setRubroFiltro(r){ rubroFiltro = r; renderClienteBuscador(); }
+
+let vendedorAbierto = null;
+function abrirCatalogoVendedor(vendedorId){
+  vendedorAbierto = vendedorId;
+  const v = state.vendedores.find(x=>x.id===vendedorId);
+  document.getElementById('clVendNombre').textContent = v.nombre;
+  document.getElementById('clVendZona').textContent = v.zona + ' · ' + v.ciudad;
+  const prods = state.productos.filter(p=>p.vendedorId===vendedorId);
+  document.getElementById('clProdGrid').innerHTML = prods.map(p=>`
+    <div class="prod-card" onclick="abrirProducto('${p.id}')" style="cursor:pointer">
+      <div class="prod-photo">${p.img ? `<img src="${p.img}" alt="${p.nombre}">` : p.foto}</div>
+      <div class="prod-body">
+        <div class="prod-name">${p.nombre}</div>
+        <div class="prod-price">$${p.precio.toLocaleString('es-AR')}</div>
+        <div class="prod-tag">${p.rubro}</div>
+      </div>
+    </div>`).join('');
+  showScreen('cl-catalogo');
+}
+
+let productoAbierto = null;
+function abrirProducto(prodId){
+  productoAbierto = prodId;
+  const p = state.productos.find(x=>x.id===prodId);
+  document.getElementById('clPFoto').innerHTML = p.img ? `<img src="${p.img}" alt="${p.nombre}" style="width:100%; height:100%; object-fit:cover; border-radius:14px;">` : p.foto;
+  document.getElementById('clPNombre').textContent = p.nombre;
+  document.getElementById('clPPrecio').textContent = '$'+p.precio.toLocaleString('es-AR');
+  document.getElementById('clPZona').textContent = p.rubro;
+  showScreen('cl-producto');
+}
+
+function pedirProducto(){
+  const p = state.productos.find(x=>x.id===productoAbierto);
+  const solicitud = {
+    id: nextId('s'), vendedorId: p.vendedorId, productoId: p.id,
+    clienteNombre: state.currentUser.nombre, estado:'pendiente'
+  };
+  state.solicitudes.push(solicitud);
+  toast('¡Listo! Le avisamos a tu vendedor. Te va a escribir por WhatsApp con el código.');
+  showScreen('cl-buscador');
+}
+
+/* ================= SPLASH ================= */
+function hideSplash(){
+  const s = document.getElementById('splash');
+  if(!s || s.classList.contains('hide')) return;
+  s.classList.add('hide');
+}
+setTimeout(hideSplash, 3400);
+
+/* ================= FEED PUBLICO ================= */
+let feedRubroFiltro = 'Todos';
+function renderFeed(){
+  const rubros = ['Todos', ...new Set(state.productos.map(p=>p.rubro))];
+  document.getElementById('feedChips').innerHTML = rubros.map(r=>
+    `<button class="chip ${r===feedRubroFiltro?'active':''}" onclick="setFeedRubro('${r}')">${r}</button>`
+  ).join('');
+
+  const prods = state.productos.filter(p=> feedRubroFiltro==='Todos' || p.rubro===feedRubroFiltro);
+  const grid = document.getElementById('feedGrid');
+  if(prods.length===0){
+    grid.innerHTML = `<div class="empty" style="grid-column:1/-1;"><div class="ic">🗂️</div><div class="t">Todavía no hay productos en este rubro</div></div>`;
+    return;
+  }
+  grid.innerHTML = prods.map(p=>{
+    const v = state.vendedores.find(x=>x.id===p.vendedorId);
+    const foto = p.img ? `<img src="${p.img}" alt="${p.nombre}">` : p.foto;
+    return `
+      <div class="feed-prod-card" onclick="showScreen('home')">
+        <div class="prod-photo">${foto}</div>
+        <div class="prod-body">
+          <div class="prod-name">${p.nombre}</div>
+          <div class="prod-price">$${p.precio.toLocaleString('es-AR')}</div>
+          <div class="feed-vendor"><span class="dot"></span>${v ? v.nombre : 'Vendedor'}</div>
+        </div>
+      </div>`;
+  }).join('');
+}
+function setFeedRubro(r){ feedRubroFiltro = r; renderFeed(); }
+
+function setFeedTab(tab){
+  const isProd = tab==='productos';
+  document.getElementById('tabProductos').classList.toggle('active', isProd);
+  document.getElementById('tabLocales').classList.toggle('active', !isProd);
+  document.getElementById('feedProductosView').classList.toggle('hidden', !isProd);
+  document.getElementById('feedLocalesView').classList.toggle('hidden', isProd);
+  document.getElementById('feedHeroTitle').textContent = isProd ? 'Lo que están vendiendo hoy en tu ciudad' : 'Los locales que ya cuentan con PuenT';
+  document.getElementById('feedHeroSub').textContent = isProd
+    ? 'Productos cargados por vendedores locales. Elegís, le escribís al vendedor y lo tenés hoy.'
+    : 'Comercios que se suman a la red y trabajan con vendedores independientes de la ciudad.';
+  if(!isProd) renderLocales();
+}
+
+function renderLocales(){
+  const grid = document.getElementById('localesGrid');
+  const locales = state.comercios.filter(c=>c.ciudad==='La Paz');
+  if(locales.length===0){
+    grid.innerHTML = `<div class="empty"><div class="ic">🏬</div><div class="t">Todavía no hay locales cargados</div></div>`;
+    return;
+  }
+  grid.innerHTML = locales.map(c=>{
+    const vendedores = (c.adheridos||[]).length;
+    const productos = state.productos.filter(p=>p.comercioId===c.id).length;
+    const cover = c.img ? `<img src="${c.img}" alt="${c.nombre}">` : '';
+    return `
+      <div class="local-card">
+        <div class="local-cover">${cover}<div class="local-badge"><span class="dot"></span>${c.verificado ? 'Verificado · Ya cuenta con PuenT' : 'Ya cuenta con PuenT'}</div></div>
+        <div class="local-body">
+          <div class="local-name">${c.nombre}</div>
+          <div class="local-meta">${c.rubro}${c.direccion ? ' · '+c.direccion : ''}${c.horario ? '<br>'+c.horario : ''}</div>
+          <div class="local-stats">
+            <div class="local-stat">🛍️ ${vendedores} vendedor(es)</div>
+            <div class="local-stat">📦 ${productos} producto(s)</div>
+          </div>
+          <button class="btn btn-ghost btn-sm" style="width:100%" onclick="showScreen('home')">Quiero vender para este local</button>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+/* ================= INIT ================= */
+renderFeed();
+showScreen('feed');
+</script>
+</body>
+</html>
