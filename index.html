@@ -226,6 +226,17 @@ input,select,textarea{font-family:inherit; font-size:14.5px;}
 .actividad-riesgo .actividad-fill{background:#E7A31C;}
 .actividad-vencido{background:#FDEDEC; border-color:#F3B9B4;}
 .actividad-vencido .actividad-title{color:#B3261E;}
+
+/* ---- Publicidad mensual del comercio ---- */
+.pub-card{border-radius:16px; padding:16px; margin-bottom:16px; position:relative; overflow:hidden;}
+.pub-card.inactiva{background:linear-gradient(135deg,#122C4A,#1c4066); color:white;}
+.pub-card.activa{background:#EAF5E3; border:1.5px solid #BFE3A8;}
+.pub-title{font-weight:700; font-size:15px; margin-bottom:5px; display:flex; align-items:center; gap:6px;}
+.pub-card.activa .pub-title{color:#2C6B1F;}
+.pub-txt{font-size:12.5px; line-height:1.5; margin-bottom:12px;}
+.pub-card.inactiva .pub-txt{color:rgba(255,255,255,0.78);}
+.pub-card.activa .pub-txt{color:#3F6B32;}
+.pub-price{font-family:'Bai Jamjuree',sans-serif; font-size:13px; font-weight:600; margin-bottom:12px; opacity:.85;}
 </style>
 </head>
 <body>
@@ -495,6 +506,7 @@ input,select,textarea{font-family:inherit; font-size:14.5px;}
     <div class="kicker">Panel de comercio</div>
     <h1 class="page-title"><span id="cNombre">Tu comercio</span></h1>
     <button class="btn btn-ghost" style="margin-bottom:14px" onclick="mostrarMiQR('comercio')">Mostrar mi código QR</button>
+    <div id="publicidadBox"></div>
     <p class="page-sub">Cuando un cliente te presente un código, escribilo acá para confirmar la entrega.</p>
     <div class="card">
       <div class="field"><label>Código presentado por el cliente</label><input id="scanCodigo" placeholder="Ej: EP-1042" style="text-transform:uppercase"></div>
@@ -519,8 +531,35 @@ input,select,textarea{font-family:inherit; font-size:14.5px;}
     <div class="page-sub" style="font-weight:700; color:var(--navy); margin-bottom:10px;">Vendedores adheridos</div>
     <div id="cVendedoresList"></div>
     <div class="divider"></div>
+    <div class="page-sub" style="font-weight:700; color:var(--navy); margin-bottom:10px;">Tus productos propios</div>
+    <div id="cProductosPropios"></div>
+    <div class="divider"></div>
     <div class="page-sub" style="font-weight:700; color:var(--navy); margin-bottom:10px;">Historial de ventas confirmadas</div>
     <div id="cHistorial"></div>
+  </div>
+
+  <!-- ============ COMERCIO: NUEVO PRODUCTO PROPIO ============ -->
+  <div class="screen hidden" id="screen-c-nuevo-producto">
+    <div class="link-back" onclick="showScreen('c-panel')">← Volver al panel</div>
+    <div class="kicker">Publicidad ElPuente</div>
+    <h1 class="page-title">Cargar producto propio</h1>
+    <p class="page-sub">Estos productos aparecen con tu marca en el feed y en tu ficha de la sección Locales. Al ser venta directa, no llevan comisión de vendedor.</p>
+    <div class="card">
+      <div class="field">
+        <label>Foto de referencia</label>
+        <select id="cnpFoto">
+          <option value="🎣">🎣 Pesca / deportes</option>
+          <option value="👕">👕 Indumentaria</option>
+          <option value="🔧">🔧 Ferretería</option>
+          <option value="🏠">🏠 Hogar</option>
+          <option value="📱">📱 Tecnología</option>
+          <option value="🍞">🍞 Alimentos</option>
+        </select>
+      </div>
+      <div class="field"><label>Nombre del producto</label><input id="cnpNombre" placeholder="Ej: Combo desayuno x2"></div>
+      <div class="field"><label>Precio</label><input id="cnpPrecio" type="number" placeholder="Ej: 8500"></div>
+    </div>
+    <button class="btn btn-primary" onclick="crearProductoComercio()">Publicar producto</button>
   </div>
 
   <!-- ============ COMERCIO: DETALLE DE ESCANEO ============ -->
@@ -605,7 +644,7 @@ function seed(){
   state.vendedores.push({id:'v-demo3', nombre:'Ezequiel Duarte', usuario:'eze_duarte', ciudad:'La Paz', zona:'Barrio Norte', qrPersonal:'VQR-DEM3', fechaAlta:diasAtras(130), ultimaVenta:diasAtras(95), diasExtra:0});
 
   state.comercios.push({id:'c-demo1', nombre:'Ferretería Don Aldo', ciudad:'La Paz', rubro:'Ferretería y construcción', qrPersonal:'CQR-DEM1', adheridos:['v-demo'], direccion:'Av. 9 de Julio 850', horario:'Lun a Sáb 8 a 13 y 17 a 20:30hs', img:'https://picsum.photos/seed/ferreteria/500/320', verificado:true});
-  state.comercios.push({id:'c-demo2', nombre:'Pesca Total', ciudad:'La Paz', rubro:'Deportes y aire libre', qrPersonal:'CQR-DEM2', adheridos:['v-demo'], direccion:'Costanera Sur 120', horario:'Todos los días 8 a 20hs', img:'https://picsum.photos/seed/pescatotal/500/320', verificado:true});
+  state.comercios.push({id:'c-demo2', nombre:'Pesca Total', ciudad:'La Paz', rubro:'Deportes y aire libre', qrPersonal:'CQR-DEM2', adheridos:['v-demo'], direccion:'Costanera Sur 120', horario:'Todos los días 8 a 20hs', img:'https://picsum.photos/seed/pescatotal/500/320', verificado:true, publicidadActiva:true, publicidadVence:diasAtras(-18)});
   state.comercios.push({id:'c-demo3', nombre:'Indumentaria Sur', ciudad:'La Paz', rubro:'Indumentaria y calzado', qrPersonal:'CQR-DEM3', adheridos:['v-demo2'], direccion:'San Martín 430', horario:'Lun a Vie 9 a 13 y 16 a 20hs', img:'https://picsum.photos/seed/indusur/500/320', verificado:true});
   state.comercios.push({id:'c-demo4', nombre:'Almacén La Costanera', ciudad:'La Paz', rubro:'Alimentos y bebidas', qrPersonal:'CQR-DEM4', adheridos:['v-demo2'], direccion:'Costanera Norte 45', horario:'Todos los días 8 a 21hs', img:'https://picsum.photos/seed/almacencostanera/500/320', verificado:true});
   state.comercios.push({id:'c-demo5', nombre:'TecnoHogar', ciudad:'La Paz', rubro:'Tecnología', qrPersonal:'CQR-DEM5', adheridos:['v-demo3'], direccion:'Belgrano 210', horario:'Lun a Sáb 9 a 13 y 16 a 20hs', img:'https://picsum.photos/seed/tecnohogar/500/320', verificado:true});
@@ -617,6 +656,7 @@ function seed(){
   state.productos.push({id:'p4', vendedorId:'v-demo2', comercioId:'c-demo4', nombre:'Canasta de picada regional', precio:12500, comision:4, rubro:'Alimentos y bebidas', foto:'🧺', img:'https://picsum.photos/seed/picada/400/400'});
   state.productos.push({id:'p5', vendedorId:'v-demo3', comercioId:'c-demo5', nombre:'Auriculares bluetooth', precio:27500, comision:3, rubro:'Tecnología', foto:'🎧', img:'https://picsum.photos/seed/auriculares/400/400'});
   state.productos.push({id:'p6', vendedorId:'v-demo3', comercioId:'c-demo6', nombre:'Set de mates artesanales', precio:15900, comision:5, rubro:'Hogar y decoración', foto:'🧉', img:'https://picsum.photos/seed/mates/400/400'});
+  state.productos.push({id:'p7', vendedorId:null, comercioId:'c-demo2', nombre:'Kit de carnada + anzuelos', precio:9800, comision:0, rubro:'Deportes y aire libre', foto:'🪱', img:'https://picsum.photos/seed/carnada/400/400', origen:'comercio'});
 }
 seed();
 
@@ -1039,6 +1079,79 @@ function renderActividadCard(){
   }
 }
 
+/* ================= PUBLICIDAD MENSUAL DEL COMERCIO ================= */
+const PRECIO_PUBLICIDAD_MENSUAL = 9000;
+
+function publicidadActiva(c){
+  return !!(c.publicidadActiva && c.publicidadVence && new Date(c.publicidadVence) > new Date());
+}
+function renderPublicidadBox(){
+  const box = document.getElementById('publicidadBox');
+  if(!box) return;
+  const c = state.currentUser;
+  if(publicidadActiva(c)){
+    const vence = new Date(c.publicidadVence).toLocaleDateString('es-AR');
+    box.innerHTML = `
+      <div class="pub-card activa">
+        <div class="pub-title">⭐ Publicidad ElPuente activa</div>
+        <div class="pub-txt">Tu local se destaca en Locales y podés cargar tus propios productos sin depender de un vendedor. Vence el ${vence}.</div>
+        <button class="btn btn-primary btn-sm" onclick="showScreen('c-nuevo-producto')">+ Cargar producto propio</button>
+      </div>`;
+  } else {
+    box.innerHTML = `
+      <div class="pub-card inactiva">
+        <div class="pub-title">📣 Publicidad ElPuente</div>
+        <div class="pub-txt">Con el plan mensual, tu local se destaca en la sección Locales y además podés cargar tus propios productos directo al feed, sin necesitar un vendedor.</div>
+        <div class="pub-price">$${PRECIO_PUBLICIDAD_MENSUAL.toLocaleString('es-AR')} / mes</div>
+        <button class="btn btn-green btn-sm" onclick="activarPublicidad()">Activar plan mensual (demo)</button>
+      </div>`;
+  }
+}
+function activarPublicidad(){
+  const c = state.currentUser;
+  const vence = new Date(); vence.setDate(vence.getDate()+30);
+  c.publicidadActiva = true;
+  c.publicidadVence = vence.toISOString();
+  toast('Plan activado (simulado) — ya podés cargar productos propios ✅');
+  renderPublicidadBox();
+}
+function renderProductosPropios(){
+  const box = document.getElementById('cProductosPropios');
+  if(!box) return;
+  const c = state.currentUser;
+  const propios = state.productos.filter(p=>p.comercioId===c.id && p.origen==='comercio');
+  if(propios.length===0){
+    box.innerHTML = `<div class="empty"><div class="ic">📣</div><div class="t">${publicidadActiva(c) ? 'Todavía no cargaste productos propios' : 'Activá la publicidad mensual para cargar productos propios'}</div></div>`;
+    return;
+  }
+  box.innerHTML = `<div class="prod-grid">` + propios.map(p=>{
+    const foto = p.img ? `<img src="${p.img}" alt="${p.nombre}">` : p.foto;
+    return `
+      <div class="prod-card">
+        <div class="prod-photo">${foto}</div>
+        <div class="prod-body">
+          <div class="prod-name">${p.nombre}</div>
+          <div class="prod-price">$${p.precio.toLocaleString('es-AR')}</div>
+          <div class="prod-tag">Venta directa del local</div>
+        </div>
+      </div>`;
+  }).join('') + `</div>`;
+}
+function crearProductoComercio(){
+  const c = state.currentUser;
+  if(!publicidadActiva(c)){ toast('Necesitás tener la publicidad mensual activa para cargar productos propios'); return; }
+  const foto = document.getElementById('cnpFoto').value;
+  const nombre = document.getElementById('cnpNombre').value.trim();
+  const precio = parseFloat(document.getElementById('cnpPrecio').value);
+  if(!nombre || !precio){ toast('Completá nombre y precio'); return; }
+
+  state.productos.push({id: nextId('p'), vendedorId:null, comercioId:c.id, nombre, precio, comision:0, rubro:c.rubro, foto, origen:'comercio'});
+  document.getElementById('cnpNombre').value=''; document.getElementById('cnpPrecio').value='';
+  toast('Producto publicado en tu ficha y en el feed de La Paz ✅');
+  renderProductosPropios();
+  showScreen('c-panel');
+}
+
 function irNuevoProducto(){
   const a = estadoActividad(state.currentUser);
   if(a.estado === 'vencido'){ toast('Tu cuenta está pausada por inactividad. Pedí más días desde tu catálogo.'); return; }
@@ -1211,6 +1324,8 @@ function renderVendedorStats(){
 function renderComercioPanel(){
   const frame = document.getElementById('scanFrameQR');
   if(frame) renderQR(frame);
+  renderPublicidadBox();
+  renderProductosPropios();
   if(!state.currentUser.adheridos) state.currentUser.adheridos = [];
   const misProds = state.productos.filter(p=>p.comercioId===state.currentUser.id);
 
@@ -1410,15 +1525,22 @@ function renderFeed(){
     return;
   }
   grid.innerHTML = prods.map(p=>{
-    const v = state.vendedores.find(x=>x.id===p.vendedorId);
     const foto = p.img ? `<img src="${p.img}" alt="${p.nombre}">` : p.foto;
+    let etiqueta;
+    if(p.origen === 'comercio'){
+      const c = state.comercios.find(x=>x.id===p.comercioId);
+      etiqueta = '📣 Venta directa · ' + (c ? c.nombre : 'Local');
+    } else {
+      const v = state.vendedores.find(x=>x.id===p.vendedorId);
+      etiqueta = v ? v.nombre : 'Vendedor';
+    }
     return `
       <div class="feed-prod-card" onclick="showScreen('home')">
         <div class="prod-photo">${foto}</div>
         <div class="prod-body">
           <div class="prod-name">${p.nombre}</div>
           <div class="prod-price">$${p.precio.toLocaleString('es-AR')}</div>
-          <div class="feed-vendor"><span class="dot"></span>${v ? v.nombre : 'Vendedor'}</div>
+          <div class="feed-vendor"><span class="dot"></span>${etiqueta}</div>
         </div>
       </div>`;
   }).join('');
@@ -1440,7 +1562,9 @@ function setFeedTab(tab){
 
 function renderLocales(){
   const grid = document.getElementById('localesGrid');
-  const locales = state.comercios.filter(c=>c.ciudad==='La Paz');
+  const locales = state.comercios.filter(c=>c.ciudad==='La Paz')
+    .slice()
+    .sort((a,b)=> (publicidadActiva(b)?1:0) - (publicidadActiva(a)?1:0));
   if(locales.length===0){
     grid.innerHTML = `<div class="empty"><div class="ic">🏬</div><div class="t">Todavía no hay locales cargados</div></div>`;
     return;
@@ -1449,9 +1573,10 @@ function renderLocales(){
     const vendedores = (c.adheridos||[]).length;
     const productos = state.productos.filter(p=>p.comercioId===c.id).length;
     const cover = c.img ? `<img src="${c.img}" alt="${c.nombre}">` : '';
+    const destacado = publicidadActiva(c);
     return `
-      <div class="local-card">
-        <div class="local-cover">${cover}<div class="local-badge"><span class="dot"></span>${c.verificado ? 'Verificado · Ya cuenta con PuenT' : 'Ya cuenta con PuenT'}</div></div>
+      <div class="local-card" style="${destacado ? 'border:1.5px solid #E7A31C;' : ''}">
+        <div class="local-cover">${cover}<div class="local-badge"><span class="dot"></span>${c.verificado ? 'Verificado · Ya cuenta con PuenT' : 'Ya cuenta con PuenT'}</div>${destacado ? '<div class="local-badge" style="left:auto; right:10px; background:#E7A31C;">⭐ Destacado</div>' : ''}</div>
         <div class="local-body">
           <div class="local-name">${c.nombre}</div>
           <div class="local-meta">${c.rubro}${c.direccion ? ' · '+c.direccion : ''}${c.horario ? '<br>'+c.horario : ''}</div>
