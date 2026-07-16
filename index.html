@@ -1212,6 +1212,26 @@ function registrarComercioPasivo(){
   enviarCodigoVerificacion(telefono, 'comercio-amigo');
 }
 
+/* ================= NOTIFICACION POR MAIL (simulada) ================= */
+// Cuando tengas la cuenta de EmailJS armada, esta es la única función que hay
+// que reemplazar por el envío real (emailjs.send(serviceId, templateId, params)).
+// Los 3 destinatarios y el contenido del mail ya quedan armados acá.
+const ADMIN_EMAIL = 'admin@elpuente.com.ar'; // reemplazar por tu mail real de admin
+
+function notificarNuevoProducto(p, comercio, vendedor){
+  const destinatarios = [
+    vendedor.email || '(vendedor sin email cargado)',
+    comercio.email || '(comercio sin email cargado)',
+    ADMIN_EMAIL
+  ];
+  const asunto = 'Nuevo producto en ElPuente: ' + p.nombre;
+  const cuerpo = `${vendedor.nombre} cargó "${p.nombre}" ($${p.precio.toLocaleString('es-AR')}) en el catálogo de ${comercio.nombre}. Comisión acordada: ${p.comision}%.`;
+
+  // --- SIMULADO: acá va emailjs.send(...) cuando esté la cuenta creada ---
+  console.log('📧 Mail simulado ->', destinatarios, '|', asunto, '|', cuerpo);
+  setTimeout(()=> toast('📧 Mail enviado a vendedor, comercio y admin (simulado)'), 2000);
+}
+
 function crearProducto(){
   const a = estadoActividad(state.currentUser);
   if(a.estado === 'vencido'){ toast('Tu cuenta está pausada por inactividad. Pedí más días para poder publicar.'); return; }
@@ -1233,6 +1253,7 @@ function crearProducto(){
   document.getElementById('npPrecio').value='';
   document.getElementById('npComision').value='';
   toast('Producto publicado en el catálogo de "'+comercio.nombre+'" ✅');
+  notificarNuevoProducto(p, comercio, state.currentUser);
   renderVendedorCatalogo();
   renderVendedorStats();
   showScreen('v-catalogo');
