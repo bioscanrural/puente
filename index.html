@@ -8,9 +8,9 @@
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Bai+Jamjuree:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
-  --navy:#122C4A; --navy-2:#1B3A5C; --green:#5BAF3C; --blue:#2BA6DE;
-  --cream:#F6F5F1; --paper:#FFFFFF; --ink:#1B2430; --muted:#5B6472; --line:#E4E1D8;
-  --danger:#C4472C;
+  --navy:#0E5C68; --navy-2:#0A454D; --green:#F2762E; --blue:#C77A00;
+  --cream:#FBF6EC; --paper:#FFFFFF; --ink:#1B2430; --muted:#5B6472; --line:#E4DFCF;
+  --danger:#C4362A;
 }
 *{box-sizing:border-box; margin:0; padding:0;}
 body{font-family:'Manrope',sans-serif; background:var(--cream); color:var(--ink); min-height:100vh;}
@@ -85,7 +85,7 @@ input,select,textarea{font-family:inherit; font-size:14.5px;}
 .prod-name{font-size:13px; font-weight:700; color:var(--navy); line-height:1.25; margin-bottom:3px;}
 .prod-price{font-size:14px; font-weight:800; color:var(--ink);}
 .prod-tag{font-size:10px; color:var(--muted); margin-top:3px;}
-.prod-comm{display:inline-block; margin-top:6px; font-size:10.5px; font-weight:700; color:var(--green); background:#EAF5E3; padding:2px 8px; border-radius:100px;}
+.prod-comm{display:inline-block; margin-top:6px; font-size:10.5px; font-weight:700; color:var(--green); background:#FDECE1; padding:2px 8px; border-radius:100px;}
 
 /* ---- List rows ---- */
 .list-row{display:flex; align-items:center; gap:12px; background:white; border:1px solid var(--line); border-radius:14px; padding:13px 14px; margin-bottom:10px;}
@@ -97,8 +97,8 @@ input,select,textarea{font-family:inherit; font-size:14.5px;}
 
 /* ---- Badges / pills ---- */
 .pill{display:inline-flex; align-items:center; gap:5px; font-size:11.5px; font-weight:700; padding:5px 11px; border-radius:100px;}
-.pill-green{background:#EAF5E3; color:var(--green);}
-.pill-blue{background:#E7F4FB; color:var(--blue);}
+.pill-green{background:#FDECE1; color:var(--green);}
+.pill-blue{background:#FBF0DA; color:var(--blue);}
 .pill-navy{background:#EAEFF4; color:var(--navy-2);}
 .pill-danger{background:#FBEAE6; color:var(--danger);}
 
@@ -155,7 +155,7 @@ input,select,textarea{font-family:inherit; font-size:14.5px;}
 
 /* ---- Splash ---- */
 #splash{
-  position:fixed; inset:0; z-index:100; background:linear-gradient(160deg, var(--navy) 0%, var(--navy-2) 55%, #16324f 100%);
+  position:fixed; inset:0; z-index:100; background:linear-gradient(160deg, var(--navy) 0%, var(--navy-2) 55%, #083840 100%);
   display:flex; flex-direction:column; align-items:center; justify-content:center; padding:32px;
   transition:opacity .5s ease, visibility .5s ease;
 }
@@ -192,7 +192,7 @@ input,select,textarea{font-family:inherit; font-size:14.5px;}
 .feed-vendor{display:flex; align-items:center; gap:6px; font-size:10.5px; color:var(--navy-2); font-weight:700; margin-top:6px;}
 .feed-vendor .dot{width:6px; height:6px; border-radius:50%; background:var(--green); flex-shrink:0;}
 .share-btn{
-  width:100%; margin-top:8px; padding:8px; border-radius:10px; background:#EAF5E3; color:var(--green);
+  width:100%; margin-top:8px; padding:8px; border-radius:10px; background:#FDECE1; color:var(--green);
   font-size:12px; font-weight:700; display:flex; align-items:center; justify-content:center; gap:6px;
 }
 
@@ -232,12 +232,12 @@ input,select,textarea{font-family:inherit; font-size:14.5px;}
 /* ---- Publicidad mensual del comercio ---- */
 .pub-card{border-radius:16px; padding:16px; margin-bottom:16px; position:relative; overflow:hidden;}
 .pub-card.inactiva{background:linear-gradient(135deg,#122C4A,#1c4066); color:white;}
-.pub-card.activa{background:#EAF5E3; border:1.5px solid #BFE3A8;}
+.pub-card.activa{background:#FDECE1; border:1.5px solid #F5C79E;}
 .pub-title{font-weight:700; font-size:15px; margin-bottom:5px; display:flex; align-items:center; gap:6px;}
-.pub-card.activa .pub-title{color:#2C6B1F;}
+.pub-card.activa .pub-title{color:#9C4A14;}
 .pub-txt{font-size:12.5px; line-height:1.5; margin-bottom:12px;}
 .pub-card.inactiva .pub-txt{color:rgba(255,255,255,0.78);}
-.pub-card.activa .pub-txt{color:#3F6B32;}
+.pub-card.activa .pub-txt{color:#B0602A;}
 .pub-price{font-family:'Bai Jamjuree',sans-serif; font-size:13px; font-weight:600; margin-bottom:12px; opacity:.85;}
 </style>
 </head>
