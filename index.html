@@ -1093,17 +1093,17 @@ function renderPublicidadBox(){
     const vence = new Date(c.publicidadVence).toLocaleDateString('es-AR');
     box.innerHTML = `
       <div class="pub-card activa">
-        <div class="pub-title">⭐ Publicidad ElPuente activa</div>
-        <div class="pub-txt">Tu local se destaca en Locales y podés cargar tus propios productos sin depender de un vendedor. Vence el ${vence}.</div>
+        <div class="pub-title">⭐ Venta directa activa</div>
+        <div class="pub-txt">Tenés tu propio catálogo activo, sumado al de tus vendedores — no lo reemplaza. Y tu local se destaca en Locales. Vence el ${vence}.</div>
         <button class="btn btn-primary btn-sm" onclick="showScreen('c-nuevo-producto')">+ Cargar producto propio</button>
       </div>`;
   } else {
     box.innerHTML = `
       <div class="pub-card inactiva">
-        <div class="pub-title">📣 Publicidad ElPuente</div>
-        <div class="pub-txt">Con el plan mensual, tu local se destaca en la sección Locales y además podés cargar tus propios productos directo al feed, sin necesitar un vendedor.</div>
+        <div class="pub-title">📣 ¿Querés vender vos mismo?</div>
+        <div class="pub-txt">Sumar tu local a ElPuente y que los vendedores independientes vendan tus productos es <b>gratis</b>, como hasta ahora, y no cambia. Este plan es para sumar, además, tu propio catálogo directo a la plataforma — un canal extra, no un reemplazo de tus vendedores.</div>
         <div class="pub-price">$${PRECIO_PUBLICIDAD_MENSUAL.toLocaleString('es-AR')} / mes</div>
-        <button class="btn btn-green btn-sm" onclick="activarPublicidad()">Activar plan mensual (demo)</button>
+        <button class="btn btn-green btn-sm" onclick="activarPublicidad()">Activar venta directa (demo)</button>
       </div>`;
   }
 }
@@ -1529,7 +1529,7 @@ function renderFeed(){
     let etiqueta;
     if(p.origen === 'comercio'){
       const c = state.comercios.find(x=>x.id===p.comercioId);
-      etiqueta = '📣 Venta directa · ' + (c ? c.nombre : 'Local');
+      etiqueta = '📣 Catálogo propio de ' + (c ? c.nombre : 'Local');
     } else {
       const v = state.vendedores.find(x=>x.id===p.vendedorId);
       etiqueta = v ? v.nombre : 'Vendedor';
