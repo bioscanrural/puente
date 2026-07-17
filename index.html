@@ -21,11 +21,11 @@ input,select,textarea{font-family:inherit; font-size:14.5px;}
 /* ---- App shell ---- */
 #app{max-width:480px; margin:0 auto; min-height:100vh; background:var(--cream); position:relative; padding-bottom:78px;}
 .topbar{
-  position:sticky; top:0; z-index:20; background:rgba(246,245,241,0.92); backdrop-filter:blur(8px);
-  border-bottom:1px solid var(--line); padding:16px 20px; display:flex; align-items:center; justify-content:space-between;
+  position:sticky; top:0; z-index:20; background:rgba(251,246,236,0.92); backdrop-filter:blur(8px);
+  border-bottom:1px solid var(--line); padding:10px 20px; display:flex; align-items:center; justify-content:space-between;
 }
 .brand{font-weight:800; font-size:18px; color:var(--navy);}
-.brand-logo{height:34px; width:auto; cursor:pointer; transition:transform .1s ease;}
+.brand-logo{height:52px; width:auto; cursor:pointer; transition:transform .1s ease;}
 .brand-logo:active{transform:scale(0.94);}
 .brand .t{color:var(--green);}
 .role-chip{font-size:11.5px; font-weight:700; padding:7px 14px; border-radius:100px; background:white; border:1px solid var(--line); color:var(--navy-2); cursor:pointer; transition:transform .1s ease, background .15s ease;}
@@ -157,32 +157,17 @@ input,select,textarea{font-family:inherit; font-size:14.5px;}
 
 /* ---- Splash ---- */
 #splash{
-  position:fixed; inset:0; z-index:100; background:linear-gradient(160deg, var(--navy) 0%, var(--navy-2) 55%, #083840 100%);
-  display:flex; flex-direction:column; align-items:center; justify-content:center; padding:32px;
+  position:fixed; inset:0; z-index:100; background:#FFFFFF;
+  display:flex; align-items:center; justify-content:center; padding:32px;
   transition:opacity .5s ease, visibility .5s ease;
 }
 #splash.hide{opacity:0; visibility:hidden; pointer-events:none;}
-.splash-glow{
-  position:absolute; width:340px; height:340px; border-radius:50%;
-  background:radial-gradient(circle, rgba(91,175,60,0.28) 0%, rgba(43,166,222,0.12) 45%, transparent 70%);
-  filter:blur(6px);
-}
 .splash-logo-wrap{
-  width:220px; height:147px; border-radius:24px; background:white; display:flex; align-items:center; justify-content:center;
-  box-shadow:0 18px 40px rgba(0,0,0,0.35); margin-bottom:26px; position:relative; overflow:hidden; padding:14px;
+  width:100%; max-width:380px; position:relative;
   animation:splashPop .7s cubic-bezier(.2,.9,.25,1.15) both;
 }
-.splash-logo-wrap img{width:100%; height:100%; object-fit:contain;}
-@keyframes splashPop{from{opacity:0; transform:scale(.75) translateY(10px);} to{opacity:1; transform:scale(1) translateY(0);}}
-.splash-word{font-family:'Bai Jamjuree',sans-serif; font-weight:700; font-size:34px; color:white; letter-spacing:.01em; position:relative; animation:splashFade .7s ease .15s both;}
-.splash-word .t{color:var(--green);}
-.splash-tag{font-size:14px; color:rgba(255,255,255,0.72); text-align:center; margin-top:10px; line-height:1.5; max-width:280px; position:relative; animation:splashFade .7s ease .3s both;}
-@keyframes splashFade{from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:translateY(0);}}
-.splash-dots{display:flex; gap:7px; position:absolute; bottom:56px; animation:splashFade .7s ease .45s both;}
-.splash-dots span{width:7px; height:7px; border-radius:50%; background:rgba(255,255,255,0.35);}
-.splash-dots span:nth-child(1){background:var(--green);}
-.splash-dots span:nth-child(2){background:var(--blue);}
-.splash-hint{position:absolute; bottom:26px; font-size:11.5px; color:rgba(255,255,255,0.4); animation:splashFade .7s ease .6s both;}
+.splash-logo-wrap img{width:100%; height:auto; display:block; object-fit:contain;}
+@keyframes splashPop{from{opacity:0; transform:scale(.85) translateY(10px);} to{opacity:1; transform:scale(1) translateY(0);}}
 
 /* ---- Feed público ---- */
 .feed-hero{background:linear-gradient(160deg, var(--navy) 0%, var(--navy-2) 100%); border-radius:0 0 26px 26px; padding:20px 20px 24px; margin:-1px -1px 18px; color:white;}
@@ -246,14 +231,9 @@ input,select,textarea{font-family:inherit; font-size:14.5px;}
 <body>
 
 <div id="splash" onclick="hideSplash()">
-  <div class="splash-glow"></div>
   <div class="splash-logo-wrap">
     <img src="https://raw.githubusercontent.com/bioscanrural/puente/refs/heads/main/imagenes/logo%20puente%203.png" alt="ElPuente">
   </div>
-  <div class="splash-word">Puen<span class="t">T</span></div>
-  <div class="splash-tag">El puente entre vendedores y comercios locales</div>
-  <div class="splash-dots"><span></span><span></span><span></span></div>
-  <div class="splash-hint">Tocá para continuar</div>
 </div>
 
 <div id="app">
