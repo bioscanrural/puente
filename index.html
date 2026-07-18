@@ -22,11 +22,18 @@ input,select,textarea{font-family:inherit; font-size:14.5px;}
 #app{max-width:480px; margin:0 auto; min-height:100vh; background:var(--cream); position:relative; padding-bottom:78px;}
 .topbar{
   position:sticky; top:0; z-index:20; background:rgba(251,247,239,0.92); backdrop-filter:blur(8px);
-  border-bottom:1px solid var(--line); padding:10px 20px; display:flex; align-items:center; justify-content:space-between;
+  border-bottom:1px solid var(--line); padding:10px 20px; display:flex; align-items:center; gap:10px; flex-wrap:wrap;
 }
 .brand{font-weight:800; font-size:18px; color:var(--navy);}
-.brand-logo{height:52px; width:auto; cursor:pointer; transition:transform .1s ease;}
+.brand-logo{height:52px; width:auto; cursor:pointer; transition:transform .1s ease; flex-shrink:0;}
 .brand-logo:active{transform:scale(0.94);}
+.topbar-search{
+  flex:1 1 140px; display:flex; align-items:center; gap:6px; background:white; border:1px solid var(--line);
+  border-radius:100px; padding:8px 14px; min-width:0;
+}
+.topbar-search-ic{font-size:13px; flex-shrink:0; opacity:.6;}
+.topbar-search input{border:none; outline:none; background:transparent; font-size:13px; width:100%; color:var(--ink); min-width:0;}
+.topbar-search input::placeholder{color:var(--muted);}
 .brand .t{color:var(--green);}
 .role-chip{font-size:11.5px; font-weight:700; padding:7px 14px; border-radius:100px; background:white; border:1px solid var(--line); color:var(--navy-2); cursor:pointer; transition:transform .1s ease, background .15s ease;}
 .role-chip:active{transform:scale(0.96);}
@@ -240,6 +247,10 @@ input,select,textarea{font-family:inherit; font-size:14.5px;}
 
   <div class="topbar" id="topbar">
     <img class="brand-logo" src="https://raw.githubusercontent.com/bioscanrural/puente/refs/heads/main/imagenes/logo%20puente%203.png" alt="ElPuente" onclick="irInicio()">
+    <div class="topbar-search">
+      <span class="topbar-search-ic">🔎</span>
+      <input id="buscadorTop" placeholder="Buscar productos…" oninput="onBuscadorInput(this.value)">
+    </div>
     <span class="role-chip is-cta" id="roleChip" onclick="onRoleChipClick()">Ingresar / Registrarme</span>
   </div>
 
@@ -1618,6 +1629,13 @@ setTimeout(hideSplash, 3400);
 /* ================= FEED PUBLICO ================= */
 let feedRubroFiltro = 'Todos';
 let feedRubroFiltroVend = 'Todos';
+let buscadorQuery = '';
+
+function onBuscadorInput(valor){
+  buscadorQuery = valor.trim().toLowerCase();
+  const activo = document.getElementById('tabVendedores').classList.contains('active') ? 'vendedores' : 'productos';
+  if(activo === 'vendedores') renderFeedVendedores(); else renderFeed();
+}
 
 function renderFeedGrid(origenTipo, chipsId, gridId, filtroActual, setFiltroFn){
   const universo = state.productos.filter(p => origenTipo==='comercio' ? p.origen==='comercio' : p.origen!=='comercio');
@@ -1626,10 +1644,18 @@ function renderFeedGrid(origenTipo, chipsId, gridId, filtroActual, setFiltroFn){
     `<button class="chip ${r===filtroActual?'active':''}" onclick="${setFiltroFn}('${r}')">${r}</button>`
   ).join('');
 
-  const prods = universo.filter(p=> filtroActual==='Todos' || p.rubro===filtroActual);
+  let prods = universo.filter(p=> filtroActual==='Todos' || p.rubro===filtroActual);
+  if(buscadorQuery){
+    prods = prods.filter(p=>{
+      const c = state.comercios.find(x=>x.id===p.comercioId);
+      const v = state.vendedores.find(x=>x.id===p.vendedorId);
+      const texto = [p.nombre, c?.nombre, v?.nombre, p.rubro].filter(Boolean).join(' ').toLowerCase();
+      return texto.includes(buscadorQuery);
+    });
+  }
   const grid = document.getElementById(gridId);
   if(prods.length===0){
-    grid.innerHTML = `<div class="empty" style="grid-column:1/-1;"><div class="ic">🗂️</div><div class="t">Todavía no hay productos en este rubro</div></div>`;
+    grid.innerHTML = `<div class="empty" style="grid-column:1/-1;"><div class="ic">🗂️</div><div class="t">${buscadorQuery ? 'No encontramos nada con "'+buscadorQuery+'"' : 'Todavía no hay productos en este rubro'}</div></div>`;
     return;
   }
   grid.innerHTML = prods.map(p=>{
