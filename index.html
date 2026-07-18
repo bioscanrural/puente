@@ -184,8 +184,8 @@ input,select,textarea{font-family:inherit; font-size:14.5px;}
 }
 
 /* ---- Feed tabs ---- */
-.feed-tabs{display:flex; gap:8px; margin-bottom:16px;}
-.feed-tab{flex:1; text-align:center; padding:10px; border-radius:12px; background:white; border:1.5px solid var(--line); font-size:13px; font-weight:700; color:var(--muted);}
+.feed-tabs{display:flex; gap:6px; margin-bottom:16px;}
+.feed-tab{flex:1; text-align:center; padding:10px 4px; border-radius:12px; background:white; border:1.5px solid var(--line); font-size:12px; font-weight:700; color:var(--muted);}
 .feed-tab.active{background:var(--navy); color:white; border-color:var(--navy);}
 
 /* ---- Locales (publicidad de comercios) ---- */
@@ -247,17 +247,24 @@ input,select,textarea{font-family:inherit; font-size:14.5px;}
   <div class="screen" id="screen-feed">
     <div class="feed-hero">
       <div class="feed-city">📍 La Paz, Entre Ríos</div>
-      <div class="feed-title" id="feedHeroTitle">Lo que están vendiendo hoy en tu ciudad</div>
-      <div class="feed-sub" id="feedHeroSub">Productos cargados por vendedores locales. Elegís, le escribís al vendedor y lo tenés hoy.</div>
+      <div class="feed-title" id="feedHeroTitle">Lo que están vendiendo los comercios de tu ciudad</div>
+      <div class="feed-sub" id="feedHeroSub">Productos cargados directo por los locales de La Paz. Elegís, vas al comercio y lo tenés hoy.</div>
     </div>
     <div class="feed-tabs">
-      <button class="feed-tab active" id="tabProductos" onclick="setFeedTab('productos')">🛍️ Productos</button>
-      <button class="feed-tab" id="tabLocales" onclick="setFeedTab('locales')">🏬 Locales</button>
+      <button class="feed-tab active" id="tabProductos" onclick="setFeedTab('productos')">🏬 Productos</button>
+      <button class="feed-tab" id="tabVendedores" onclick="setFeedTab('vendedores')">🛍️ Vendedores</button>
+      <button class="feed-tab" id="tabLocales" onclick="setFeedTab('locales')">📍 Locales</button>
     </div>
 
     <div id="feedProductosView">
       <div class="chiprow" id="feedChips"></div>
       <div class="prod-grid" id="feedGrid"></div>
+    </div>
+
+    <div id="feedVendedoresView" class="hidden">
+      <p class="page-sub" style="margin-bottom:14px;">Productos que arman los vendedores independientes de La Paz con lo que consiguen en los comercios.</p>
+      <div class="chiprow" id="feedChipsVend"></div>
+      <div class="prod-grid" id="feedGridVend"></div>
     </div>
 
     <div id="feedLocalesView" class="hidden">
@@ -644,8 +651,8 @@ function seed(){
   state.comercios.push({id:'c-demo1', nombre:'Ferretería Don Aldo', ciudad:'La Paz', rubro:'Ferretería y construcción', qrPersonal:'CQR-DEM1', lat:-30.7511, lng:-59.6392, adheridos:['v-demo'], direccion:'Av. 9 de Julio 850', horario:'Lun a Sáb 8 a 13 y 17 a 20:30hs', img:'https://picsum.photos/seed/ferreteria/500/320', verificado:true});
   state.comercios.push({id:'c-demo2', nombre:'Pesca Total', ciudad:'La Paz', rubro:'Deportes y aire libre', qrPersonal:'CQR-DEM2', lat:-30.7458, lng:-59.6355, adheridos:['v-demo'], direccion:'Costanera Sur 120', horario:'Todos los días 8 a 20hs', img:'https://picsum.photos/seed/pescatotal/500/320', verificado:true, publicidadActiva:true, publicidadVence:diasAtras(-18)});
   state.comercios.push({id:'c-demo3', nombre:'Indumentaria Sur', ciudad:'La Paz', rubro:'Indumentaria y calzado', qrPersonal:'CQR-DEM3', lat:-30.7502, lng:-59.641, adheridos:['v-demo2'], direccion:'San Martín 430', horario:'Lun a Vie 9 a 13 y 16 a 20hs', img:'https://picsum.photos/seed/indusur/500/320', verificado:true});
-  state.comercios.push({id:'c-demo4', nombre:'Almacén La Costanera', ciudad:'La Paz', rubro:'Alimentos y bebidas', qrPersonal:'CQR-DEM4', lat:-30.744, lng:-59.637, adheridos:['v-demo2'], direccion:'Costanera Norte 45', horario:'Todos los días 8 a 21hs', img:'https://picsum.photos/seed/almacencostanera/500/320', verificado:true});
-  state.comercios.push({id:'c-demo5', nombre:'TecnoHogar', ciudad:'La Paz', rubro:'Tecnología', qrPersonal:'CQR-DEM5', lat:-30.7525, lng:-59.6401, adheridos:['v-demo3'], direccion:'Belgrano 210', horario:'Lun a Sáb 9 a 13 y 16 a 20hs', img:'https://picsum.photos/seed/tecnohogar/500/320', verificado:true});
+  state.comercios.push({id:'c-demo4', nombre:'Almacén La Costanera', ciudad:'La Paz', rubro:'Alimentos y bebidas', qrPersonal:'CQR-DEM4', lat:-30.744, lng:-59.637, adheridos:['v-demo2'], direccion:'Costanera Norte 45', horario:'Todos los días 8 a 21hs', img:'https://picsum.photos/seed/almacencostanera/500/320', verificado:true, publicidadActiva:true, publicidadVence:diasAtras(-9)});
+  state.comercios.push({id:'c-demo5', nombre:'TecnoHogar', ciudad:'La Paz', rubro:'Tecnología', qrPersonal:'CQR-DEM5', lat:-30.7525, lng:-59.6401, adheridos:['v-demo3'], direccion:'Belgrano 210', horario:'Lun a Sáb 9 a 13 y 16 a 20hs', img:'https://picsum.photos/seed/tecnohogar/500/320', verificado:true, publicidadActiva:true, publicidadVence:diasAtras(-25)});
   state.comercios.push({id:'c-demo6', nombre:'Deco Hogar Norte', ciudad:'La Paz', rubro:'Hogar y decoración', qrPersonal:'CQR-DEM6', lat:-30.748, lng:-59.644, adheridos:['v-demo3'], direccion:'Barrio Norte, Ruta 11 km 3', horario:'Lun a Sáb 9 a 20hs', img:'https://picsum.photos/seed/decohogar/500/320', verificado:true});
 
   state.productos.push({id:'p1', vendedorId:'v-demo', comercioId:'c-demo2', nombre:'Caña de pescar 2.10m', precio:24000, comision:4, rubro:'Deportes y aire libre', foto:'🎣', img:'https://picsum.photos/seed/canapesca/400/400'});
@@ -655,6 +662,9 @@ function seed(){
   state.productos.push({id:'p5', vendedorId:'v-demo3', comercioId:'c-demo5', nombre:'Auriculares bluetooth', precio:27500, comision:3, rubro:'Tecnología', foto:'🎧', img:'https://picsum.photos/seed/auriculares/400/400'});
   state.productos.push({id:'p6', vendedorId:'v-demo3', comercioId:'c-demo6', nombre:'Set de mates artesanales', precio:15900, comision:5, rubro:'Hogar y decoración', foto:'🧉', img:'https://picsum.photos/seed/mates/400/400'});
   state.productos.push({id:'p7', vendedorId:null, comercioId:'c-demo2', nombre:'Kit de carnada + anzuelos', precio:9800, comision:0, rubro:'Deportes y aire libre', foto:'🪱', img:'https://picsum.photos/seed/carnada/400/400', origen:'comercio'});
+  state.productos.push({id:'p8', vendedorId:null, comercioId:'c-demo4', nombre:'Canasta de fiambres regional', precio:14200, comision:0, rubro:'Alimentos y bebidas', foto:'🧀', img:'https://picsum.photos/seed/fiambres/400/400', origen:'comercio'});
+  state.productos.push({id:'p9', vendedorId:null, comercioId:'c-demo5', nombre:'Cargador rápido 30W', precio:11500, comision:0, rubro:'Tecnología', foto:'🔌', img:'https://picsum.photos/seed/cargador/400/400', origen:'comercio'});
+  state.productos.push({id:'p10', vendedorId:null, comercioId:'c-demo5', nombre:'Parlante bluetooth portátil', precio:22900, comision:0, rubro:'Tecnología', foto:'🔊', img:'https://picsum.photos/seed/parlante/400/400', origen:'comercio'});
 }
 seed();
 
@@ -1573,14 +1583,17 @@ setTimeout(hideSplash, 3400);
 
 /* ================= FEED PUBLICO ================= */
 let feedRubroFiltro = 'Todos';
-function renderFeed(){
-  const rubros = ['Todos', ...new Set(state.productos.map(p=>p.rubro))];
-  document.getElementById('feedChips').innerHTML = rubros.map(r=>
-    `<button class="chip ${r===feedRubroFiltro?'active':''}" onclick="setFeedRubro('${r}')">${r}</button>`
+let feedRubroFiltroVend = 'Todos';
+
+function renderFeedGrid(origenTipo, chipsId, gridId, filtroActual, setFiltroFn){
+  const universo = state.productos.filter(p => origenTipo==='comercio' ? p.origen==='comercio' : p.origen!=='comercio');
+  const rubros = ['Todos', ...new Set(universo.map(p=>p.rubro))];
+  document.getElementById(chipsId).innerHTML = rubros.map(r=>
+    `<button class="chip ${r===filtroActual?'active':''}" onclick="${setFiltroFn}('${r}')">${r}</button>`
   ).join('');
 
-  const prods = state.productos.filter(p=> feedRubroFiltro==='Todos' || p.rubro===feedRubroFiltro);
-  const grid = document.getElementById('feedGrid');
+  const prods = universo.filter(p=> filtroActual==='Todos' || p.rubro===filtroActual);
+  const grid = document.getElementById(gridId);
   if(prods.length===0){
     grid.innerHTML = `<div class="empty" style="grid-column:1/-1;"><div class="ic">🗂️</div><div class="t">Todavía no hay productos en este rubro</div></div>`;
     return;
@@ -1590,7 +1603,7 @@ function renderFeed(){
     let etiqueta;
     if(p.origen === 'comercio'){
       const c = state.comercios.find(x=>x.id===p.comercioId);
-      etiqueta = '📣 Catálogo propio de ' + (c ? c.nombre : 'Local');
+      etiqueta = '📣 ' + (c ? c.nombre : 'Local');
     } else {
       const v = state.vendedores.find(x=>x.id===p.vendedorId);
       etiqueta = v ? v.nombre : 'Vendedor';
@@ -1606,19 +1619,35 @@ function renderFeed(){
       </div>`;
   }).join('');
 }
+
+function renderFeed(){
+  renderFeedGrid('comercio', 'feedChips', 'feedGrid', feedRubroFiltro, 'setFeedRubro');
+}
 function setFeedRubro(r){ feedRubroFiltro = r; renderFeed(); }
 
+function renderFeedVendedores(){
+  renderFeedGrid('vendedor', 'feedChipsVend', 'feedGridVend', feedRubroFiltroVend, 'setFeedRubroVend');
+}
+function setFeedRubroVend(r){ feedRubroFiltroVend = r; renderFeedVendedores(); }
+
 function setFeedTab(tab){
-  const isProd = tab==='productos';
-  document.getElementById('tabProductos').classList.toggle('active', isProd);
-  document.getElementById('tabLocales').classList.toggle('active', !isProd);
-  document.getElementById('feedProductosView').classList.toggle('hidden', !isProd);
-  document.getElementById('feedLocalesView').classList.toggle('hidden', isProd);
-  document.getElementById('feedHeroTitle').textContent = isProd ? 'Lo que están vendiendo hoy en tu ciudad' : 'Los locales que ya cuentan con PuenT';
-  document.getElementById('feedHeroSub').textContent = isProd
-    ? 'Productos cargados por vendedores locales. Elegís, le escribís al vendedor y lo tenés hoy.'
-    : 'Comercios que se suman a la red y trabajan con vendedores independientes de la ciudad.';
-  if(!isProd) renderLocales();
+  document.getElementById('tabProductos').classList.toggle('active', tab==='productos');
+  document.getElementById('tabVendedores').classList.toggle('active', tab==='vendedores');
+  document.getElementById('tabLocales').classList.toggle('active', tab==='locales');
+  document.getElementById('feedProductosView').classList.toggle('hidden', tab!=='productos');
+  document.getElementById('feedVendedoresView').classList.toggle('hidden', tab!=='vendedores');
+  document.getElementById('feedLocalesView').classList.toggle('hidden', tab!=='locales');
+
+  const textos = {
+    productos: ['Lo que están vendiendo los comercios de tu ciudad', 'Productos cargados directo por los locales de La Paz. Elegís, vas al comercio y lo tenés hoy.'],
+    vendedores: ['Lo que arman los vendedores independientes', 'Catálogos armados por vendedores de La Paz con productos de distintos comercios. Elegís, coordinás y lo tenés hoy.'],
+    locales: ['Los locales que ya cuentan con PuenT', 'Comercios que se suman a la red y trabajan con vendedores independientes de la ciudad.']
+  };
+  document.getElementById('feedHeroTitle').textContent = textos[tab][0];
+  document.getElementById('feedHeroSub').textContent = textos[tab][1];
+
+  if(tab==='vendedores') renderFeedVendedores();
+  if(tab==='locales') renderLocales();
 }
 
 function comoLlegar(comercioId){
