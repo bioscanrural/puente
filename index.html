@@ -88,7 +88,7 @@ input,select,textarea{font-family:inherit; font-size:14.5px;}
 /* ---- Product grid ---- */
 .prod-grid{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
 .prod-card{background:white; border:1px solid var(--line); border-radius:16px; overflow:hidden;}
-.prod-photo{height:88px; background:linear-gradient(135deg,#eef1ea,#e3ece9); display:flex; align-items:center; justify-content:center; font-size:34px; overflow:hidden;}
+.prod-photo{height:88px; background:linear-gradient(135deg,#eef1ea,#e3ece9); display:flex; align-items:center; justify-content:center; font-size:34px; overflow:hidden; position:relative;}
 .prod-photo img{width:100%; height:100%; object-fit:cover; display:block;}
 .prod-body{padding:11px 12px;}
 .prod-name{font-size:13px; font-weight:700; color:var(--navy); line-height:1.25; margin-bottom:3px;}
@@ -116,6 +116,27 @@ input,select,textarea{font-family:inherit; font-size:14.5px;}
 .chiprow::-webkit-scrollbar{display:none;}
 .chip{white-space:nowrap; font-size:12.5px; font-weight:700; padding:8px 14px; border-radius:100px; background:white; border:1.5px solid var(--line); color:var(--muted);}
 .chip.active{background:var(--navy); color:white; border-color:var(--navy);}
+
+/* ---- Dropdown de filtro por rubro (reemplaza los chips, anda bien en desktop y mobile) ---- */
+.filter-dd{position:relative; margin-bottom:16px;}
+.filter-dd-btn{
+  width:100%; display:flex; align-items:center; justify-content:space-between; gap:8px;
+  background:white; border:1.5px solid var(--line); border-radius:12px; padding:11px 16px;
+  font-size:13.5px; font-weight:600; color:var(--ink); text-align:left;
+}
+.filter-dd-btn b{color:var(--navy);}
+.filter-dd-chev{color:var(--muted); font-size:11px;}
+.filter-dd-panel{
+  position:fixed; z-index:500; background:white;
+  border:1px solid var(--line); border-radius:12px; box-shadow:0 12px 28px rgba(0,0,0,0.22);
+  max-height:260px; overflow-y:auto; padding:6px;
+}
+.filter-dd-opt{
+  display:block; width:100%; text-align:left; padding:10px 12px; border-radius:8px;
+  font-size:13.5px; font-weight:600; color:var(--ink); background:transparent;
+}
+.filter-dd-opt:hover{background:var(--cream);}
+.filter-dd-opt.active{background:var(--navy); color:white;}
 
 /* ---- Stat grid ---- */
 .stat-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:20px;}
@@ -178,7 +199,8 @@ input,select,textarea{font-family:inherit; font-size:14.5px;}
 
 /* ---- Feed público ---- */
 .feed-hero{background:linear-gradient(160deg, var(--navy) 0%, var(--navy-2) 100%); border-radius:0 0 26px 26px; padding:20px 20px 24px; margin:-1px -1px 18px; color:white;}
-.feed-city{display:inline-flex; align-items:center; gap:6px; font-size:11.5px; font-weight:700; background:rgba(255,255,255,0.12); padding:5px 12px; border-radius:100px; margin-bottom:12px;}
+.feed-city{display:inline-flex; align-items:center; gap:6px; font-size:11.5px; font-weight:700; background:rgba(255,255,255,0.12); padding:5px 12px; border-radius:100px; margin-bottom:12px; color:white; border:none; cursor:pointer;}
+.ciudad-dd{position:relative; display:inline-block;}
 .feed-title{font-family:'Bai Jamjuree',sans-serif; font-size:22px; font-weight:700; line-height:1.25; margin-bottom:6px;}
 .feed-sub{font-size:13px; color:rgba(255,255,255,0.7); line-height:1.5;}
 .feed-prod-card{background:white; border:1px solid var(--line); border-radius:16px; overflow:hidden; cursor:pointer;}
@@ -209,6 +231,27 @@ input,select,textarea{font-family:inherit; font-size:14.5px;}
 .local-meta{font-size:12.5px; color:var(--muted); line-height:1.5; margin-bottom:10px;}
 .local-stats{display:flex; gap:8px; margin-bottom:12px;}
 .local-stat{background:var(--cream); border-radius:10px; padding:7px 11px; font-size:11.5px; font-weight:700; color:var(--navy-2);}
+
+/* ---- Carga de foto de producto ---- */
+.foto-upload{
+  height:150px; border-radius:14px; border:1.5px dashed var(--line); background:var(--cream);
+  display:flex; align-items:center; justify-content:center; cursor:pointer; overflow:hidden; margin-bottom:6px;
+  transition:border-color .15s ease;
+}
+.foto-upload:active{border-color:var(--green);}
+.foto-upload-empty{display:flex; flex-direction:column; align-items:center; gap:6px; padding:16px; text-align:center;}
+.foto-upload-ic{font-size:30px;}
+.foto-upload-txt{font-size:12.5px; color:var(--muted); font-weight:600;}
+.foto-upload img{width:100%; height:100%; object-fit:cover; display:block;}
+.foto-upload-estado{font-size:11.5px; color:var(--muted); margin-bottom:10px;}
+.foto-upload-estado.ok{color:var(--green); font-weight:700;}
+
+/* ---- Badge de tipo de oferta ---- */
+.oferta-badge{
+  position:absolute; top:6px; left:6px; background:var(--green); color:white; font-size:9.5px; font-weight:700;
+  padding:3px 8px; border-radius:100px; box-shadow:0 2px 6px rgba(0,0,0,0.15); max-width:calc(100% - 12px);
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
 
 /* ---- Actividad del vendedor ---- */
 .actividad-card{margin-bottom:16px;}
@@ -257,7 +300,10 @@ input,select,textarea{font-family:inherit; font-size:14.5px;}
   <!-- ============ SCREEN: FEED PUBLICO (INICIAL) ============ -->
   <div class="screen" id="screen-feed">
     <div class="feed-hero">
-      <div class="feed-city">📍 La Paz, Entre Ríos</div>
+      <div class="filter-dd ciudad-dd" id="ciudadDd">
+        <button type="button" class="feed-city" onclick="toggleFilterDd(event, 'ciudadDdPanel')">📍 <span id="ciudadDdLabel">La Paz, Entre Ríos</span> <span class="filter-dd-chev" style="color:rgba(255,255,255,0.7)">▾</span></button>
+        <div class="filter-dd-panel hidden" id="ciudadDdPanel"></div>
+      </div>
       <div class="feed-title" id="feedHeroTitle">🔥 Ofertas del día en tu ciudad</div>
       <div class="feed-sub" id="feedHeroSub">Elegí una oferta cargada por un comercio, generá tu código y presentalo en el local para retirarlo.</div>
     </div>
@@ -280,6 +326,7 @@ input,select,textarea{font-family:inherit; font-size:14.5px;}
 
     <div id="feedLocalesView" class="hidden">
       <p class="page-sub" style="margin-bottom:14px;">Comercios de La Paz que ya suman vendedores y venden más gracias a ElPuente.</p>
+      <div class="chiprow" id="feedChipsLocales"></div>
       <div id="localesGrid"></div>
     </div>
 
@@ -395,9 +442,12 @@ input,select,textarea{font-family:inherit; font-size:14.5px;}
       <div class="field">
         <label>Rubro</label>
         <select id="ncRubro">
-          <option>Deportes y aire libre</option><option>Indumentaria y calzado</option>
-          <option>Ferretería y construcción</option><option>Hogar y decoración</option>
-          <option>Tecnología</option><option>Alimentos y bebidas</option><option>Otros / varios</option>
+          <option>Indumentaria y calzado</option><option>Hogar y decoración</option>
+          <option>Ferretería y construcción</option><option>Repuestos y automotor</option>
+          <option>Deportes y aire libre</option><option>Alimentos y bebidas</option>
+          <option>Alojamiento y turismo</option><option>Tecnología</option>
+          <option>Belleza y cuidado personal</option><option>Mascotas</option>
+          <option>Servicios varios</option><option>Otros / varios</option>
         </select>
       </div>
     </div>
@@ -433,9 +483,12 @@ input,select,textarea{font-family:inherit; font-size:14.5px;}
         <div class="field">
           <label>Rubro</label>
           <select id="npNuevoComercioRubro">
-            <option>Deportes y aire libre</option><option>Indumentaria y calzado</option>
-            <option>Ferretería y construcción</option><option>Hogar y decoración</option>
-            <option>Tecnología</option><option>Alimentos y bebidas</option><option>Otros / varios</option>
+            <option>Indumentaria y calzado</option><option>Hogar y decoración</option>
+          <option>Ferretería y construcción</option><option>Repuestos y automotor</option>
+          <option>Deportes y aire libre</option><option>Alimentos y bebidas</option>
+          <option>Alojamiento y turismo</option><option>Tecnología</option>
+          <option>Belleza y cuidado personal</option><option>Mascotas</option>
+          <option>Servicios varios</option><option>Otros / varios</option>
           </select>
         </div>
         <button class="btn btn-ghost btn-sm" onclick="registrarComercioPasivo()">Enviar código de verificación</button>
@@ -575,24 +628,42 @@ input,select,textarea{font-family:inherit; font-size:14.5px;}
     <p class="page-sub">Estos productos aparecen con tu marca en el feed y en tu ficha de la sección Locales. Al ser venta directa, no llevan comisión de vendedor.</p>
     <div class="card">
       <div class="field">
-        <label>Foto de referencia</label>
-        <select id="cnpFoto">
-          <option value="🎣">🎣 Pesca / deportes</option>
-          <option value="👕">👕 Indumentaria</option>
-          <option value="🔧">🔧 Ferretería</option>
-          <option value="🏠">🏠 Hogar</option>
-          <option value="📱">📱 Tecnología</option>
-          <option value="🍞">🍞 Alimentos</option>
-        </select>
+        <label>Foto del producto</label>
+        <div class="foto-upload" id="cnpFotoBox" onclick="document.getElementById('cnpFotoInput').click()">
+          <div id="cnpFotoPreview" class="foto-upload-empty">
+            <div class="foto-upload-ic">📷</div>
+            <div class="foto-upload-txt">Sacá una foto o elegí de la galería</div>
+          </div>
+          <input type="file" id="cnpFotoInput" accept="image/*" capture="environment" style="display:none" onchange="onFotoSeleccionada(this, 'cnp')">
+        </div>
+        <div id="cnpFotoEstado" class="foto-upload-estado"></div>
       </div>
       <div class="field"><label>Nombre del producto</label><input id="cnpNombre" placeholder="Ej: Combo desayuno x2"></div>
       <div class="field"><label>Precio</label><input id="cnpPrecio" type="number" placeholder="Ej: 8500"></div>
       <div class="field">
+        <label>Tipo de oferta</label>
+        <select id="cnpTipoOferta" onchange="onTipoOfertaChange()">
+          <option value="unica">Oferta única</option>
+          <option value="tiempo">Oferta por tiempo limitado</option>
+          <option value="normal">Precio normal</option>
+          <option value="ddp">Descuento DDP — Día del Padre</option>
+          <option value="ddm">Descuento DDM — Día de la Madre</option>
+          <option value="ddn">Descuento DDN — Día del Niño</option>
+        </select>
+      </div>
+      <div class="field" id="cnpDescuentoBox">
+        <label>Porcentaje de descuento</label>
+        <input id="cnpDescuento" type="number" min="1" max="90" placeholder="Ej: 20">
+      </div>
+      <div class="field">
         <label>Rubro / filtro con el que aparece</label>
         <select id="cnpRubro">
-          <option>Deportes y aire libre</option><option>Indumentaria y calzado</option>
-          <option>Ferretería y construcción</option><option>Hogar y decoración</option>
-          <option>Tecnología</option><option>Alimentos y bebidas</option><option>Otros / varios</option>
+          <option>Indumentaria y calzado</option><option>Hogar y decoración</option>
+          <option>Ferretería y construcción</option><option>Repuestos y automotor</option>
+          <option>Deportes y aire libre</option><option>Alimentos y bebidas</option>
+          <option>Alojamiento y turismo</option><option>Tecnología</option>
+          <option>Belleza y cuidado personal</option><option>Mascotas</option>
+          <option>Servicios varios</option><option>Otros / varios</option>
         </select>
       </div>
     </div>
@@ -699,12 +770,12 @@ function seed(){
   state.productos.push({id:'p4', vendedorId:'v-demo2', comercioId:'c-demo4', nombre:'Canasta de picada regional', precio:12500, comision:4, rubro:'Alimentos y bebidas', foto:'🧺', img:'https://picsum.photos/seed/picada/400/400'});
   state.productos.push({id:'p5', vendedorId:'v-demo3', comercioId:'c-demo5', nombre:'Auriculares bluetooth', precio:27500, comision:3, rubro:'Tecnología', foto:'🎧', img:'https://picsum.photos/seed/auriculares/400/400'});
   state.productos.push({id:'p6', vendedorId:'v-demo3', comercioId:'c-demo6', nombre:'Set de mates artesanales', precio:15900, comision:5, rubro:'Hogar y decoración', foto:'🧉', img:'https://picsum.photos/seed/mates/400/400'});
-  state.productos.push({id:'p7', vendedorId:null, comercioId:'c-demo2', nombre:'Kit de carnada + anzuelos', precio:9800, comision:0, rubro:'Deportes y aire libre', foto:'🪱', img:'https://picsum.photos/seed/carnada/400/400', origen:'comercio'});
+  state.productos.push({id:'p7', vendedorId:null, comercioId:'c-demo2', nombre:'Kit de carnada + anzuelos', precio:9800, comision:0, rubro:'Deportes y aire libre', foto:'🪱', img:'https://picsum.photos/seed/carnada/400/400', origen:'comercio', tipoOferta:'ddp', descuento:20});
   state.productos.push({id:'p8', vendedorId:null, comercioId:'c-demo4', nombre:'Canasta de fiambres regional', precio:14200, comision:0, rubro:'Alimentos y bebidas', foto:'🧀', img:'https://picsum.photos/seed/fiambres/400/400', origen:'comercio'});
-  state.productos.push({id:'p9', vendedorId:null, comercioId:'c-demo5', nombre:'Cargador rápido 30W', precio:11500, comision:0, rubro:'Tecnología', foto:'🔌', img:'https://picsum.photos/seed/cargador/400/400', origen:'comercio'});
+  state.productos.push({id:'p9', vendedorId:null, comercioId:'c-demo5', nombre:'Cargador rápido 30W', precio:11500, comision:0, rubro:'Tecnología', foto:'🔌', img:'https://picsum.photos/seed/cargador/400/400', origen:'comercio', tipoOferta:'tiempo'});
   state.productos.push({id:'p10', vendedorId:null, comercioId:'c-demo5', nombre:'Parlante bluetooth portátil', precio:22900, comision:0, rubro:'Tecnología', foto:'🔊', img:'https://picsum.photos/seed/parlante/400/400', origen:'comercio'});
   state.productos.push({id:'p11', vendedorId:null, comercioId:'c-demo1', nombre:'Set de destornilladores x12', precio:13800, comision:0, rubro:'Ferretería y construcción', foto:'🪛', img:'https://picsum.photos/seed/destornilladores/400/400', origen:'comercio'});
-  state.productos.push({id:'p12', vendedorId:null, comercioId:'c-demo3', nombre:'Campera de abrigo unisex', precio:29500, comision:0, rubro:'Indumentaria y calzado', foto:'🧥', img:'https://picsum.photos/seed/campera/400/400', origen:'comercio'});
+  state.productos.push({id:'p12', vendedorId:null, comercioId:'c-demo3', nombre:'Campera de abrigo unisex', precio:29500, comision:0, rubro:'Indumentaria y calzado', foto:'🧥', img:'https://picsum.photos/seed/campera/400/400', origen:'comercio', tipoOferta:'ddn', descuento:15});
   state.productos.push({id:'p13', vendedorId:null, comercioId:'c-demo6', nombre:'Juego de velas aromáticas', precio:8900, comision:0, rubro:'Hogar y decoración', foto:'🕯️', img:'https://picsum.photos/seed/velas/400/400', origen:'comercio'});
   state.productos.push({id:'p14', vendedorId:null, comercioId:'c-demo2', nombre:'Reposera plegable de pesca', precio:18700, comision:0, rubro:'Deportes y aire libre', foto:'🪑', img:'https://picsum.photos/seed/reposera/400/400', origen:'comercio'});
 }
@@ -967,9 +1038,12 @@ function goRegister(role){
           <div class="field"><label>Ciudad</label><input id="rCiudad" placeholder="Ej: La Paz" value="La Paz"></div>
           <div class="field"><label>Rubro</label>
             <select id="rRubro">
-              <option>Ferretería y construcción</option><option>Deportes y aire libre</option>
               <option>Indumentaria y calzado</option><option>Hogar y decoración</option>
-              <option>Tecnología</option><option>Alimentos y bebidas</option>
+          <option>Ferretería y construcción</option><option>Repuestos y automotor</option>
+          <option>Deportes y aire libre</option><option>Alimentos y bebidas</option>
+          <option>Alojamiento y turismo</option><option>Tecnología</option>
+          <option>Belleza y cuidado personal</option><option>Mascotas</option>
+          <option>Servicios varios</option><option>Otros / varios</option>
             </select>
           </div>
         </div>
@@ -1210,9 +1284,10 @@ function renderProductosPropios(){
   }
   box.innerHTML = `<div class="prod-grid">` + propios.map(p=>{
     const foto = p.img ? `<img src="${p.img}" alt="${p.nombre}">` : p.foto;
+    const badge = etiquetaOferta(p);
     return `
       <div class="prod-card">
-        <div class="prod-photo">${foto}</div>
+        <div class="prod-photo">${foto}${badge ? `<span class="oferta-badge">${badge}</span>` : ''}</div>
         <div class="prod-body">
           <div class="prod-name">${p.nombre}</div>
           <div class="prod-price">$${p.precio.toLocaleString('es-AR')}</div>
@@ -1221,6 +1296,91 @@ function renderProductosPropios(){
       </div>`;
   }).join('') + `</div>`;
 }
+/* ================= FOTO DE PRODUCTO: captura + compresión a <70KB ================= */
+// Guarda la foto ya comprimida (dataURL) lista para publicar. Cuando tengas Firebase Storage
+// armado, el único cambio es en subirFotoAFirebase(): en vez de guardar el dataURL acá,
+// subís el blob comprimido a Storage y guardás la URL que te devuelve.
+const LIMITE_FOTO_BYTES = 70 * 1024;
+const fotosCargadas = {}; // prefix -> dataURL comprimida, lista para publicar
+
+function onFotoSeleccionada(input, prefix){
+  const file = input.files[0];
+  if(!file) return;
+  const estado = document.getElementById(prefix+'FotoEstado');
+  const box = document.getElementById(prefix+'FotoBox');
+  estado.className = 'foto-upload-estado';
+  estado.textContent = 'Comprimiendo imagen…';
+
+  comprimirImagen(file, LIMITE_FOTO_BYTES).then(dataUrl=>{
+    fotosCargadas[prefix] = dataUrl;
+    subirFotoAFirebase(prefix, dataUrl); // placeholder — hoy no hace nada real
+    box.innerHTML = `<img src="${dataUrl}" alt="Foto del producto">`;
+    const kb = Math.round(dataUrl.length * 0.75 / 1024);
+    estado.textContent = `✅ Foto lista (~${kb} KB, menos de 70KB)`;
+    estado.classList.add('ok');
+  }).catch(()=>{
+    estado.textContent = 'No pudimos procesar esa foto, probá con otra.';
+  });
+}
+
+function comprimirImagen(file, maxBytes){
+  return new Promise((resolve, reject)=>{
+    const reader = new FileReader();
+    reader.onerror = ()=> reject(new Error('No se pudo leer el archivo'));
+    reader.onload = (e)=>{
+      const img = new Image();
+      img.onerror = ()=> reject(new Error('No se pudo leer la imagen'));
+      img.onload = ()=>{
+        const probar = (dim, calidad)=>{
+          let w = img.width, h = img.height;
+          if(w >= h && w > dim){ h = Math.round(h * dim / w); w = dim; }
+          else if(h > w && h > dim){ w = Math.round(w * dim / h); h = dim; }
+          const canvas = document.createElement('canvas');
+          canvas.width = w; canvas.height = h;
+          canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+          const dataUrl = canvas.toDataURL('image/jpeg', calidad);
+          const bytes = Math.round(dataUrl.length * 0.75);
+
+          if(bytes <= maxBytes || (calidad <= 0.3 && dim <= 320)){
+            resolve(dataUrl);
+          } else if(calidad > 0.3){
+            probar(dim, calidad - 0.15);
+          } else {
+            probar(Math.max(320, dim - 160), 0.6);
+          }
+        };
+        probar(900, 0.75);
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+// Placeholder: acá va la subida real a Firebase Storage cuando esté la cuenta creada.
+function subirFotoAFirebase(prefix, dataUrl){
+  console.log('📦 Foto lista para subir a Firebase (' + prefix + '):', Math.round(dataUrl.length*0.75/1024) + 'KB');
+}
+
+const TIPOS_OFERTA = {
+  unica: {label:'🎯 Oferta única', descuento:false},
+  tiempo: {label:'⏳ Oferta por tiempo limitado', descuento:false},
+  normal: {label:'Precio normal', descuento:false},
+  ddp: {label:'👔 Descuento Día del Padre', descuento:true},
+  ddm: {label:'💐 Descuento Día de la Madre', descuento:true},
+  ddn: {label:'🎈 Descuento Día del Niño', descuento:true},
+};
+function onTipoOfertaChange(){
+  const tipo = document.getElementById('cnpTipoOferta').value;
+  document.getElementById('cnpDescuentoBox').classList.toggle('hidden', !TIPOS_OFERTA[tipo].descuento);
+}
+function etiquetaOferta(p){
+  if(!p.tipoOferta || !TIPOS_OFERTA[p.tipoOferta] || p.tipoOferta==='normal') return null;
+  const t = TIPOS_OFERTA[p.tipoOferta];
+  if(t.descuento && p.descuento) return `${t.label} -${p.descuento}%`;
+  return t.descuento ? null : t.label;
+}
+
 function irNuevoProductoComercio(){
   const c = state.currentUser;
   showScreen('c-nuevo-producto');
@@ -1231,14 +1391,26 @@ function irNuevoProductoComercio(){
 function crearProductoComercio(){
   const c = state.currentUser;
   if(!publicidadActiva(c)){ toast('Necesitás tener la publicidad mensual activa para cargar productos propios'); return; }
-  const foto = document.getElementById('cnpFoto').value;
   const nombre = document.getElementById('cnpNombre').value.trim();
   const precio = parseFloat(document.getElementById('cnpPrecio').value);
   const rubro = document.getElementById('cnpRubro').value;
-  if(!nombre || !precio){ toast('Completá nombre y precio'); return; }
+  const tipoOferta = document.getElementById('cnpTipoOferta').value;
+  const descuento = parseFloat(document.getElementById('cnpDescuento').value) || null;
+  const foto = fotosCargadas['cnp'];
 
-  state.productos.push({id: nextId('p'), vendedorId:null, comercioId:c.id, nombre, precio, comision:0, rubro, foto, origen:'comercio'});
+  if(!foto){ toast('Sacá o elegí una foto del producto para poder publicarlo'); return; }
+  if(!nombre){ toast('Completá el nombre del producto'); return; }
+  if(!precio){ toast('El precio es obligatorio'); return; }
+  if(TIPOS_OFERTA[tipoOferta].descuento && !descuento){ toast('Ingresá el porcentaje de descuento'); return; }
+
+  state.productos.push({id: nextId('p'), vendedorId:null, comercioId:c.id, nombre, precio, comision:0, rubro, img:foto, origen:'comercio', tipoOferta, descuento});
   document.getElementById('cnpNombre').value=''; document.getElementById('cnpPrecio').value='';
+  document.getElementById('cnpDescuento').value=''; document.getElementById('cnpTipoOferta').value='unica';
+  onTipoOfertaChange();
+  document.getElementById('cnpFotoBox').innerHTML = `<div id="cnpFotoPreview" class="foto-upload-empty"><div class="foto-upload-ic">📷</div><div class="foto-upload-txt">Sacá una foto o elegí de la galería</div></div>`;
+  document.getElementById('cnpFotoEstado').textContent = '';
+  document.getElementById('cnpFotoEstado').className = 'foto-upload-estado';
+  delete fotosCargadas['cnp'];
   toast('Producto publicado en tu ficha y en el feed de La Paz ✅');
   renderProductosPropios();
   showScreen('c-panel');
@@ -1633,16 +1805,72 @@ let buscadorQuery = '';
 
 function onBuscadorInput(valor){
   buscadorQuery = valor.trim().toLowerCase();
-  const activo = document.getElementById('tabVendedores').classList.contains('active') ? 'vendedores' : 'productos';
-  if(activo === 'vendedores') renderFeedVendedores(); else renderFeed();
+  if(document.getElementById('tabVendedores').classList.contains('active')) renderFeedVendedores();
+  else if(document.getElementById('tabLocales').classList.contains('active')) renderLocales();
+  else renderFeed();
 }
 
+/* ================= CIUDAD SELECCIONADA ================= */
+const CIUDADES_ENTRE_RIOS = [
+  'La Paz', 'Paraná', 'Concordia', 'Gualeguaychú', 'Concepción del Uruguay',
+  'Gualeguay', 'Villaguay', 'Chajarí', 'Federación', 'Colón',
+  'Victoria', 'Diamante', 'Nogoyá', 'San José de Feliciano', 'Rosario del Tala'
+];
+let ciudadSeleccionada = 'La Paz';
+
+function renderCiudadDropdown(){
+  document.getElementById('ciudadDdLabel').textContent = ciudadSeleccionada + ', Entre Ríos';
+  document.getElementById('ciudadDdPanel').innerHTML =
+    `<div style="padding:8px 10px 4px; font-size:11px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.03em;">Elegí tu ciudad</div>` +
+    CIUDADES_ENTRE_RIOS.map(c=>`<button type="button" class="filter-dd-opt ${c===ciudadSeleccionada?'active':''}" onclick="setCiudad('${c}')">${c}</button>`).join('');
+}
+function setCiudad(c){
+  ciudadSeleccionada = c;
+  renderCiudadDropdown();
+  document.getElementById('ciudadDdPanel').classList.add('hidden');
+  renderFeed();
+  renderFeedVendedores();
+  renderLocales();
+  toast('📍 Mostrando ' + c + ', Entre Ríos');
+}
+
+function renderRubroDropdown(containerId, rubros, filtroActual, setFiltroFn){
+  const panelId = containerId + 'Dd';
+  document.getElementById(containerId).innerHTML = `
+    <div class="filter-dd">
+      <button type="button" class="filter-dd-btn" onclick="toggleFilterDd(event, '${panelId}')">
+        <span>Rubro: <b>${filtroActual}</b></span><span class="filter-dd-chev">▾</span>
+      </button>
+      <div class="filter-dd-panel hidden" id="${panelId}">
+        ${rubros.map(r=>`<button type="button" class="filter-dd-opt ${r===filtroActual?'active':''}" onclick="${setFiltroFn}('${r}')">${r}</button>`).join('')}
+      </div>
+    </div>`;
+}
+function toggleFilterDd(evt, id){
+  const btn = evt.currentTarget;
+  const panel = document.getElementById(id);
+  document.querySelectorAll('.filter-dd-panel').forEach(p=>{ if(p.id!==id) p.classList.add('hidden'); });
+  const abriendo = panel.classList.contains('hidden');
+  panel.classList.toggle('hidden');
+  if(abriendo){
+    const rect = btn.getBoundingClientRect();
+    panel.style.top = (rect.bottom + 6) + 'px';
+    panel.style.left = rect.left + 'px';
+    panel.style.width = rect.width + 'px';
+  }
+}
+document.addEventListener('click', (e)=>{
+  if(!e.target.closest('.filter-dd')) document.querySelectorAll('.filter-dd-panel').forEach(p=>p.classList.add('hidden'));
+});
+
 function renderFeedGrid(origenTipo, chipsId, gridId, filtroActual, setFiltroFn){
-  const universo = state.productos.filter(p => origenTipo==='comercio' ? p.origen==='comercio' : p.origen!=='comercio');
+  let universo = state.productos.filter(p => origenTipo==='comercio' ? p.origen==='comercio' : p.origen!=='comercio');
+  universo = universo.filter(p=>{
+    if(origenTipo==='comercio'){ const c = state.comercios.find(x=>x.id===p.comercioId); return c && c.ciudad===ciudadSeleccionada; }
+    const v = state.vendedores.find(x=>x.id===p.vendedorId); return v && v.ciudad===ciudadSeleccionada;
+  });
   const rubros = ['Todos', ...new Set(universo.map(p=>p.rubro))];
-  document.getElementById(chipsId).innerHTML = rubros.map(r=>
-    `<button class="chip ${r===filtroActual?'active':''}" onclick="${setFiltroFn}('${r}')">${r}</button>`
-  ).join('');
+  renderRubroDropdown(chipsId, rubros, filtroActual, setFiltroFn);
 
   let prods = universo.filter(p=> filtroActual==='Todos' || p.rubro===filtroActual);
   if(buscadorQuery){
@@ -1655,7 +1883,7 @@ function renderFeedGrid(origenTipo, chipsId, gridId, filtroActual, setFiltroFn){
   }
   const grid = document.getElementById(gridId);
   if(prods.length===0){
-    grid.innerHTML = `<div class="empty" style="grid-column:1/-1;"><div class="ic">🗂️</div><div class="t">${buscadorQuery ? 'No encontramos nada con "'+buscadorQuery+'"' : 'Todavía no hay productos en este rubro'}</div></div>`;
+    grid.innerHTML = `<div class="empty" style="grid-column:1/-1;"><div class="ic">🗂️</div><div class="t">${buscadorQuery ? 'No encontramos nada con "'+buscadorQuery+'"' : 'Todavía no hay productos cargados en ' + ciudadSeleccionada}</div></div>`;
     return;
   }
   grid.innerHTML = prods.map(p=>{
@@ -1669,9 +1897,10 @@ function renderFeedGrid(origenTipo, chipsId, gridId, filtroActual, setFiltroFn){
       etiqueta = v ? v.nombre : 'Vendedor';
     }
     const click = origenTipo==='comercio' ? `abrirOferta('${p.id}')` : `showScreen('home')`;
+    const badge = etiquetaOferta(p);
     return `
       <div class="feed-prod-card" onclick="${click}">
-        <div class="prod-photo">${foto}</div>
+        <div class="prod-photo">${foto}${badge ? `<span class="oferta-badge">${badge}</span>` : ''}</div>
         <div class="prod-body">
           <div class="prod-name">${p.nombre}</div>
           <div class="prod-price">$${p.precio.toLocaleString('es-AR')}</div>
@@ -1720,6 +1949,8 @@ function abrirOferta(prodId){
   document.getElementById('ofFoto').innerHTML = p.img ? `<img src="${p.img}" alt="${p.nombre}" style="width:100%; height:100%; object-fit:cover;">` : p.foto;
   document.getElementById('ofNombre').textContent = p.nombre;
   document.getElementById('ofPrecio').textContent = '$'+p.precio.toLocaleString('es-AR');
+  const badge = etiquetaOferta(p);
+  document.getElementById('ofPrecio').innerHTML = '$'+p.precio.toLocaleString('es-AR') + (badge ? ` <span class="oferta-badge" style="position:static; display:inline-block; margin-left:8px; vertical-align:middle;">${badge}</span>` : '');
   document.getElementById('ofComercio').textContent = c ? c.nombre : 'Comercio';
   document.getElementById('ofDireccion').textContent = c ? (c.direccion || 'La Paz, Entre Ríos') : '';
   document.getElementById('ofAntes').classList.remove('hidden');
@@ -1754,13 +1985,23 @@ function comoLlegar(comercioId){
   window.open(url, '_blank');
 }
 
+let feedRubroFiltroLocales = 'Todos';
+function setFeedRubroLocales(r){ feedRubroFiltroLocales = r; renderLocales(); }
+
 function renderLocales(){
   const grid = document.getElementById('localesGrid');
-  const locales = state.comercios.filter(c=>c.ciudad==='La Paz')
-    .slice()
-    .sort((a,b)=> (publicidadActiva(b)?1:0) - (publicidadActiva(a)?1:0));
+  const todos = state.comercios.filter(c=>c.ciudad===ciudadSeleccionada);
+  const rubros = ['Todos', ...new Set(todos.map(c=>c.rubro))];
+  renderRubroDropdown('feedChipsLocales', rubros, feedRubroFiltroLocales, 'setFeedRubroLocales');
+
+  let locales = todos.filter(c=> feedRubroFiltroLocales==='Todos' || c.rubro===feedRubroFiltroLocales);
+  if(buscadorQuery){
+    locales = locales.filter(c=> (c.nombre+' '+c.rubro).toLowerCase().includes(buscadorQuery));
+  }
+  locales = locales.slice().sort((a,b)=> (publicidadActiva(b)?1:0) - (publicidadActiva(a)?1:0));
+
   if(locales.length===0){
-    grid.innerHTML = `<div class="empty"><div class="ic">🏬</div><div class="t">Todavía no hay locales cargados</div></div>`;
+    grid.innerHTML = `<div class="empty"><div class="ic">🏬</div><div class="t">${feedRubroFiltroLocales!=='Todos' || buscadorQuery ? 'No encontramos locales con ese filtro' : 'Todavía no hay locales cargados en ' + ciudadSeleccionada}</div></div>`;
     return;
   }
   grid.innerHTML = locales.map(c=>{
@@ -1786,6 +2027,7 @@ function renderLocales(){
 }
 
 /* ================= INIT ================= */
+renderCiudadDropdown();
 renderFeed();
 showScreen('feed');
 </script>
