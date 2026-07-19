@@ -1812,9 +1812,13 @@ function onBuscadorInput(valor){
 
 /* ================= CIUDAD SELECCIONADA ================= */
 const CIUDADES_ENTRE_RIOS = [
-  'La Paz', 'Paraná', 'Concordia', 'Gualeguaychú', 'Concepción del Uruguay',
-  'Gualeguay', 'Villaguay', 'Chajarí', 'Federación', 'Colón',
-  'Victoria', 'Diamante', 'Nogoyá', 'San José de Feliciano', 'Rosario del Tala'
+  'La Paz', // ciudad de lanzamiento, siempre primera
+  ...[
+    'Paraná', 'Concordia', 'Gualeguaychú', 'Concepción del Uruguay', 'Gualeguay',
+    'Villaguay', 'Chajarí', 'Federación', 'Colón', 'Victoria', 'Diamante', 'Nogoyá',
+    'San José de Feliciano', 'Rosario del Tala', 'San Gustavo', 'Santa Elena',
+    'Bovril', 'Hernandarias', 'Hasenkamp', 'Cerrito', 'Villa Urquiza'
+  ].sort((a,b)=>a.localeCompare(b,'es'))
 ];
 let ciudadSeleccionada = 'La Paz';
 
