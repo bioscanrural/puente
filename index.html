@@ -198,7 +198,11 @@ input,select,textarea{font-family:inherit; font-size:14.5px;}
 @keyframes splashPop{from{opacity:0; transform:scale(.85) translateY(10px);} to{opacity:1; transform:scale(1) translateY(0);}}
 
 /* ---- Feed público ---- */
-.feed-hero{background:linear-gradient(160deg, var(--navy) 0%, var(--navy-2) 100%); border-radius:0 0 26px 26px; padding:20px 20px 24px; margin:-1px -1px 18px; color:white;}
+.feed-hero{background:linear-gradient(160deg, var(--navy) 0%, var(--navy-2) 100%); border-radius:0 0 26px 26px; padding:0 0 24px; margin:-1px -1px 18px; color:white; overflow:hidden;}
+.feed-banner-slider{position:relative; width:100%; aspect-ratio:1774/887; overflow:hidden;}
+.feed-banner-slider img{position:absolute; top:0; left:0; width:100%; height:100%; object-fit:cover; opacity:0; transition:opacity 1s ease;}
+.feed-banner-slider img.active{opacity:1;}
+.feed-hero-topbar{display:flex; align-items:center; padding:20px 20px 0;}
 .feed-city{display:inline-flex; align-items:center; gap:6px; font-size:11.5px; font-weight:700; background:rgba(255,255,255,0.12); padding:5px 12px; border-radius:100px; margin-bottom:12px; color:white; border:none; cursor:pointer;}
 .ciudad-dd{position:relative; display:inline-block;}
 .feed-title{font-family:'Bai Jamjuree',sans-serif; font-size:22px; font-weight:700; line-height:1.25; margin-bottom:6px;}
@@ -337,12 +341,18 @@ input,select,textarea{font-family:inherit; font-size:14.5px;}
   <!-- ============ SCREEN: FEED PUBLICO (INICIAL) ============ -->
   <div class="screen" id="screen-feed">
     <div class="feed-hero">
-      <div class="filter-dd ciudad-dd" id="ciudadDd">
-        <button type="button" class="feed-city" onclick="toggleFilterDd(event, 'ciudadDdPanel')">📍 <span id="ciudadDdLabel">La Paz, Entre Ríos</span> <span class="filter-dd-chev" style="color:rgba(255,255,255,0.7)">▾</span></button>
-        <div class="filter-dd-panel hidden" id="ciudadDdPanel"></div>
+      <div class="feed-hero-topbar">
+        <div class="filter-dd ciudad-dd" id="ciudadDd">
+          <button type="button" class="feed-city" onclick="toggleFilterDd(event, 'ciudadDdPanel')">📍 <span id="ciudadDdLabel">La Paz, Entre Ríos</span> <span class="filter-dd-chev" style="color:rgba(255,255,255,0.7)">▾</span></button>
+          <div class="filter-dd-panel hidden" id="ciudadDdPanel"></div>
+        </div>
       </div>
-      <div class="feed-title" id="feedHeroTitle">Todo tu pueblo, en un solo lugar</div>
-      <div class="feed-sub" id="feedHeroSub">PuenT reúne a todos los comercios y locales de la ciudad — y las mejores ofertas del día.</div>
+      <div class="feed-banner-slider" id="feedBannerSlider">
+        <img src="https://raw.githubusercontent.com/bioscanrural/puente/refs/heads/main/imagenes/banner1.png" class="active" alt="">
+        <img src="https://raw.githubusercontent.com/bioscanrural/puente/refs/heads/main/imagenes/banner2.png" alt="">
+      </div>
+      <div class="feed-title hidden" id="feedHeroTitle">Todo tu pueblo, en un solo lugar</div>
+      <div class="feed-sub hidden" id="feedHeroSub">PuenT reúne a todos los comercios y locales de la ciudad — y las mejores ofertas del día.</div>
     </div>
     <div class="explora-ciudad">
       <div class="section-title">Explorá tu ciudad</div>
@@ -1880,11 +1890,24 @@ function renderCiudadDropdown(){
     `<div style="padding:8px 10px 4px; font-size:11px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.03em;">Elegí tu ciudad</div>` +
     CIUDADES_ENTRE_RIOS.map(c=>`<button type="button" class="filter-dd-opt ${c===ciudadSeleccionada?'active':''}" onclick="setCiudad('${c}')">${c}</button>`).join('');
 }
+function initFeedBannerSlider(){
+  const cont = document.getElementById('feedBannerSlider');
+  if(!cont) return;
+  const imgs = cont.querySelectorAll('img');
+  if(imgs.length < 2) return;
+  let idx = 0;
+  setInterval(()=>{
+    imgs[idx].classList.remove('active');
+    idx = (idx + 1) % imgs.length;
+    imgs[idx].classList.add('active');
+  }, 5000);
+}
 function setCiudad(c){
   ciudadSeleccionada = c;
   renderCiudadDropdown();
   document.getElementById('ciudadDdPanel').classList.add('hidden');
   actualizarSubtituloHero();
+  initFeedBannerSlider();
   renderFeed();
   renderFeedVendedores();
   renderLocales();
@@ -2152,6 +2175,7 @@ renderCiudadDropdown();
 renderExploraCiudad();
 renderFeed();
 showScreen('feed');
+initFeedBannerSlider();
 </script>
 </body>
 </html>
