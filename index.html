@@ -34,6 +34,16 @@ input,select,textarea{font-family:inherit; font-size:14.5px;}
 .topbar-search-ic{font-size:13px; flex-shrink:0; opacity:.6;}
 .topbar-search input{border:none; outline:none; background:transparent; font-size:13px; width:100%; color:var(--ink); min-width:0;}
 .topbar-search input::placeholder{color:var(--muted);}
+.topbar-ciudad{flex:1 1 140px; min-width:0;}
+.topbar-city-btn{
+  width:100%; display:flex; align-items:center; gap:6px; background:white; border:1px solid var(--line);
+  border-radius:100px; padding:8px 14px; font-size:12px; font-weight:700; color:var(--navy); cursor:pointer; white-space:nowrap; overflow:hidden;
+}
+.topbar-city-btn span:nth-child(2){overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.topbar-city-btn .filter-dd-chev{color:var(--muted); flex-shrink:0; margin-left:auto;}
+.feed-toolbar-row{display:flex; align-items:center; gap:10px; margin-bottom:16px;}
+.feed-toolbar-row .chiprow{margin-bottom:0; flex-shrink:0;}
+.feed-search-inline{flex:1 1 auto; min-width:0; margin-bottom:0; padding:7px 14px;}
 .brand .t{color:var(--green);}
 .role-chip{font-size:11.5px; font-weight:700; padding:7px 14px; border-radius:100px; background:white; border:1px solid var(--line); color:var(--navy-2); cursor:pointer; transition:transform .1s ease, background .15s ease;}
 .role-chip:active{transform:scale(0.96);}
@@ -198,11 +208,10 @@ input,select,textarea{font-family:inherit; font-size:14.5px;}
 @keyframes splashPop{from{opacity:0; transform:scale(.85) translateY(10px);} to{opacity:1; transform:scale(1) translateY(0);}}
 
 /* ---- Feed público ---- */
-.feed-hero{background:linear-gradient(160deg, var(--navy) 0%, var(--navy-2) 100%); border-radius:0 0 26px 26px; padding:0 0 24px; margin:-1px -1px 18px; color:white; overflow:hidden;}
+.feed-hero{background:linear-gradient(160deg, var(--navy) 0%, var(--navy-2) 100%); border-radius:0 0 26px 26px; margin:-1px -1px 18px; color:white; overflow:hidden;}
 .feed-banner-slider{position:relative; width:100%; aspect-ratio:1774/887; overflow:hidden;}
 .feed-banner-slider img{position:absolute; top:0; left:0; width:100%; height:100%; object-fit:cover; opacity:0; transition:opacity 1s ease;}
 .feed-banner-slider img.active{opacity:1;}
-.feed-hero-topbar{display:flex; align-items:center; padding:20px 20px 0;}
 .feed-city{display:inline-flex; align-items:center; gap:6px; font-size:11.5px; font-weight:700; background:rgba(255,255,255,0.12); padding:5px 12px; border-radius:100px; margin-bottom:12px; color:white; border:none; cursor:pointer;}
 .ciudad-dd{position:relative; display:inline-block;}
 .feed-title{font-family:'Bai Jamjuree',sans-serif; font-size:22px; font-weight:700; line-height:1.25; margin-bottom:6px;}
@@ -331,9 +340,9 @@ input,select,textarea{font-family:inherit; font-size:14.5px;}
 
   <div class="topbar" id="topbar">
     <img class="brand-logo" src="https://raw.githubusercontent.com/bioscanrural/puente/refs/heads/main/imagenes/logo%20puente%203.png" alt="ElPuente" onclick="irInicio()">
-    <div class="topbar-search">
-      <span class="topbar-search-ic">🔎</span>
-      <input id="buscadorTop" placeholder="Buscar productos…" oninput="onBuscadorInput(this.value)">
+    <div class="filter-dd ciudad-dd topbar-ciudad" id="ciudadDd">
+      <button type="button" class="topbar-city-btn" onclick="toggleFilterDd(event, 'ciudadDdPanel')">📍 <span id="ciudadDdLabel">La Paz, Entre Ríos</span> <span class="filter-dd-chev">▾</span></button>
+      <div class="filter-dd-panel hidden" id="ciudadDdPanel"></div>
     </div>
     <span class="role-chip is-cta" id="roleChip" onclick="onRoleChipClick()">Ingresar / Registrarme</span>
   </div>
@@ -341,12 +350,6 @@ input,select,textarea{font-family:inherit; font-size:14.5px;}
   <!-- ============ SCREEN: FEED PUBLICO (INICIAL) ============ -->
   <div class="screen" id="screen-feed">
     <div class="feed-hero">
-      <div class="feed-hero-topbar">
-        <div class="filter-dd ciudad-dd" id="ciudadDd">
-          <button type="button" class="feed-city" onclick="toggleFilterDd(event, 'ciudadDdPanel')">📍 <span id="ciudadDdLabel">La Paz, Entre Ríos</span> <span class="filter-dd-chev" style="color:rgba(255,255,255,0.7)">▾</span></button>
-          <div class="filter-dd-panel hidden" id="ciudadDdPanel"></div>
-        </div>
-      </div>
       <div class="feed-banner-slider" id="feedBannerSlider">
         <img src="https://raw.githubusercontent.com/bioscanrural/puente/refs/heads/main/imagenes/banner1.png" class="active" alt="">
         <img src="https://raw.githubusercontent.com/bioscanrural/puente/refs/heads/main/imagenes/banner2.png" alt="">
@@ -366,7 +369,13 @@ input,select,textarea{font-family:inherit; font-size:14.5px;}
     </div>
 
     <div id="feedProductosView">
-      <div class="chiprow" id="feedChips"></div>
+      <div class="feed-toolbar-row">
+        <div class="chiprow" id="feedChips"></div>
+        <div class="topbar-search feed-search-inline">
+          <span class="topbar-search-ic">🔎</span>
+          <input id="buscadorTop" placeholder="Buscar productos…" oninput="onBuscadorInput(this.value)">
+        </div>
+      </div>
       <div class="prod-grid" id="feedGrid"></div>
     </div>
 
