@@ -226,8 +226,9 @@ input,select,textarea{font-family:inherit; font-size:14.5px;}
 }
 
 /* ---- Feed tabs ---- */
-.feed-tabs{display:flex; gap:6px; margin-bottom:16px;}
-.feed-tab{flex:1; text-align:center; padding:10px 4px; border-radius:12px; background:white; border:1.5px solid var(--line); font-size:12px; font-weight:700; color:var(--muted);}
+.feed-tabs{display:flex; gap:6px; margin-bottom:16px; overflow-x:auto; -webkit-overflow-scrolling:touch;}
+.feed-tabs::-webkit-scrollbar{display:none;}
+.feed-tab{flex:1 1 auto; white-space:nowrap; text-align:center; padding:10px 12px; border-radius:12px; background:white; border:1.5px solid var(--line); font-size:12px; font-weight:700; color:var(--muted);}
 .feed-tab.active{background:var(--navy); color:white; border-color:var(--navy);}
 
 /* ---- Locales (publicidad de comercios) ---- */
@@ -244,6 +245,35 @@ input,select,textarea{font-family:inherit; font-size:14.5px;}
 .local-meta{font-size:12.5px; color:var(--muted); line-height:1.5; margin-bottom:10px;}
 .local-stats{display:flex; gap:8px; margin-bottom:12px;}
 .local-stat{background:var(--cream); border-radius:10px; padding:7px 11px; font-size:11.5px; font-weight:700; color:var(--navy-2);}
+
+/* ---- Guía / Útil ---- */
+.turno-card{
+  background:linear-gradient(135deg, #1c6b4f, #14523c); border-radius:18px; padding:18px 18px 16px; color:white;
+  display:flex; flex-direction:column; gap:4px;
+}
+.turno-card .kicker{font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; opacity:.85;}
+.turno-card .nombre{font-family:'Bai Jamjuree',sans-serif; font-size:19px; font-weight:700; margin:2px 0 6px;}
+.turno-card .meta{font-size:12.5px; opacity:.92; line-height:1.5; margin-bottom:12px;}
+.turno-card .acciones{display:flex; gap:8px;}
+.turno-card .acciones .btn{flex:1;}
+.telefonos-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:6px;}
+.telefono-item{
+  background:white; border:1px solid var(--line); border-radius:14px; padding:12px 14px; display:flex; flex-direction:column; gap:2px;
+  text-decoration:none; color:inherit; transition:transform .1s ease;
+}
+.telefono-item:active{transform:scale(0.97);}
+.telefono-item .ic{font-size:18px;}
+.telefono-item .nombre{font-size:12.5px; font-weight:700; color:var(--navy); margin-top:4px;}
+.telefono-item .num{font-size:13px; font-weight:700; color:var(--green);}
+.guia-mini-card{
+  display:flex; align-items:center; gap:12px; background:white; border:1px solid var(--line); border-radius:14px;
+  padding:11px 13px; margin-bottom:10px;
+}
+.guia-mini-card .ic-wrap{width:42px; height:42px; border-radius:12px; background:var(--cream); display:flex; align-items:center; justify-content:center; font-size:19px; flex-shrink:0;}
+.guia-mini-card .info{flex:1; min-width:0;}
+.guia-mini-card .info .nombre{font-size:13.5px; font-weight:700; color:var(--navy);}
+.guia-mini-card .info .meta{font-size:11.5px; color:var(--muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.guia-mini-card .btn-sm{flex-shrink:0;}
 
 /* ---- Carga de foto de producto ---- */
 .foto-upload{
@@ -366,6 +396,7 @@ input,select,textarea{font-family:inherit; font-size:14.5px;}
       <button class="feed-tab active" id="tabProductos" onclick="setFeedTab('productos')">🔥 Ofertas del día</button>
       <button class="feed-tab" id="tabVendedores" onclick="setFeedTab('vendedores')">🛍️ Vendedores</button>
       <button class="feed-tab" id="tabLocales" onclick="setFeedTab('locales')">📍 Locales</button>
+      <button class="feed-tab" id="tabUtil" onclick="setFeedTab('util')">📖 Guía / Útil</button>
     </div>
 
     <div id="feedProductosView">
@@ -399,6 +430,30 @@ input,select,textarea{font-family:inherit; font-size:14.5px;}
       <div class="section-title" style="margin-top:6px;">Todos los locales</div>
       <div id="localesFiltroActivo"></div>
       <div id="localesGrid"></div>
+    </div>
+
+    <div id="feedUtilView" class="hidden">
+
+      <div class="turno-card" id="turnoCard"></div>
+
+      <div class="section-title-row" style="margin-top:18px;">
+        <div class="section-title">📞 Teléfonos útiles</div>
+      </div>
+      <div class="telefonos-grid" id="telefonosGrid"></div>
+
+      <div class="section-title-row" style="margin-top:18px;">
+        <div class="section-title">🏥 Salud</div>
+        <span class="ver-todo" onclick="verMasRubro('Salud')">Ver todo</span>
+      </div>
+      <div id="guiaSaludList"></div>
+
+      <div class="section-title-row" style="margin-top:18px;">
+        <div class="section-title">🔧 Mecánicos</div>
+        <span class="ver-todo" onclick="verMasRubro('Mecánica del Automotor')">Ver todo</span>
+      </div>
+      <div id="guiaMecanicosList"></div>
+
+      <p style="text-align:center; font-size:11.5px; color:var(--muted); margin-top:16px;">¿Tenés un comercio de salud o mecánica y querés aparecer acá? Sumate como local en PuenT.</p>
     </div>
 
     <div class="divider"></div>
@@ -834,6 +889,10 @@ function seed(){
   state.comercios.push({id:'c-demo4', nombre:'Almacén La Costanera', ciudad:'La Paz', rubro:'Alimentos y bebidas', qrPersonal:'CQR-DEM4', rating:4.7, lat:-30.744, lng:-59.637, adheridos:['v-demo2'], direccion:'Costanera Norte 45', horario:'Todos los días 8 a 21hs', img:'https://picsum.photos/seed/almacencostanera/500/320', verificado:true, publicidadActiva:true, publicidadVence:diasAtras(-9)});
   state.comercios.push({id:'c-demo5', nombre:'TecnoHogar', ciudad:'La Paz', rubro:'Tecnología', qrPersonal:'CQR-DEM5', rating:4.5, lat:-30.7525, lng:-59.6401, adheridos:['v-demo3'], direccion:'Belgrano 210', horario:'Lun a Sáb 9 a 13 y 16 a 20hs', img:'https://picsum.photos/seed/tecnohogar/500/320', verificado:true, publicidadActiva:true, publicidadVence:diasAtras(-25)});
   state.comercios.push({id:'c-demo6', nombre:'Deco Hogar Norte', ciudad:'La Paz', rubro:'Hogar y decoración', qrPersonal:'CQR-DEM6', rating:4.9, lat:-30.748, lng:-59.644, adheridos:['v-demo3'], direccion:'Barrio Norte, Ruta 11 km 3', horario:'Lun a Sáb 9 a 20hs', img:'https://picsum.photos/seed/decohogar/500/320', verificado:true, publicidadActiva:true, publicidadVence:diasAtras(-15)});
+  state.comercios.push({id:'c-demo7', nombre:'Consultorio Dr. Ibáñez (Clínica Médica)', ciudad:'La Paz', rubro:'Salud', qrPersonal:'CQR-DEM7', rating:4.8, lat:-30.7495, lng:-59.6388, adheridos:[], direccion:'San Martín 610', horario:'Lun a Vie 8 a 12 y 16 a 19hs', telefono:'343 415-0011', img:'https://picsum.photos/seed/consultorio/500/320', verificado:true});
+  state.comercios.push({id:'c-demo8', nombre:'Centro Odontológico La Paz', ciudad:'La Paz', rubro:'Salud', qrPersonal:'CQR-DEM8', rating:4.7, lat:-30.7518, lng:-59.6379, adheridos:[], direccion:'Alberdi 220', horario:'Lun a Vie 8 a 13 y 17 a 20hs', telefono:'343 415-0022', img:'https://picsum.photos/seed/odontologia/500/320', verificado:true});
+  state.comercios.push({id:'c-demo9', nombre:'Taller Mecánico Hnos. Roldán', ciudad:'La Paz', rubro:'Mecánica del Automotor', qrPersonal:'CQR-DEM9', rating:4.6, lat:-30.7469, lng:-59.6421, adheridos:[], direccion:'Ruta 11 km 2', horario:'Lun a Sáb 8 a 12 y 15 a 19hs', telefono:'343 415-0033', img:'https://picsum.photos/seed/tallerroldan/500/320', verificado:true});
+  state.comercios.push({id:'c-demo10', nombre:'Gomería y Mecánica El Pibe', ciudad:'La Paz', rubro:'Mecánica del Automotor', qrPersonal:'CQR-DEM10', rating:4.5, lat:-30.7533, lng:-59.6405, adheridos:[], direccion:'Av. 9 de Julio 1420', horario:'Todos los días 8 a 20hs', telefono:'343 415-0044', img:'https://picsum.photos/seed/gomeriapibe/500/320', verificado:true});
 
   state.productos.push({id:'p1', vendedorId:'v-demo', comercioId:'c-demo2', nombre:'Caña de pescar 2.10m', precio:24000, comision:4, rubro:'Deportes y aire libre', foto:'🎣', img:'https://picsum.photos/seed/canapesca/400/400'});
   state.productos.push({id:'p2', vendedorId:'v-demo', comercioId:'c-demo1', nombre:'Taladro percutor 1/2"', precio:38500, comision:3, rubro:'Ferretería y construcción', foto:'🔧', img:'https://picsum.photos/seed/taladro/400/400'});
@@ -2067,7 +2126,8 @@ function actualizarSubtituloHero(){
   const subtextos = {
     productos: '🔥 Ofertas del día: elegí una, generá tu código y presentalo en el local para retirarlo.',
     vendedores: `Catálogos armados por vendedores de ${ciudadSeleccionada} con productos de distintos comercios. Elegís, coordinás y lo tenés hoy.`,
-    locales: `Todos los comercios que ya cuentan con PuenT en ${ciudadSeleccionada}.`
+    locales: `Todos los comercios que ya cuentan con PuenT en ${ciudadSeleccionada}.`,
+    util: `Farmacia de turno, teléfonos útiles y más info de ${ciudadSeleccionada} a mano.`
   };
   document.getElementById('feedHeroSub').textContent = subtextos[tabActiva];
 }
@@ -2077,14 +2137,84 @@ function setFeedTab(tab){
   document.getElementById('tabProductos').classList.toggle('active', tab==='productos');
   document.getElementById('tabVendedores').classList.toggle('active', tab==='vendedores');
   document.getElementById('tabLocales').classList.toggle('active', tab==='locales');
+  document.getElementById('tabUtil').classList.toggle('active', tab==='util');
   document.getElementById('feedProductosView').classList.toggle('hidden', tab!=='productos');
   document.getElementById('feedVendedoresView').classList.toggle('hidden', tab!=='vendedores');
   document.getElementById('feedLocalesView').classList.toggle('hidden', tab!=='locales');
+  document.getElementById('feedUtilView').classList.toggle('hidden', tab!=='util');
 
   actualizarSubtituloHero();
 
   if(tab==='vendedores') renderFeedVendedores();
   if(tab==='locales') renderLocales();
+  if(tab==='util') renderGuiaUtil();
+}
+
+/* ================= GUÍA / ÚTIL ================= */
+const FARMACIAS_TURNO = [
+  {nombre:'Farmacia Central', direccion:'San Martín 480', telefono:'343 415-1001'},
+  {nombre:'Farmacia Del Puerto', direccion:'Costanera Sur 210', telefono:'343 415-1002'},
+  {nombre:'Farmacia Belgrano', direccion:'Belgrano 155', telefono:'343 415-1003'},
+  {nombre:'Farmacia Santa Rita', direccion:'Av. 9 de Julio 690', telefono:'343 415-1004'},
+  {nombre:'Farmacia San José', direccion:'Alberdi 340', telefono:'343 415-1005'},
+];
+const TELEFONOS_UTILES = [
+  {ic:'🚓', nombre:'Policía', num:'101'},
+  {ic:'🚒', nombre:'Bomberos', num:'100'},
+  {ic:'🚑', nombre:'Emergencias / SAME', num:'107'},
+  {ic:'🏥', nombre:'Hospital Local', num:'343 415-2000'},
+  {ic:'🛟', nombre:'Defensa Civil', num:'343 415-2010'},
+  {ic:'🏛️', nombre:'Municipalidad', num:'343 415-2020'},
+];
+
+function farmaciaDeTurnoHoy(){
+  const dia = Math.floor(Date.now() / 86400000); // día absoluto, cambia cada 24hs
+  return FARMACIAS_TURNO[dia % FARMACIAS_TURNO.length];
+}
+
+function renderGuiaUtil(){
+  const f = farmaciaDeTurnoHoy();
+  document.getElementById('turnoCard').innerHTML = `
+    <div class="kicker">💊 Farmacia de turno hoy</div>
+    <div class="nombre">${f.nombre}</div>
+    <div class="meta">📍 ${f.direccion}${f.telefono ? '<br>📞 '+f.telefono : ''}</div>
+    <div class="acciones">
+      <button class="btn btn-primary btn-sm" onclick="window.open('https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(f.direccion+', La Paz, Entre Ríos')}','_blank')">📍 Cómo llegar</button>
+      ${f.telefono ? `<button class="btn btn-ghost btn-sm" onclick="window.open('tel:${f.telefono.replace(/\\s/g,'')}')">📞 Llamar</button>` : ''}
+    </div>`;
+
+  document.getElementById('telefonosGrid').innerHTML = TELEFONOS_UTILES.map(t=>`
+    <a class="telefono-item" href="tel:${t.num.replace(/\s/g,'')}">
+      <span class="ic">${t.ic}</span>
+      <span class="nombre">${t.nombre}</span>
+      <span class="num">${t.num}</span>
+    </a>`).join('');
+
+  renderGuiaMini('guiaSaludList', 'Salud', '🏥');
+  renderGuiaMini('guiaMecanicosList', 'Mecánica del Automotor', '🔧');
+}
+
+function renderGuiaMini(containerId, rubro, icono){
+  const cont = document.getElementById(containerId);
+  const items = state.comercios.filter(c=>c.ciudad===ciudadSeleccionada && c.rubro===rubro).slice(0,3);
+  if(items.length===0){
+    cont.innerHTML = `<div class="empty" style="padding:16px;"><div class="ic">${icono}</div><div class="t">Todavía no hay locales de este rubro cargados en ${ciudadSeleccionada}</div></div>`;
+    return;
+  }
+  cont.innerHTML = items.map(c=>`
+    <div class="guia-mini-card">
+      <div class="ic-wrap">${icono}</div>
+      <div class="info">
+        <div class="nombre">${c.nombre}</div>
+        <div class="meta">${c.direccion || ''}${c.horario ? ' · '+c.horario : ''}</div>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="comoLlegar('${c.id}')">📍</button>
+    </div>`).join('');
+}
+
+function verMasRubro(rubro){
+  feedRubroFiltroLocales = rubro;
+  setFeedTab('locales');
 }
 
 /* ================= OFERTAS DEL DIA (feed público, sin login) ================= */
