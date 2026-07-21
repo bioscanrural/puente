@@ -288,6 +288,19 @@ input,select,textarea{font-family:inherit; font-size:14.5px;}
 .foto-upload img{width:100%; height:100%; object-fit:cover; display:block;}
 .foto-upload-estado{font-size:11.5px; color:var(--muted); margin-bottom:10px;}
 .foto-upload-estado.ok{color:var(--green); font-weight:700;}
+.logo-upload-row{display:flex; align-items:center; gap:14px; margin-bottom:4px;}
+.logo-upload{
+  width:84px; height:84px; flex-shrink:0; border-radius:50%; border:1.5px dashed var(--line); background:var(--cream);
+  display:flex; align-items:center; justify-content:center; cursor:pointer; overflow:hidden; transition:border-color .15s ease;
+}
+.logo-upload:active{border-color:var(--green);}
+.logo-upload-empty{display:flex; flex-direction:column; align-items:center; gap:2px; padding:6px; text-align:center;}
+.logo-upload-empty .ic{font-size:22px;}
+.logo-upload img{width:100%; height:100%; object-fit:cover; display:block;}
+.logo-upload-info{flex:1; min-width:0;}
+.logo-upload-info .t{font-size:13px; font-weight:700; color:var(--navy); margin-bottom:2px;}
+.logo-upload-info .s{font-size:11.5px; color:var(--muted);}
+.logo-upload-info .s.ok{color:var(--green); font-weight:700;}
 
 /* ---- Badge de tipo de oferta ---- */
 .oferta-badge{
@@ -855,6 +868,22 @@ input,select,textarea{font-family:inherit; font-size:14.5px;}
 <div class="bottomnav hidden" id="bottomnav"></div>
 <div id="toast"></div>
 
+<!-- ================= FIREBASE ================= -->
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyBPiakbtG4INidXAua07BhhRKAtT57Vjp4",
+    authDomain: "puent-c701f.firebaseapp.com",
+    projectId: "puent-c701f",
+    storageBucket: "puent-c701f.firebasestorage.app",
+    messagingSenderId: "822863076627",
+    appId: "1:822863076627:web:6f1d98f00c2c79d7e3cee6",
+    measurementId: "G-GJ5D9P8EEQ"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const firebaseAuth = firebase.auth();
+</script>
 <script>
 /* ================= ESTADO EN MEMORIA ================= */
 let state = {
@@ -1059,13 +1088,28 @@ function verificarCodigo(){
 }
 
 function loginConGoogle(){
-  const eleccion = prompt('Prototipo — simulamos el login con Google.\n¿Con qué rol querés continuar?\n\nEscribí: vendedor, comercio o cliente');
-  const rol = (eleccion||'').trim().toLowerCase();
-  if(!['vendedor','comercio','cliente'].includes(rol)){ toast('Rol no reconocido, probá de nuevo'); return; }
+  const provider = new firebase.auth.GoogleAuthProvider();
+  firebaseAuth.signInWithPopup(provider).then(result=>{
+    const user = result.user;
+    const eleccion = prompt(`¡Hola ${user.displayName}! ¿Con qué rol querés continuar?\n\nEscribí: vendedor, comercio o cliente`);
+    const rol = (eleccion||'').trim().toLowerCase();
+    if(!['vendedor','comercio','cliente'].includes(rol)){ toast('Rol no reconocido, probá de nuevo'); return; }
+    crearCuentaDesdeGoogle(rol, user);
+  }).catch(err=>{
+    console.error('Error de login con Google:', err);
+    if(err.code === 'auth/popup-closed-by-user') return;
+    toast('No pudimos completar el login con Google, probá de nuevo');
+  });
+}
+
+function crearCuentaDesdeGoogle(rol, user){
+  const nombre = user.displayName || 'Cuenta de Google';
+  const email = user.email || '—';
+  const foto = user.photoURL || '🙂';
 
   if(rol==='vendedor'){
-    const v = {id: nextId('v'), nombre:'Cuenta de Google', dni:'—', telefono:'—', email:'usuario@gmail.com',
-      direccion:'—', ciudad:'La Paz', zona:'Zona Centro', foto:'🙂', telefonoVerificado:true, viaGoogle:true,
+    const v = {id: nextId('v'), uid:user.uid, nombre, dni:'—', telefono:'—', email,
+      direccion:'—', ciudad:'La Paz', zona:'Zona Centro', foto, telefonoVerificado:true, viaGoogle:true,
       fechaAlta: new Date().toISOString(), ultimaVenta:null, diasExtra:0};
     v.qrPersonal = 'VQR-' + v.id.split('-')[1].padStart(4,'0');
     state.vendedores.push(v);
@@ -1076,7 +1120,7 @@ function loginConGoogle(){
     renderVendedorCatalogo(); renderVendedorSolicitudes(); renderVendedorStats();
     showScreen('v-catalogo'); updateBottomNav('v-catalogo');
   } else if(rol==='comercio'){
-    const c = {id: nextId('c'), nombre:'Comercio (Google)', ciudad:'La Paz', rubro:'Otros', viaGoogle:true, adheridos:[]};
+    const c = {id: nextId('c'), uid:user.uid, nombre, email, ciudad:'La Paz', rubro:'Otros', viaGoogle:true, adheridos:[], img: (foto.startsWith('http') ? foto : null)};
     c.qrPersonal = 'CQR-' + c.id.split('-')[1].padStart(4,'0');
     state.comercios.push(c);
     state.currentUser = c; state.role='comercio';
@@ -1085,13 +1129,17 @@ function loginConGoogle(){
     toast('Ingresaste con Google ✅');
     renderComercioPanel(); showScreen('c-panel'); updateBottomNav('c-panel');
   } else {
-    const cl = {id: nextId('cl'), nombre:'Cliente (Google)', ciudad:'La Paz', viaGoogle:true};
+    const cl = {id: nextId('cl'), uid:user.uid, nombre, email, ciudad:'La Paz', viaGoogle:true};
     state.clientes.push(cl);
     state.currentUser = cl; state.role='cliente';
     setRoleChip('🙋 Cliente', false);
     toast('Ingresaste con Google ✅');
     renderClienteBuscador(); showScreen('cl-buscador'); updateBottomNav('cl-buscador');
   }
+}
+
+function logoutFirebase(){
+  firebaseAuth.signOut().catch(()=>{});
 }
 
 /* ================= REGISTRO ================= */
@@ -1155,6 +1203,21 @@ function goRegister(role){
     sub.textContent='Vos facturás como siempre. Necesitamos estos datos para identificarte y que los vendedores y clientes confíen en el local.';
     fields.innerHTML = `
       <div class="card">
+        <div class="field">
+          <label>Logo o foto del comercio</label>
+          <div class="logo-upload-row">
+            <div class="logo-upload" id="rLogoFotoBox" onclick="document.getElementById('rLogoFotoInput').click()">
+              <div id="rLogoFotoPreview" class="logo-upload-empty">
+                <div class="ic">📷</div>
+              </div>
+              <input type="file" id="rLogoFotoInput" accept="image/*" capture="environment" style="display:none" onchange="onFotoSeleccionada(this, 'rLogo')">
+            </div>
+            <div class="logo-upload-info">
+              <div class="t">Subí el logo o una foto del local</div>
+              <div class="foto-upload-estado" id="rLogoFotoEstado" style="margin-bottom:0;">Se va a usar como presentación en tu ficha y en los productos que subas. Opcional, pero recomendado.</div>
+            </div>
+          </div>
+        </div>
         <div class="field"><label>Nombre del comercio (único)</label><input id="rNombre" placeholder="Ej: Ferretería Don Aldo"></div>
         <div class="field"><label>Razón social / Titular</label><input id="rRazonSocial" placeholder="Nombre del titular o razón social"></div>
         <div class="field"><label>CUIT</label><input id="rCuit" inputmode="numeric" placeholder="Sin guiones"></div>
@@ -1252,7 +1315,7 @@ function submitRegister(){
     if(nombreOcupado){ toast('Ya existe un comercio registrado con ese nombre, elegí otro'); return; }
     if(!tyc){ toast('Necesitás aceptar los Términos y Condiciones'); return; }
 
-    const c = {id: nextId('c'), nombre, razonSocial, cuit, direccion, ciudad, rubro, telefono, telefonoAlt, email, horario, adheridos:[], lat: registroLatLng?.lat, lng: registroLatLng?.lng};
+    const c = {id: nextId('c'), nombre, razonSocial, cuit, direccion, ciudad, rubro, telefono, telefonoAlt, email, horario, adheridos:[], lat: registroLatLng?.lat, lng: registroLatLng?.lng, img: fotosCargadas['rLogo'] || null};
     c.qrPersonal = 'CQR-' + c.id.split('-')[1].padStart(4,'0');
     state.comercios.push(c);
     state.currentUser = c; state.role='comercio';
@@ -1260,6 +1323,7 @@ function submitRegister(){
     document.getElementById('cNombre').textContent = nombre;
     toast('¡Comercio registrado!');
     registroLatLng = null;
+    delete fotosCargadas['rLogo'];
     renderComercioPanel();
     showScreen('c-panel');
   } else {
