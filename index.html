@@ -506,27 +506,32 @@ input,select,textarea{font-family:inherit; font-size:14.5px;}
     <div class="link-back" onclick="showScreen('feed')">← Ver productos sin ingresar</div>
     <div class="kicker">Bienvenido</div>
     <h1 class="page-title">Oportunidades para toda la ciudad</h1>
-    <p class="page-sub">Ingresá a tu cuenta o registrate para empezar a usar la plataforma.</p>
+    <p class="page-sub">Entrá con tu cuenta de Google: si ya tenés una cuenta en PuenT te reconocemos automáticamente, y si es tu primera vez, te dejamos elegir cómo la vas a usar.</p>
 
-    <button class="btn btn-ghost" style="display:flex; align-items:center; justify-content:center; gap:10px; margin-bottom:12px;" onclick="loginConGoogle()">
+    <button class="btn btn-ghost" style="display:flex; align-items:center; justify-content:center; gap:10px; margin-bottom:8px;" onclick="loginConGoogle()">
       <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.9 32.6 29.4 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.1 8 3l6-6C34.5 5.5 29.6 3.5 24 3.5 12.7 3.5 3.5 12.7 3.5 24S12.7 44.5 24 44.5 44.5 35.3 44.5 24c0-1.2-.1-2.4-.3-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.6 19 12.5 24 12.5c3.1 0 5.8 1.1 8 3l6-6C34.5 5.5 29.6 3.5 24 3.5c-7.9 0-14.6 4.5-17.7 11.2z"/><path fill="#4CAF50" d="M24 44.5c5.4 0 10.2-1.8 13.9-4.9l-6.4-5.4c-2 1.4-4.6 2.3-7.5 2.3-5.4 0-9.9-3.4-11.5-8.2l-6.5 5C9.3 40 16.1 44.5 24 44.5z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.7 2-2 3.7-3.7 5l6.4 5.4C41.4 35.4 44.5 30.2 44.5 24c0-1.2-.1-2.4-.9-3.5z"/></svg>
       Continuar con Google
     </button>
-    <div style="text-align:center; font-size:12px; color:var(--muted); margin-bottom:20px;">— o registrate por primera vez —</div>
+    <div style="text-align:center; font-size:11.5px; color:var(--green); font-weight:700; margin-bottom:20px;">✅ Recomendado — te reconoce si ya tenés cuenta</div>
 
-    <div class="role-select-grid" style="margin-top:0;">
-      <button class="role-btn" onclick="goRegister('vendedor')">
-        <div class="ic" style="background:var(--green)">🛍️</div>
-        <div><div class="tt">Registrarme como Vendedor</div><div class="ss">Armo mi catálogo y vendo</div></div>
-      </button>
-      <button class="role-btn" onclick="goRegister('comercio')">
-        <div class="ic" style="background:var(--blue)">🏬</div>
-        <div><div class="tt">Registrarme como Comercio</div><div class="ss">Escaneo códigos y facturo</div></div>
-      </button>
-      <button class="role-btn" onclick="goRegister('cliente')">
-        <div class="ic" style="background:var(--navy)">🙋</div>
-        <div><div class="tt">Registrarme como Cliente</div><div class="ss">Busco productos de mi ciudad</div></div>
-      </button>
+    <div class="link-back" style="text-align:center; margin:0 0 14px;" onclick="document.getElementById('registroManualBox').classList.toggle('hidden')">¿No tenés Gmail? Registrate sin Google</div>
+
+    <div class="hidden" id="registroManualBox">
+      <div style="text-align:center; font-size:12px; color:var(--muted); margin-bottom:14px;">Este registro es manual (con verificación de teléfono) y es una cuenta aparte de la de Google.</div>
+      <div class="role-select-grid" style="margin-top:0;">
+        <button class="role-btn" onclick="goRegister('vendedor')">
+          <div class="ic" style="background:var(--green)">🛍️</div>
+          <div><div class="tt">Registrarme como Vendedor</div><div class="ss">Armo mi catálogo y vendo</div></div>
+        </button>
+        <button class="role-btn" onclick="goRegister('comercio')">
+          <div class="ic" style="background:var(--blue)">🏬</div>
+          <div><div class="tt">Registrarme como Comercio</div><div class="ss">Escaneo códigos y facturo</div></div>
+        </button>
+        <button class="role-btn" onclick="goRegister('cliente')">
+          <div class="ic" style="background:var(--navy)">🙋</div>
+          <div><div class="tt">Registrarme como Cliente</div><div class="ss">Busco productos de mi ciudad</div></div>
+        </button>
+      </div>
     </div>
   </div>
 
@@ -1236,6 +1241,7 @@ function entrarConDatosGuardados(rol, data){
     document.getElementById('cNombre').textContent = data.nombre;
     toast('¡Bienvenido de nuevo!');
     renderComercioPanel(); showScreen('c-panel'); updateBottomNav('c-panel');
+    cargarProductosGuardados(data.uid);
   } else {
     state.clientes.push(data);
     state.currentUser = data; state.role='cliente';
@@ -1716,7 +1722,9 @@ function crearProductoComercio(){
   if(!precio){ toast('El precio es obligatorio'); return; }
   if(TIPOS_OFERTA[tipoOferta].descuento && !descuento){ toast('Ingresá el porcentaje de descuento'); return; }
 
-  state.productos.push({id: nextId('p'), vendedorId:null, comercioId:c.id, nombre, precio, comision:0, rubro, img:foto, origen:'comercio', tipoOferta, descuento});
+  const p = {id: nextId('p'), vendedorId:null, comercioId:c.id, nombre, precio, comision:0, rubro, img:foto, origen:'comercio', tipoOferta, descuento};
+  state.productos.push(p);
+  guardarProductoEnFirestore(p, c.uid);
   document.getElementById('cnpNombre').value=''; document.getElementById('cnpPrecio').value='';
   document.getElementById('cnpDescuento').value=''; document.getElementById('cnpTipoOferta').value='unica';
   onTipoOfertaChange();
@@ -1727,6 +1735,32 @@ function crearProductoComercio(){
   toast('Producto publicado en tu ficha y en el feed de La Paz ✅');
   renderProductosPropios();
   showScreen('c-panel');
+}
+
+// Guarda (o actualiza) un producto en Firestore, solo si el dueño está logueado de verdad con Google.
+// Si todavía no conectaste Firebase o el usuario no tiene UID (cuentas de prueba/teléfono), el producto
+// sigue funcionando en memoria como hasta ahora, simplemente no persiste entre sesiones.
+function guardarProductoEnFirestore(producto, ownerUid){
+  if(!firebaseListo || !ownerUid) return;
+  db.collection('productos').doc(producto.id).set({...producto, ownerUid})
+    .catch(e=>console.error('No se pudo guardar el producto en Firestore:', e));
+}
+
+// Trae los productos que ese comercio ya había cargado en sesiones anteriores, para que no se pierdan al recargar.
+async function cargarProductosGuardados(ownerUid){
+  if(!firebaseListo || !ownerUid) return;
+  try{
+    const snap = await db.collection('productos').where('ownerUid','==',ownerUid).get();
+    snap.forEach(doc=>{
+      const p = doc.data();
+      if(!state.productos.some(existing=>existing.id===p.id)){
+        state.productos.push(p);
+      }
+    });
+    renderProductosPropios();
+  }catch(e){
+    console.error('No se pudieron cargar los productos guardados:', e);
+  }
 }
 
 function irNuevoProducto(){
