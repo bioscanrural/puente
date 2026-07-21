@@ -904,9 +904,22 @@ input,select,textarea{font-family:inherit; font-size:14.5px;}
     appId: "1:822863076627:web:6f1d98f00c2c79d7e3cee6",
     measurementId: "G-GJ5D9P8EEQ"
   };
-  firebase.initializeApp(firebaseConfig);
-  const firebaseAuth = firebase.auth();
-  const db = firebase.firestore();
+  // Si el SDK de Firebase no llegó a cargar (bloqueo de red, adblocker, sin conexión, etc.)
+  // dejamos variables "vacías" que no rompan el resto de la app — solo se desactiva el login real.
+  var firebaseAuth = null;
+  var db = null;
+  var firebaseListo = false;
+  try{
+    if(typeof firebase === 'undefined'){
+      throw new Error('El SDK de Firebase no se cargó (revisá la conexión o si algo lo está bloqueando).');
+    }
+    firebase.initializeApp(firebaseConfig);
+    firebaseAuth = firebase.auth();
+    db = firebase.firestore();
+    firebaseListo = true;
+  }catch(e){
+    console.error('Firebase no se pudo inicializar, la app sigue funcionando sin login real:', e);
+  }
 </script>
 <script>
 /* ================= ESTADO EN MEMORIA ================= */
@@ -982,7 +995,7 @@ function showScreen(name){
 function goHome(){
   state.role = null;
   state.currentUser = null;
-  firebaseAuth.signOut().catch(()=>{});
+  if(firebaseListo) firebaseAuth.signOut().catch(()=>{});
   setRoleChip('Ingresar / Registrarme', true);
   document.getElementById('bottomnav').classList.add('hidden');
   showScreen('home');
@@ -1117,6 +1130,10 @@ let pendingGoogleUser = null;
 const COL_POR_ROL = {vendedor:'vendedores', comercio:'comercios', cliente:'clientes'};
 
 function loginConGoogle(){
+  if(!firebaseListo){
+    toast('No pudimos conectar con Google ahora mismo. Revisá tu conexión y volvé a intentar.');
+    return;
+  }
   const provider = new firebase.auth.GoogleAuthProvider();
   firebaseAuth.signInWithPopup(provider).then(result=>{
     manejarUsuarioGoogle(result.user);
@@ -1171,7 +1188,7 @@ function crearCuentaDesdeGoogle(rol, user){
     data = {id: nextId('cl'), uid:user.uid, nombre, email, ciudad:'La Paz', viaGoogle:true};
   }
 
-  db.collection(COL_POR_ROL[rol]).doc(user.uid).set(data).catch(e=>console.error('No se pudo guardar en Firestore:', e));
+  if(firebaseListo) db.collection(COL_POR_ROL[rol]).doc(user.uid).set(data).catch(e=>console.error('No se pudo guardar en Firestore:', e));
   entrarConDatosGuardados(rol, data);
 }
 
@@ -1202,11 +1219,13 @@ function entrarConDatosGuardados(rol, data){
 }
 
 // Al cargar la página, si ya había una sesión de Google activa, entramos directo sin pedir login de nuevo.
-firebaseAuth.onAuthStateChanged(user=>{
-  if(user && !state.currentUser){
-    manejarUsuarioGoogle(user);
-  }
-});
+if(firebaseListo){
+  firebaseAuth.onAuthStateChanged(user=>{
+    if(user && !state.currentUser){
+      manejarUsuarioGoogle(user);
+    }
+  });
+}
 
 function logoutFirebase(){
   goHome();
