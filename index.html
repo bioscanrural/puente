@@ -891,9 +891,6 @@ input,select,textarea{font-family:inherit; font-size:14.5px;}
 <div id="toast"></div>
 
 <!-- ================= FIREBASE ================= -->
-<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
 <script>
   const firebaseConfig = {
     apiKey: "AIzaSyBPiakbtG4INidXAua07BhhRKAtT57Vjp4",
@@ -904,22 +901,52 @@ input,select,textarea{font-family:inherit; font-size:14.5px;}
     appId: "1:822863076627:web:6f1d98f00c2c79d7e3cee6",
     measurementId: "G-GJ5D9P8EEQ"
   };
-  // Si el SDK de Firebase no llegó a cargar (bloqueo de red, adblocker, sin conexión, etc.)
+  // Si el SDK de Firebase no llega a cargar (bloqueo de red, adblocker, sin conexión, etc.)
   // dejamos variables "vacías" que no rompan el resto de la app — solo se desactiva el login real.
   var firebaseAuth = null;
   var db = null;
   var firebaseListo = false;
-  try{
-    if(typeof firebase === 'undefined'){
-      throw new Error('El SDK de Firebase no se cargó (revisá la conexión o si algo lo está bloqueando).');
-    }
-    firebase.initializeApp(firebaseConfig);
-    firebaseAuth = firebase.auth();
-    db = firebase.firestore();
-    firebaseListo = true;
-  }catch(e){
-    console.error('Firebase no se pudo inicializar, la app sigue funcionando sin login real:', e);
+
+  function cargarScript(src){
+    return new Promise((resolve, reject)=>{
+      const s = document.createElement('script');
+      s.src = src;
+      s.onload = resolve;
+      s.onerror = () => reject(new Error('No se pudo cargar: ' + src));
+      document.head.appendChild(s);
+    });
   }
+
+  // Probamos primero el CDN oficial de Google (gstatic). Si por lo que sea falla
+  // (bloqueo de red, adblocker, DNS, etc.) probamos con el mirror de jsDelivr antes de rendirnos.
+  async function cargarFirebaseConFallback(){
+    const FIREBASE_VERSION = '10.13.2';
+    const cdns = [
+      (lib) => `https://www.gstatic.com/firebasejs/${FIREBASE_VERSION}/firebase-${lib}-compat.js`,
+      (lib) => `https://cdn.jsdelivr.net/npm/firebase@${FIREBASE_VERSION}/firebase-${lib}-compat.js`,
+    ];
+    const libs = ['app', 'auth', 'firestore'];
+
+    for(let i=0; i<cdns.length; i++){
+      try{
+        for(const lib of libs){
+          await cargarScript(cdns[i](lib));
+        }
+        if(typeof firebase === 'undefined') throw new Error('firebase global no quedó definido tras cargar los scripts.');
+        firebase.initializeApp(firebaseConfig);
+        firebaseAuth = firebase.auth();
+        db = firebase.firestore();
+        firebaseListo = true;
+        console.log(i===0 ? 'Firebase cargado desde gstatic.com' : 'Firebase cargado desde jsDelivr (fallback)');
+        if(typeof onFirebaseReady === 'function') onFirebaseReady();
+        return;
+      }catch(e){
+        console.error(`Falló la carga de Firebase desde ${i===0?'gstatic':'jsDelivr'}:`, e);
+      }
+    }
+    console.error('Firebase no se pudo inicializar por ningún CDN. La app sigue funcionando sin login real.');
+  }
+  cargarFirebaseConFallback();
 </script>
 <script>
 /* ================= ESTADO EN MEMORIA ================= */
@@ -1218,14 +1245,17 @@ function entrarConDatosGuardados(rol, data){
   }
 }
 
-// Al cargar la página, si ya había una sesión de Google activa, entramos directo sin pedir login de nuevo.
-if(firebaseListo){
+// Se llama automáticamente en cuanto Firebase termina de cargar (puede tardar un instante,
+// por eso no lo hacemos de forma síncrona apenas arranca la página).
+function onFirebaseReady(){
   firebaseAuth.onAuthStateChanged(user=>{
     if(user && !state.currentUser){
       manejarUsuarioGoogle(user);
     }
   });
 }
+// Por si Firebase ya había terminado de cargar antes de que este script se ejecutara.
+if(firebaseListo) onFirebaseReady();
 
 function logoutFirebase(){
   goHome();
