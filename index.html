@@ -163,10 +163,17 @@ input,select,textarea{font-family:inherit; font-size:14.5px;}
   background:var(--navy); border-radius:18px; padding:26px 20px; text-align:center; color:white; margin:18px 0;
 }
 .qr-fake{
-  width:150px; height:150px; margin:0 auto 14px; background:white; border-radius:12px; padding:10px;
-  display:grid; grid-template-columns:repeat(7,1fr); grid-template-rows:repeat(7,1fr); gap:3px;
+  width:180px; height:180px; margin:0 auto 14px; background:white; border-radius:12px; padding:10px; overflow:hidden;
 }
-.qr-fake div{background:var(--navy); border-radius:2px;}
+.cam-overlay{
+  position:fixed; inset:0; background:rgba(10,20,25,0.92); z-index:999;
+  display:flex; align-items:center; justify-content:center; padding:24px;
+}
+.cam-box{background:white; border-radius:20px; padding:20px; width:100%; max-width:340px; text-align:center;}
+.cam-title{font-family:'Bai Jamjuree'; font-weight:700; font-size:16px; color:var(--navy); margin-bottom:12px;}
+.cam-hint{font-size:12px; color:var(--muted); margin-top:10px;}
+#camReader{border-radius:14px; overflow:hidden;}
+#camReader video{border-radius:14px;}
 .code-text{font-family:'Bai Jamjuree'; font-size:22px; font-weight:700; letter-spacing:.06em; margin-bottom:4px;}
 .code-label{font-size:12px; color:rgba(255,255,255,0.6);}
 
@@ -786,18 +793,19 @@ input,select,textarea{font-family:inherit; font-size:14.5px;}
     <p class="page-sub">Cuando un cliente te presente un código, escribilo acá para confirmar la entrega.</p>
     <div class="card">
       <div class="field"><label>Código presentado por el cliente</label><input id="scanCodigo" placeholder="Ej: EP-1042" style="text-transform:uppercase"></div>
-      <button class="btn btn-primary" onclick="escanearCodigo()">Escanear / verificar código</button>
+      <button class="btn btn-primary" style="margin-bottom:8px" onclick="escanearCodigo()">Verificar código escrito</button>
+      <button class="btn btn-ghost" onclick="escanearCodigoConCamara()">📷 Escanear con cámara</button>
     </div>
     <div class="divider"></div>
     <div class="page-sub" style="font-weight:700; color:var(--navy); margin-bottom:10px;">Sumar un vendedor</div>
     <div class="card" style="text-align:center;">
-      <div class="qr-fake" style="margin:0 auto 12px;" id="scanFrameQR"></div>
-      <div style="font-size:12px; color:var(--muted); margin-bottom:12px;">Cámara simulada — en este prototipo escribí el código que te muestra el vendedor</div>
+      <button class="btn btn-primary btn-sm" style="margin-bottom:12px; width:100%" onclick="escanearVendedorConCamara()">📷 Escanear QR del vendedor</button>
+      <div style="font-size:12px; color:var(--muted); margin-bottom:12px;">— o escribí su código manualmente —</div>
       <div class="field" style="text-align:left;">
         <label>Código de identidad del vendedor</label>
         <input id="scanVendedorQR" placeholder="Ej: VQR-0001" style="text-transform:uppercase">
       </div>
-      <button class="btn btn-green btn-sm" style="margin-bottom:16px" onclick="adherirPorQR()">Escanear y sumar</button>
+      <button class="btn btn-green btn-sm" style="margin-bottom:16px" onclick="adherirPorQR()">Sumar con ese código</button>
       <div class="field" style="margin-top:4px; text-align:left;">
         <label>¿No tiene cuenta todavía? Cargalo vos</label>
         <input id="addVendedorNombre" placeholder="Nombre del vendedor">
@@ -966,8 +974,21 @@ input,select,textarea{font-family:inherit; font-size:14.5px;}
 
 </div>
 
+<!-- ============ OVERLAY: ESCÁNER DE CÁMARA (reutilizable) ============ -->
+<div class="cam-overlay hidden" id="camOverlay">
+  <div class="cam-box">
+    <div class="cam-title" id="camOverlayTitle">Escaneando…</div>
+    <div id="camReader"></div>
+    <div class="cam-hint">Apuntá con la cámara al código QR</div>
+    <button class="btn btn-ghost" style="margin-top:14px" onclick="detenerEscaneoCamara()">Cancelar</button>
+  </div>
+</div>
+
 <div class="bottomnav hidden" id="bottomnav"></div>
 <div id="toast"></div>
+
+<!-- ================= LECTOR DE CÁMARA (QR) ================= -->
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 
 <!-- ================= FIREBASE ================= -->
 <script>
@@ -1122,13 +1143,65 @@ function onRoleChipClick(){
 function nextId(prefix){ return prefix + '-' + (state.seq++); }
 function genCodigo(){ return 'EP-' + (1000 + Math.floor(Math.random()*8999)); }
 
-function renderQR(container){
-  container.innerHTML='';
-  for(let i=0;i<49;i++){
-    const d = document.createElement('div');
-    if(Math.random() > 0.42) d.style.background = 'var(--navy)'; else d.style.background='transparent';
-    container.appendChild(d);
+function renderQR(container, texto){
+  container.innerHTML = '';
+  const img = document.createElement('img');
+  img.src = `https://api.qrserver.com/v1/create-qr-code/?size=280x280&margin=0&data=${encodeURIComponent(texto)}`;
+  img.alt = 'Código QR: ' + texto;
+  img.style.width = '100%';
+  img.style.height = '100%';
+  img.style.display = 'block';
+  img.onerror = () => { container.textContent = texto; };
+  container.appendChild(img);
+}
+
+/* ================= ESCÁNER DE CÁMARA (real) ================= */
+let camaraActiva = null;
+
+function iniciarEscaneoCamara(titulo, alTerminar){
+  if(typeof Html5Qrcode === 'undefined'){
+    toast('No pudimos cargar el lector de cámara. Escribí el código a mano.');
+    return;
   }
+  document.getElementById('camOverlayTitle').textContent = titulo;
+  document.getElementById('camOverlay').classList.remove('hidden');
+  camaraActiva = new Html5Qrcode('camReader');
+  camaraActiva.start(
+    { facingMode: 'environment' },
+    { fps: 10, qrbox: 220 },
+    (textoLeido) => {
+      detenerEscaneoCamara();
+      alTerminar(textoLeido);
+    },
+    () => {} // se llama en cada frame sin resultado — lo ignoramos
+  ).catch(err=>{
+    console.error('No se pudo acceder a la cámara:', err);
+    toast('No pudimos acceder a la cámara. Revisá los permisos del navegador o escribí el código a mano.');
+    document.getElementById('camOverlay').classList.add('hidden');
+    camaraActiva = null;
+  });
+}
+
+function detenerEscaneoCamara(){
+  document.getElementById('camOverlay').classList.add('hidden');
+  if(camaraActiva){
+    camaraActiva.stop().then(()=>camaraActiva.clear()).catch(()=>{});
+    camaraActiva = null;
+  }
+}
+
+function escanearCodigoConCamara(){
+  iniciarEscaneoCamara('Escaneá el código del cliente', (texto)=>{
+    document.getElementById('scanCodigo').value = texto.trim().toUpperCase();
+    escanearCodigo();
+  });
+}
+
+function escanearVendedorConCamara(){
+  iniciarEscaneoCamara('Escaneá el QR del vendedor', (texto)=>{
+    document.getElementById('scanVendedorQR').value = texto.trim().toUpperCase();
+    adherirPorQR();
+  });
 }
 
 /* ================= BOTTOM NAV ================= */
@@ -2068,7 +2141,7 @@ function generarCodigo(solicitudId){
   s.estado = 'con_codigo';
 
   document.getElementById('codigoTexto').textContent = codigo;
-  renderQR(document.getElementById('qrFake'));
+  renderQR(document.getElementById('qrFake'), codigo);
   document.getElementById('codigoDetalle').innerHTML = `
     <div class="field"><label>Cliente</label>${s.clienteNombre}</div>
     <div class="field"><label>Producto</label>${prod.nombre} — $${prod.precio.toLocaleString('es-AR')}</div>
@@ -2171,8 +2244,6 @@ function guardarPerfilEnFirestore(coleccion, data){
 }
 
 function renderComercioPanel(){
-  const frame = document.getElementById('scanFrameQR');
-  if(frame) renderQR(frame);
   renderPublicidadBox();
   renderProductosPropios();
   if(!state.currentUser.adheridos) state.currentUser.adheridos = [];
@@ -2220,7 +2291,7 @@ function mostrarMiQR(tipo){
   document.getElementById('miQrSub').textContent = tipo==='vendedor'
     ? 'Mostrale este QR a cualquier comercio. Al escanearlo, te suma como vendedor con tus datos ya cargados — sin tener que tipear nada.'
     : 'Mostrale este QR a cualquier vendedor que quiera sumarte a su catálogo. Con esto ya te identifica automáticamente.';
-  renderQR(document.getElementById('miQrFake'));
+  renderQR(document.getElementById('miQrFake'), u.qrPersonal);
   window._qrVolverA = tipo==='vendedor' ? 'v-catalogo' : 'c-panel';
   showScreen('mi-qr');
 }
@@ -2677,7 +2748,7 @@ function quieroEstaOferta(){
     clienteNombre:'Cliente del feed', estado:'pendiente', comisionMonto:0, origen:'oferta'
   });
   document.getElementById('ofCodigo').textContent = codigo;
-  renderQR(document.getElementById('ofQrFake'));
+  renderQR(document.getElementById('ofQrFake'), codigo);
   document.getElementById('ofAntes').classList.add('hidden');
   document.getElementById('ofDespues').classList.remove('hidden');
   toast('¡Listo! Mostrá este código en ' + c.nombre + ' ✅');
