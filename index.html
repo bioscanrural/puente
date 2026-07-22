@@ -1112,6 +1112,7 @@ function setRoleChip(texto, esCta){
   chip.classList.toggle('is-cta', !!esCta);
 }
 function irInicio(){
+  renderFeed();
   showScreen('feed');
 }
 function onRoleChipClick(){
@@ -1832,6 +1833,7 @@ function crearProductoComercio(){
   delete fotosCargadas['cnp'];
   toast('Producto publicado en tu ficha y en el feed de La Paz ✅');
   renderProductosPropios();
+  renderFeed();
   showScreen('c-panel');
 }
 
