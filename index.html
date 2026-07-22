@@ -508,27 +508,15 @@ input,select,textarea{font-family:inherit; font-size:14.5px;}
     </div>
   </div>
 
-  <!-- ============ SCREEN: HOME / ROLE SELECT ============ -->
+  <!-- ============ SCREEN: HOME (entrar o registrarme) ============ -->
   <div class="screen hidden" id="screen-home">
     <div class="link-back" onclick="showScreen('feed')">← Ver productos sin ingresar</div>
     <div class="kicker">Bienvenido</div>
-    <h1 class="page-title">¿Cómo querés usar PuenT?</h1>
-    <p class="page-sub">Elegí con qué perfil vas a entrar. Si ya tenés cuenta, no importa cuál toques: te reconocemos igual con tu Google.</p>
+    <h1 class="page-title">¿Ya tenés cuenta en PuenT?</h1>
+    <p class="page-sub">Elegí una opción para continuar.</p>
 
-    <div class="role-select-grid" style="margin-top:0; margin-bottom:18px;">
-      <button class="role-btn" onclick="elegirRolParaRegistro('vendedor')">
-        <div class="ic" style="background:var(--green)">🛍️</div>
-        <div><div class="tt">Vendedor</div><div class="ss">Armo mi catálogo y vendo</div></div>
-      </button>
-      <button class="role-btn" onclick="elegirRolParaRegistro('comercio')">
-        <div class="ic" style="background:var(--blue)">🏬</div>
-        <div><div class="tt">Comercio</div><div class="ss">Escaneo códigos y facturo</div></div>
-      </button>
-      <button class="role-btn" onclick="elegirRolParaRegistro('cliente')">
-        <div class="ic" style="background:var(--navy)">🙋</div>
-        <div><div class="tt">Cliente</div><div class="ss">Busco productos de mi ciudad</div></div>
-      </button>
-    </div>
+    <button class="btn btn-primary" style="margin-bottom:10px;" onclick="loginConGoogle()">Ya tengo cuenta — Iniciar sesión</button>
+    <button class="btn btn-ghost" style="margin-bottom:18px;" onclick="mostrarSeleccionDeRol()">Soy nuevo — Quiero registrarme</button>
 
     <div class="link-back" style="text-align:center; margin:0 0 14px;" onclick="document.getElementById('registroManualBox').classList.toggle('hidden')">¿No tenés Gmail? Registrate sin Google</div>
 
@@ -551,11 +539,34 @@ input,select,textarea{font-family:inherit; font-size:14.5px;}
     </div>
   </div>
 
-  <!-- ============ SCREEN: ELEGIR ROL (fallback, si Google no vino con un rol pre-elegido) ============ -->
+  <!-- ============ SCREEN: ELEGIR ROL PARA REGISTRARME (antes de tocar Google) ============ -->
+  <div class="screen hidden" id="screen-elegir-rol-nuevo">
+    <div class="link-back" onclick="showScreen('home')">← Volver</div>
+    <div class="kicker">Cuenta nueva</div>
+    <h1 class="page-title">¿Cómo te vas a registrar?</h1>
+    <p class="page-sub">Elegí tu perfil. Recién ahí te vamos a pedir que confirmes con tu cuenta de Google.</p>
+
+    <div class="role-select-grid" style="margin-top:0;">
+      <button class="role-btn" onclick="elegirRolParaRegistro('vendedor')">
+        <div class="ic" style="background:var(--green)">🛍️</div>
+        <div><div class="tt">Vendedor</div><div class="ss">Armo mi catálogo y vendo</div></div>
+      </button>
+      <button class="role-btn" onclick="elegirRolParaRegistro('comercio')">
+        <div class="ic" style="background:var(--blue)">🏬</div>
+        <div><div class="tt">Comercio</div><div class="ss">Escaneo códigos y facturo</div></div>
+      </button>
+      <button class="role-btn" onclick="elegirRolParaRegistro('cliente')">
+        <div class="ic" style="background:var(--navy)">🙋</div>
+        <div><div class="tt">Cliente</div><div class="ss">Busco productos de mi ciudad</div></div>
+      </button>
+    </div>
+  </div>
+
+  <!-- ============ SCREEN: ELEGIR ROL (fallback, solo si "Iniciar sesión" encontró una cuenta de Google sin rol registrado) ============ -->
   <div class="screen hidden" id="screen-google-role">
     <div class="kicker">¡Ya casi!</div>
-    <h1 class="page-title">¿Cómo querés usar PuenT, <span id="googleRoleNombre">vecino</span>?</h1>
-    <p class="page-sub">Elegí con qué perfil vas a entrar. Podés cambiarlo más adelante creando otra cuenta si lo necesitás.</p>
+    <h1 class="page-title">No encontramos una cuenta de PuenT para <span id="googleRoleNombre">vos</span></h1>
+    <p class="page-sub">Elegí con qué perfil querés registrarte.</p>
 
     <div class="role-select-grid" style="margin-top:0;">
       <button class="role-btn" onclick="elegirRolGoogle('vendedor')">
@@ -1312,6 +1323,10 @@ const COL_POR_ROL = {vendedor:'vendedores', comercio:'comercios', cliente:'clien
 
 // Se llama al tocar Vendedor / Comercio / Cliente en la pantalla de inicio.
 // Guardamos qué rol tocó por si es cuenta nueva, y disparamos el login de Google.
+function mostrarSeleccionDeRol(){
+  showScreen('elegir-rol-nuevo');
+}
+
 function elegirRolParaRegistro(rol){
   rolPreElegido = rol;
   try{ localStorage.setItem('puente_rolPreElegido', rol); }catch(e){}
