@@ -1430,7 +1430,8 @@ function crearCuentaDesdeGoogle(rol, user){
 // Toma los datos (ya sea recién creados o recuperados de Firestore) y arma la sesión activa.
 function entrarConDatosGuardados(rol, data){
   if(rol==='vendedor'){
-    state.vendedores.push(data);
+    const idx = state.vendedores.findIndex(x=>x.uid===data.uid);
+    if(idx>=0) state.vendedores[idx] = data; else state.vendedores.push(data);
     state.currentUser = data; state.role='vendedor';
     setRoleChip('🛍️ Vendedor', false);
     document.getElementById('vNombre').textContent = data.nombre;
@@ -1445,7 +1446,8 @@ function entrarConDatosGuardados(rol, data){
       data.publicidadVence = diasAtras(-30);
       guardarPerfilEnFirestore('comercios', data);
     }
-    state.comercios.push(data);
+    const idx = state.comercios.findIndex(x=>x.uid===data.uid);
+    if(idx>=0) state.comercios[idx] = data; else state.comercios.push(data);
     state.currentUser = data; state.role='comercio';
     setRoleChip('🏬 Comercio', false);
     document.getElementById('cNombre').textContent = data.nombre;
@@ -1453,7 +1455,8 @@ function entrarConDatosGuardados(rol, data){
     renderComercioPanel(); showScreen('c-panel'); updateBottomNav('c-panel');
     cargarProductosGuardados(data.uid);
   } else {
-    state.clientes.push(data);
+    const idx = state.clientes.findIndex(x=>x.uid===data.uid);
+    if(idx>=0) state.clientes[idx] = data; else state.clientes.push(data);
     state.currentUser = data; state.role='cliente';
     setRoleChip('🙋 Cliente', false);
     toast('¡Bienvenido de nuevo!');
