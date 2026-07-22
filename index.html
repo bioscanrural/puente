@@ -591,7 +591,8 @@ input,select,textarea{font-family:inherit; font-size:14.5px;}
     <div id="actividadBox"></div>
     <button class="btn btn-green" style="margin-bottom:10px" onclick="irNuevoProducto()">+ Cargar nuevo producto</button>
     <button class="btn btn-ghost" style="margin-bottom:10px" onclick="showScreen('v-nuevo-comercio')">🏬 Sumar comercio nuevo</button>
-    <button class="btn btn-ghost" style="margin-bottom:16px" onclick="mostrarMiQR('vendedor')">Mostrar mi código QR</button>
+    <button class="btn btn-ghost" style="margin-bottom:10px" onclick="mostrarMiQR('vendedor')">Mostrar mi código QR</button>
+    <button class="btn btn-ghost" style="margin-bottom:16px" onclick="abrirEditarVendedor()">✏️ Editar mi información</button>
     <div id="vProdList"></div>
   </div>
 
@@ -618,6 +619,23 @@ input,select,textarea{font-family:inherit; font-size:14.5px;}
       </div>
     </div>
     <button class="btn btn-primary" onclick="registrarComercioDirecto()">Enviar código de verificación</button>
+  </div>
+
+  <!-- ============ VENDEDOR: EDITAR MI INFORMACIÓN ============ -->
+  <div class="screen hidden" id="screen-editar-vendedor">
+    <div class="link-back" onclick="showScreen('v-catalogo')">← Volver al catálogo</div>
+    <div class="kicker">Mi cuenta</div>
+    <h1 class="page-title">Editar mi información</h1>
+    <p class="page-sub">Estos datos son los que ven los comercios y clientes cuando interactúan con vos.</p>
+    <div class="card">
+      <div class="field"><label>Nombre completo</label><input id="editVNombre" placeholder="Tu nombre"></div>
+      <div class="field"><label>Teléfono</label><input id="editVTelefono" type="tel" placeholder="Tu WhatsApp"></div>
+      <div class="two-col">
+        <div class="field"><label>Ciudad</label><input id="editVCiudad" placeholder="Ej: La Paz"></div>
+        <div class="field"><label>Zona</label><input id="editVZona" placeholder="Ej: Zona Centro"></div>
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="guardarEdicionVendedor()">Guardar cambios</button>
   </div>
 
   <!-- ============ VENDEDOR: NUEVO PRODUCTO ============ -->
@@ -754,6 +772,7 @@ input,select,textarea{font-family:inherit; font-size:14.5px;}
     <div class="kicker">Panel de comercio</div>
     <h1 class="page-title"><span id="cNombre">Tu comercio</span></h1>
     <button class="btn btn-ghost" style="margin-bottom:14px" onclick="mostrarMiQR('comercio')">Mostrar mi código QR</button>
+    <button class="btn btn-ghost" style="margin-bottom:14px" onclick="abrirEditarComercio()">✏️ Editar mi información</button>
     <div id="publicidadBox"></div>
     <p class="page-sub">Cuando un cliente te presente un código, escribilo acá para confirmar la entrega.</p>
     <div class="card">
@@ -840,6 +859,52 @@ input,select,textarea{font-family:inherit; font-size:14.5px;}
       </div>
     </div>
     <button class="btn btn-primary" onclick="crearProductoComercio()">Publicar producto</button>
+  </div>
+
+  <!-- ============ COMERCIO: EDITAR MI INFORMACIÓN ============ -->
+  <div class="screen hidden" id="screen-editar-comercio">
+    <div class="link-back" onclick="showScreen('c-panel')">← Volver al panel</div>
+    <div class="kicker">Mi comercio</div>
+    <h1 class="page-title">Editar mi información</h1>
+    <p class="page-sub">Estos datos son los que ven tus clientes en tu ficha. Actualizalos cuando cambien.</p>
+    <div class="card">
+      <div class="field">
+        <label>Logo o foto del comercio</label>
+        <div class="logo-upload-row">
+          <div class="logo-upload" id="editLogoFotoBox" onclick="document.getElementById('editLogoFotoInput').click()">
+            <div id="editLogoFotoPreview" class="logo-upload-empty"><div class="ic">📷</div></div>
+            <input type="file" id="editLogoFotoInput" accept="image/*" capture="environment" style="display:none" onchange="onFotoSeleccionada(this, 'editLogo')">
+          </div>
+          <div class="logo-upload-info">
+            <div class="t">Tocá para cambiar la foto</div>
+            <div class="foto-upload-estado" id="editLogoFotoEstado" style="margin-bottom:0;">Se muestra en tu ficha y en tus productos.</div>
+          </div>
+        </div>
+      </div>
+      <div class="field"><label>Nombre del comercio</label><input id="editCNombre" placeholder="Ej: Ferretería Don Aldo"></div>
+      <div class="field"><label>Dirección del local</label><input id="editCDireccion" placeholder="Calle, número y ciudad"></div>
+      <div class="two-col">
+        <div class="field"><label>Ciudad</label><input id="editCCiudad" placeholder="Ej: La Paz"></div>
+        <div class="field"><label>Rubro</label>
+          <select id="editCRubro">
+            <option>Indumentaria y calzado</option><option>Hogar y decoración</option>
+            <option>Ferretería y construcción</option><option>Repuestos y automotor</option>
+            <option>Deportes y aire libre</option><option>Alimentos y bebidas</option>
+            <option>Alojamiento y turismo</option><option>Tecnología</option>
+            <option>Belleza y cuidado personal</option><option>Mascotas</option>
+            <option>Salud</option><option>Mecánica del Automotor</option>
+            <option>Servicios varios</option><option>Otros / varios</option>
+          </select>
+        </div>
+      </div>
+      <div class="two-col">
+        <div class="field"><label>Teléfono del local</label><input id="editCTelefono" type="tel" placeholder="Fijo o WhatsApp"></div>
+        <div class="field"><label>Teléfono alternativo</label><input id="editCTelefonoAlt" type="tel" placeholder="Opcional"></div>
+      </div>
+      <div class="field"><label>Correo electrónico</label><input id="editCEmail" type="email" placeholder="local@ejemplo.com"></div>
+      <div class="field"><label>Horario de atención</label><input id="editCHorario" placeholder="Ej: Lun a Vie 9 a 18hs"></div>
+    </div>
+    <button class="btn btn-primary" onclick="guardarEdicionComercio()">Guardar cambios</button>
   </div>
 
   <!-- ============ COMERCIO: DETALLE DE ESCANEO ============ -->
@@ -1953,6 +2018,75 @@ function renderVendedorStats(){
 }
 
 /* ================= COMERCIO ================= */
+/* ================= EDITAR MI INFORMACIÓN ================= */
+function abrirEditarComercio(){
+  const c = state.currentUser;
+  document.getElementById('editCNombre').value = c.nombre || '';
+  document.getElementById('editCDireccion').value = c.direccion || '';
+  document.getElementById('editCCiudad').value = c.ciudad || 'La Paz';
+  document.getElementById('editCRubro').value = c.rubro || 'Otros / varios';
+  document.getElementById('editCTelefono').value = c.telefono || '';
+  document.getElementById('editCTelefonoAlt').value = c.telefonoAlt || '';
+  document.getElementById('editCEmail').value = c.email || '';
+  document.getElementById('editCHorario').value = c.horario || '';
+  document.getElementById('editLogoFotoBox').innerHTML = c.img
+    ? `<img src="${c.img}" alt="">`
+    : `<div id="editLogoFotoPreview" class="logo-upload-empty"><div class="ic">📷</div></div>`;
+  document.getElementById('editLogoFotoEstado').textContent = 'Tocá la foto para cambiarla.';
+  document.getElementById('editLogoFotoEstado').className = 'foto-upload-estado';
+  delete fotosCargadas['editLogo'];
+  showScreen('editar-comercio');
+}
+
+function guardarEdicionComercio(){
+  const c = state.currentUser;
+  c.nombre = document.getElementById('editCNombre').value.trim() || c.nombre;
+  c.direccion = document.getElementById('editCDireccion').value.trim();
+  c.ciudad = document.getElementById('editCCiudad').value.trim() || 'La Paz';
+  c.rubro = document.getElementById('editCRubro').value;
+  c.telefono = document.getElementById('editCTelefono').value.trim();
+  c.telefonoAlt = document.getElementById('editCTelefonoAlt').value.trim();
+  c.email = document.getElementById('editCEmail').value.trim();
+  c.horario = document.getElementById('editCHorario').value.trim();
+  if(fotosCargadas['editLogo']) c.img = fotosCargadas['editLogo'];
+
+  document.getElementById('cNombre').textContent = c.nombre;
+  guardarPerfilEnFirestore('comercios', c);
+  toast('Datos actualizados ✅');
+  renderComercioPanel();
+  showScreen('c-panel');
+}
+
+function abrirEditarVendedor(){
+  const v = state.currentUser;
+  document.getElementById('editVNombre').value = v.nombre || '';
+  document.getElementById('editVTelefono').value = (v.telefono && v.telefono!=='—') ? v.telefono : '';
+  document.getElementById('editVCiudad').value = v.ciudad || 'La Paz';
+  document.getElementById('editVZona').value = v.zona || '';
+  showScreen('editar-vendedor');
+}
+
+function guardarEdicionVendedor(){
+  const v = state.currentUser;
+  v.nombre = document.getElementById('editVNombre').value.trim() || v.nombre;
+  v.telefono = document.getElementById('editVTelefono').value.trim() || '—';
+  v.ciudad = document.getElementById('editVCiudad').value.trim() || 'La Paz';
+  v.zona = document.getElementById('editVZona').value.trim();
+
+  document.getElementById('vNombre').textContent = v.nombre;
+  guardarPerfilEnFirestore('vendedores', v);
+  toast('Datos actualizados ✅');
+  renderVendedorCatalogo();
+  showScreen('v-catalogo');
+}
+
+// Guarda el perfil actualizado en Firestore, solo si es una cuenta real de Google (tiene uid).
+function guardarPerfilEnFirestore(coleccion, data){
+  if(!firebaseListo || !data.uid) return;
+  db.collection(coleccion).doc(data.uid).set(data, {merge:true})
+    .catch(e=>console.error('No se pudo actualizar el perfil en Firestore:', e));
+}
+
 function renderComercioPanel(){
   const frame = document.getElementById('scanFrameQR');
   if(frame) renderQR(frame);
