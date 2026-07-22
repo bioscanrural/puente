@@ -1241,6 +1241,7 @@ const COL_POR_ROL = {vendedor:'vendedores', comercio:'comercios', cliente:'clien
 // Guardamos qué rol tocó por si es cuenta nueva, y disparamos el login de Google.
 function elegirRolParaRegistro(rol){
   rolPreElegido = rol;
+  try{ localStorage.setItem('puente_rolPreElegido', rol); }catch(e){}
   loginConGoogle();
 }
 
@@ -1250,6 +1251,14 @@ function loginConGoogle(){
     return;
   }
   const provider = new firebase.auth.GoogleAuthProvider();
+  const esMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+  if(esMobile){
+    // En celular, el popup falla o se pierde con mucha frecuencia (bloqueos del navegador,
+    // apps que abren en webview, etc.) — usamos redirección, que es lo que recomienda Firebase para mobile.
+    firebaseAuth.signInWithRedirect(provider);
+    return;
+  }
   firebaseAuth.signInWithPopup(provider).then(result=>{
     manejarUsuarioGoogle(result.user);
   }).catch(err=>{
@@ -1353,11 +1362,50 @@ function entrarConDatosGuardados(rol, data){
 // Se llama automáticamente en cuanto Firebase termina de cargar (puede tardar un instante,
 // por eso no lo hacemos de forma síncrona apenas arranca la página).
 function onFirebaseReady(){
+  // Se ejecuta para CUALQUIER visitante (esté logueado o no): trae los comercios y productos
+  // reales cargados por otros, así el feed no muestra solo los datos demo del código.
+  cargarDatosPublicosDeFirestore();
+
+  // Si veníamos de un login por redirección (mobile), Firebase procesa el resultado acá.
+  firebaseAuth.getRedirectResult().catch(err=>{
+    console.error('Error volviendo del login con Google (redirect):', err);
+  });
   firebaseAuth.onAuthStateChanged(user=>{
     if(user && !state.currentUser){
+      if(!rolPreElegido){
+        try{
+          const guardado = localStorage.getItem('puente_rolPreElegido');
+          if(guardado){ rolPreElegido = guardado; localStorage.removeItem('puente_rolPreElegido'); }
+        }catch(e){}
+      }
       manejarUsuarioGoogle(user);
     }
   });
+}
+
+// Trae de Firestore los comercios y productos reales (cargados por cualquier usuario) y los suma
+// a los datos demo que ya tenemos en memoria, para que todos los visitantes los vean sin recargar a mano.
+async function cargarDatosPublicosDeFirestore(){
+  if(!firebaseListo) return;
+  try{
+    const [comerciosSnap, productosSnap] = await Promise.all([
+      db.collection('comercios').get(),
+      db.collection('productos').get()
+    ]);
+    comerciosSnap.forEach(doc=>{
+      const c = doc.data();
+      if(c.uid && !state.comercios.some(x=>x.uid===c.uid)) state.comercios.push(c);
+    });
+    productosSnap.forEach(doc=>{
+      const p = doc.data();
+      if(!state.productos.some(x=>x.id===p.id)) state.productos.push(p);
+    });
+    renderFeed();
+    renderFeedVendedores();
+    renderExploraCiudad();
+  }catch(e){
+    console.error('No se pudieron cargar los datos públicos de Firestore:', e);
+  }
 }
 // Por si Firebase ya había terminado de cargar antes de que este script se ejecutara.
 if(firebaseListo) onFirebaseReady();
