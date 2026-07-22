@@ -505,14 +505,23 @@ input,select,textarea{font-family:inherit; font-size:14.5px;}
   <div class="screen hidden" id="screen-home">
     <div class="link-back" onclick="showScreen('feed')">← Ver productos sin ingresar</div>
     <div class="kicker">Bienvenido</div>
-    <h1 class="page-title">Oportunidades para toda la ciudad</h1>
-    <p class="page-sub">Entrá con tu cuenta de Google: si ya tenés una cuenta en PuenT te reconocemos automáticamente, y si es tu primera vez, te dejamos elegir cómo la vas a usar.</p>
+    <h1 class="page-title">¿Cómo querés usar PuenT?</h1>
+    <p class="page-sub">Elegí con qué perfil vas a entrar. Si ya tenés cuenta, no importa cuál toques: te reconocemos igual con tu Google.</p>
 
-    <button class="btn btn-ghost" style="display:flex; align-items:center; justify-content:center; gap:10px; margin-bottom:8px;" onclick="loginConGoogle()">
-      <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.9 32.6 29.4 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.1 8 3l6-6C34.5 5.5 29.6 3.5 24 3.5 12.7 3.5 3.5 12.7 3.5 24S12.7 44.5 24 44.5 44.5 35.3 44.5 24c0-1.2-.1-2.4-.3-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.6 19 12.5 24 12.5c3.1 0 5.8 1.1 8 3l6-6C34.5 5.5 29.6 3.5 24 3.5c-7.9 0-14.6 4.5-17.7 11.2z"/><path fill="#4CAF50" d="M24 44.5c5.4 0 10.2-1.8 13.9-4.9l-6.4-5.4c-2 1.4-4.6 2.3-7.5 2.3-5.4 0-9.9-3.4-11.5-8.2l-6.5 5C9.3 40 16.1 44.5 24 44.5z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.7 2-2 3.7-3.7 5l6.4 5.4C41.4 35.4 44.5 30.2 44.5 24c0-1.2-.1-2.4-.9-3.5z"/></svg>
-      Continuar con Google
-    </button>
-    <div style="text-align:center; font-size:11.5px; color:var(--green); font-weight:700; margin-bottom:20px;">✅ Recomendado — te reconoce si ya tenés cuenta</div>
+    <div class="role-select-grid" style="margin-top:0; margin-bottom:18px;">
+      <button class="role-btn" onclick="elegirRolParaRegistro('vendedor')">
+        <div class="ic" style="background:var(--green)">🛍️</div>
+        <div><div class="tt">Vendedor</div><div class="ss">Armo mi catálogo y vendo</div></div>
+      </button>
+      <button class="role-btn" onclick="elegirRolParaRegistro('comercio')">
+        <div class="ic" style="background:var(--blue)">🏬</div>
+        <div><div class="tt">Comercio</div><div class="ss">Escaneo códigos y facturo</div></div>
+      </button>
+      <button class="role-btn" onclick="elegirRolParaRegistro('cliente')">
+        <div class="ic" style="background:var(--navy)">🙋</div>
+        <div><div class="tt">Cliente</div><div class="ss">Busco productos de mi ciudad</div></div>
+      </button>
+    </div>
 
     <div class="link-back" style="text-align:center; margin:0 0 14px;" onclick="document.getElementById('registroManualBox').classList.toggle('hidden')">¿No tenés Gmail? Registrate sin Google</div>
 
@@ -535,7 +544,7 @@ input,select,textarea{font-family:inherit; font-size:14.5px;}
     </div>
   </div>
 
-  <!-- ============ SCREEN: ELEGIR ROL (post Google login) ============ -->
+  <!-- ============ SCREEN: ELEGIR ROL (fallback, si Google no vino con un rol pre-elegido) ============ -->
   <div class="screen hidden" id="screen-google-role">
     <div class="kicker">¡Ya casi!</div>
     <h1 class="page-title">¿Cómo querés usar PuenT, <span id="googleRoleNombre">vecino</span>?</h1>
@@ -1224,7 +1233,15 @@ function verificarCodigo(){
 }
 
 let pendingGoogleUser = null;
+let rolPreElegido = null;
 const COL_POR_ROL = {vendedor:'vendedores', comercio:'comercios', cliente:'clientes'};
+
+// Se llama al tocar Vendedor / Comercio / Cliente en la pantalla de inicio.
+// Guardamos qué rol tocó por si es cuenta nueva, y disparamos el login de Google.
+function elegirRolParaRegistro(rol){
+  rolPreElegido = rol;
+  loginConGoogle();
+}
 
 function loginConGoogle(){
   if(!firebaseListo){
@@ -1242,12 +1259,15 @@ function loginConGoogle(){
 }
 
 // Busca si ese UID ya tiene cuenta guardada en Firestore (en cualquiera de los 3 roles).
-// Si existe, entra directo a su panel. Si no, le muestra la pantalla para elegir rol.
+// Si existe, entra directo a SU panel real (sin importar qué botón tocó esta vez).
+// Si es cuenta nueva: si ya había elegido un rol en la pantalla de inicio, la crea directo con ese rol;
+// si no (ej: alguien entra por "Iniciar sesión" genérico), le pedimos que elija.
 async function manejarUsuarioGoogle(user){
   try{
     for(const rol of Object.keys(COL_POR_ROL)){
       const doc = await db.collection(COL_POR_ROL[rol]).doc(user.uid).get();
       if(doc.exists){
+        rolPreElegido = null;
         entrarConDatosGuardados(rol, doc.data());
         return;
       }
@@ -1255,7 +1275,13 @@ async function manejarUsuarioGoogle(user){
   }catch(e){
     console.error('Error buscando cuenta en Firestore:', e);
   }
-  // No tiene cuenta todavía: le pedimos que elija con qué rol quiere entrar
+
+  // Cuenta nueva
+  if(rolPreElegido){
+    crearCuentaDesdeGoogle(rolPreElegido, user);
+    rolPreElegido = null;
+    return;
+  }
   pendingGoogleUser = user;
   document.getElementById('googleRoleNombre').textContent = (user.displayName||'').split(' ')[0] || 'vecino';
   showScreen('google-role');
