@@ -1305,7 +1305,7 @@ function crearCuentaDesdeGoogle(rol, user){
       fechaAlta: new Date().toISOString(), ultimaVenta:null, diasExtra:0};
     data.qrPersonal = 'VQR-' + data.id.split('-')[1].padStart(4,'0');
   } else if(rol==='comercio'){
-    data = {id: nextId('c'), uid:user.uid, nombre, email, ciudad:'La Paz', rubro:'Otros', viaGoogle:true, adheridos:[], img: (foto.startsWith('http') ? foto : null)};
+    data = {id: nextId('c'), uid:user.uid, nombre, email, ciudad:'La Paz', rubro:'Otros', viaGoogle:true, adheridos:[], img: (foto.startsWith('http') ? foto : null), publicidadActiva:true, publicidadVence:diasAtras(-30)};
     data.qrPersonal = 'CQR-' + data.id.split('-')[1].padStart(4,'0');
   } else {
     data = {id: nextId('cl'), uid:user.uid, nombre, email, ciudad:'La Paz', viaGoogle:true};
@@ -1326,6 +1326,13 @@ function entrarConDatosGuardados(rol, data){
     renderVendedorCatalogo(); renderVendedorSolicitudes(); renderVendedorStats();
     showScreen('v-catalogo'); updateBottomNav('v-catalogo');
   } else if(rol==='comercio'){
+    // Cuentas de comercio creadas antes de este arreglo no tenían publicidad de prueba activa
+    // (por eso no podían publicar productos) — se la damos ahora, una sola vez.
+    if(!publicidadActiva(data)){
+      data.publicidadActiva = true;
+      data.publicidadVence = diasAtras(-30);
+      guardarPerfilEnFirestore('comercios', data);
+    }
     state.comercios.push(data);
     state.currentUser = data; state.role='comercio';
     setRoleChip('🏬 Comercio', false);
@@ -1531,7 +1538,7 @@ function submitRegister(){
     if(nombreOcupado){ toast('Ya existe un comercio registrado con ese nombre, elegí otro'); return; }
     if(!tyc){ toast('Necesitás aceptar los Términos y Condiciones'); return; }
 
-    const c = {id: nextId('c'), nombre, razonSocial, cuit, direccion, ciudad, rubro, telefono, telefonoAlt, email, horario, adheridos:[], lat: registroLatLng?.lat, lng: registroLatLng?.lng, img: fotosCargadas['rLogo'] || null};
+    const c = {id: nextId('c'), nombre, razonSocial, cuit, direccion, ciudad, rubro, telefono, telefonoAlt, email, horario, adheridos:[], lat: registroLatLng?.lat, lng: registroLatLng?.lng, img: fotosCargadas['rLogo'] || null, publicidadActiva:true, publicidadVence:diasAtras(-30)};
     c.qrPersonal = 'CQR-' + c.id.split('-')[1].padStart(4,'0');
     state.comercios.push(c);
     state.currentUser = c; state.role='comercio';
