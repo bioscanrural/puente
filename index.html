@@ -955,14 +955,40 @@ input,select,textarea{font-family:inherit; font-size:14.5px;}
     <div class="kicker">Detalle de la operación</div>
     <h1 class="page-title">Confirmar entrega</h1>
     <div class="card" id="cDetalleCard"></div>
-    <div class="field">
-      <label>¿Entregaste el producto original?</label>
-      <select id="cSustituto">
-        <option value="si">Sí, el producto original</option>
-        <option value="no">No, entregué un reemplazo similar</option>
-      </select>
+
+    <div class="card" id="cVentaSiCard">
+      <div class="field">
+        <label>¿Entregaste el producto original?</label>
+        <select id="cSustituto">
+          <option value="si">Sí, el producto original</option>
+          <option value="no">No, entregué un reemplazo similar</option>
+        </select>
+      </div>
     </div>
-    <button class="btn btn-green" onclick="confirmarVenta()">Confirmar venta y acreditar comisión</button>
+    <button class="btn btn-green" style="margin-bottom:10px;" onclick="confirmarVenta()">✅ Sí, se realizó la venta — acreditar comisión</button>
+
+    <div class="link-back" style="text-align:center; margin:6px 0 14px;" onclick="document.getElementById('cVentaNoBox').classList.toggle('hidden')">La venta no se concretó</div>
+
+    <div class="card hidden" id="cVentaNoBox">
+      <div class="field">
+        <label>¿Por qué no se concretó?</label>
+        <select id="cMotivoNoVenta">
+          <option value="">Elegí un motivo…</option>
+          <option value="sin_credito">No tenía crédito/límite en la tarjeta</option>
+          <option value="arrepentido">El cliente se arrepintió</option>
+          <option value="no_era_lo_esperado">No era lo que pensaba / no le gustó</option>
+          <option value="no_se_presento">El cliente no se presentó</option>
+          <option value="sin_stock">No teníamos stock disponible</option>
+          <option value="precio">Le pareció caro / no llegaron a un acuerdo</option>
+          <option value="otro">Otro motivo</option>
+        </select>
+      </div>
+      <div class="field" id="cMotivoOtroWrap" style="display:none;">
+        <label>Contanos brevemente qué pasó</label>
+        <textarea id="cMotivoOtroTexto" rows="2" placeholder="Breve descripción…"></textarea>
+      </div>
+      <button class="btn btn-ghost" onclick="rechazarVenta()" style="border-color:var(--rose, #e05a5a); color:#c23b3b;">Confirmar que no se realizó la venta</button>
+    </div>
   </div>
 
   <!-- ============ CLIENTE: BUSCADOR ============ -->
@@ -2372,8 +2398,18 @@ function escanearCodigo(){
       : `<div class="field"><label>Origen</label><span class="pill pill-blue">Oferta directa del feed — sin vendedor</span></div>`
     }
   `;
+  document.getElementById('cVentaNoBox').classList.add('hidden');
+  document.getElementById('cMotivoNoVenta').value = '';
+  document.getElementById('cMotivoOtroWrap').style.display = 'none';
+  document.getElementById('cMotivoOtroTexto').value = '';
   showScreen('c-detalle');
 }
+
+document.addEventListener('change', (e)=>{
+  if(e.target && e.target.id === 'cMotivoNoVenta'){
+    document.getElementById('cMotivoOtroWrap').style.display = (e.target.value === 'otro') ? 'block' : 'none';
+  }
+});
 
 function confirmarVenta(){
   const venta = state.ventas.find(v=>v.id===window._ventaEscaneada);
@@ -2383,6 +2419,34 @@ function confirmarVenta(){
   const vend = state.vendedores.find(v=>v.id===venta.vendedorId);
   if(vend) vend.ultimaVenta = new Date().toISOString();
   toast(venta.sustituto ? 'Venta confirmada con reemplazo — comisión original acreditada ✅' : 'Venta confirmada — comisión acreditada ✅');
+  renderComercioPanel();
+  showScreen('c-panel');
+}
+
+const MOTIVOS_NO_VENTA = {
+  sin_credito: 'No tenía crédito/límite en la tarjeta',
+  arrepentido: 'El cliente se arrepintió',
+  no_era_lo_esperado: 'No era lo que pensaba / no le gustó',
+  no_se_presento: 'El cliente no se presentó',
+  sin_stock: 'No teníamos stock disponible',
+  precio: 'Le pareció caro / no llegaron a un acuerdo',
+  otro: 'Otro motivo'
+};
+
+function rechazarVenta(){
+  const motivo = document.getElementById('cMotivoNoVenta').value;
+  if(!motivo){ toast('Elegí un motivo antes de confirmar'); return; }
+  const otroTexto = document.getElementById('cMotivoOtroTexto').value.trim();
+  if(motivo==='otro' && !otroTexto){ toast('Contanos brevemente qué pasó'); return; }
+
+  const venta = state.ventas.find(v=>v.id===window._ventaEscaneada);
+  venta.estado = 'no_realizada';
+  venta.motivoNoVenta = motivo;
+  venta.motivoNoVentaTexto = motivo==='otro' ? otroTexto : MOTIVOS_NO_VENTA[motivo];
+  venta.comisionMonto = 0; // no se acredita comisión si la venta no se concretó
+
+  document.getElementById('scanCodigo').value='';
+  toast('Quedó registrado que la venta no se concretó. No se acreditó comisión.');
   renderComercioPanel();
   showScreen('c-panel');
 }
