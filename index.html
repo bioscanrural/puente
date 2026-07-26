@@ -488,11 +488,16 @@ input,select,textarea{font-family:inherit; font-size:14.5px;}
     <div class="card" style="text-align:center;">
       <div class="prod-photo" style="height:150px; border-radius:14px; font-size:56px; margin-bottom:14px; overflow:hidden;" id="ofFoto">🎣</div>
       <h1 class="page-title" id="ofNombre" style="margin-bottom:4px;">Producto</h1>
-      <div class="prod-price" style="font-size:20px; margin-bottom:10px;" id="ofPrecio">$0</div>
-      <div class="page-sub" id="ofComercio" style="font-weight:700; color:var(--navy); margin-bottom:2px;">Comercio</div>
-      <div class="page-sub" id="ofDireccion" style="margin-bottom:16px;">Dirección</div>
+      <div class="prod-price" style="font-size:20px; margin-bottom:14px;" id="ofPrecio">$0</div>
+
+      <div class="card" style="background:var(--cream); text-align:left; margin-bottom:16px;">
+        <div style="font-size:11px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.03em; margin-bottom:4px;">📍 Retirás en</div>
+        <div class="page-sub" id="ofComercio" style="font-weight:700; color:var(--navy); margin-bottom:2px; font-size:15px;">Comercio</div>
+        <div class="page-sub" id="ofDireccion" style="margin-bottom:0;">Dirección</div>
+      </div>
 
       <div id="ofAntes">
+        <p style="font-size:12.5px; color:var(--muted); margin-bottom:10px;">Si te sirve la ubicación, generá tu código y presentalo cuando llegues al local para retirarlo.</p>
         <button class="btn btn-primary" onclick="quieroEstaOferta()">Quiero esta oferta — generar mi código</button>
       </div>
 
@@ -502,6 +507,16 @@ input,select,textarea{font-family:inherit; font-size:14.5px;}
           <div class="code-text" id="ofCodigo">EP-0000</div>
           <div class="code-label">Presentalo en el local para retirarlo</div>
         </div>
+
+        <div id="ofGuardarBanner" class="card" style="background:var(--cream); text-align:left; margin-bottom:14px;">
+          <div style="font-size:13px; font-weight:700; color:var(--navy); margin-bottom:4px;">💡 ¿Querés guardar este código?</div>
+          <div style="font-size:12px; color:var(--muted); margin-bottom:10px;">Registrate con Google y vas a poder verlo desde cualquier dispositivo, en "Mis códigos".</div>
+          <button class="btn btn-ghost btn-sm" style="width:100%; display:flex; align-items:center; justify-content:center; gap:8px;" onclick="guardarCompraComoCliente()">
+            <svg width="16" height="16" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.9 32.6 29.4 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.1 8 3l6-6C34.5 5.5 29.6 3.5 24 3.5 12.7 3.5 3.5 12.7 3.5 24S12.7 44.5 24 44.5 44.5 35.3 44.5 24c0-1.2-.1-2.4-.3-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.6 19 12.5 24 12.5c3.1 0 5.8 1.1 8 3l6-6C34.5 5.5 29.6 3.5 24 3.5c-7.9 0-14.6 4.5-17.7 11.2z"/><path fill="#4CAF50" d="M24 44.5c5.4 0 10.2-1.8 13.9-4.9l-6.4-5.4c-2 1.4-4.6 2.3-7.5 2.3-5.4 0-9.9-3.4-11.5-8.2l-6.5 5C9.3 40 16.1 44.5 24 44.5z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.7 2-2 3.7-3.7 5l6.4 5.4C41.4 35.4 44.5 30.2 44.5 24c0-1.2-.1-2.4-.9-3.5z"/></svg>
+            Guardar con Google
+          </button>
+        </div>
+
         <button class="btn btn-green" style="margin-bottom:10px;" onclick="comoLlegarOferta()">📍 Cómo llegar</button>
         <button class="btn btn-ghost" onclick="showScreen('feed')">Seguir viendo ofertas</button>
       </div>
@@ -996,6 +1011,12 @@ input,select,textarea{font-family:inherit; font-size:14.5px;}
     <div class="link-back" onclick="goHome()">← Salir</div>
     <div class="kicker">Tu ciudad</div>
     <h1 class="page-title">Buscá vendedores o productos</h1>
+
+    <div class="section-title-row" style="margin-bottom:10px;">
+      <div class="section-title">🎟️ Mis códigos</div>
+    </div>
+    <div id="clMisCodigos" style="margin-bottom:20px;"></div>
+
     <div class="chiprow" id="rubroChips"></div>
     <div id="clVendedoresList"></div>
   </div>
@@ -1455,6 +1476,26 @@ function crearCuentaDesdeGoogle(rol, user){
 
 // Toma los datos (ya sea recién creados o recuperados de Firestore) y arma la sesión activa.
 function entrarConDatosGuardados(rol, data){
+  state.currentUser = data; state.role = rol;
+
+  // Si veníamos de "Guardar este código con Google" desde la pantalla de una oferta,
+  // no lo mandamos a ningún panel — solo vinculamos el código y lo dejamos donde estaba.
+  if(window._ventaPendienteDeGuardar){
+    if(rol==='cliente'){
+      const idx = state.clientes.findIndex(x=>x.uid===data.uid);
+      if(idx>=0) state.clientes[idx] = data; else state.clientes.push(data);
+    }
+    setRoleChip('🙋 Cliente', false);
+    vincularVentaConCliente(data);
+    return;
+  }
+
+  // Si venía de escanear un código de retiro con la cámara del celular, pero esta cuenta no es de comercio.
+  if(window._codigoPendienteDesdeURL && rol!=='comercio'){
+    toast('Ese código se valida desde una cuenta de comercio, no desde esta cuenta.');
+    window._codigoPendienteDesdeURL = null;
+  }
+
   if(rol==='vendedor'){
     const idx = state.vendedores.findIndex(x=>x.uid===data.uid);
     if(idx>=0) state.vendedores[idx] = data; else state.vendedores.push(data);
@@ -1480,6 +1521,7 @@ function entrarConDatosGuardados(rol, data){
     toast('¡Bienvenido de nuevo!');
     renderComercioPanel(); showScreen('c-panel'); updateBottomNav('c-panel');
     cargarProductosGuardados(data.uid);
+    if(window._codigoPendienteDesdeURL) procesarCodigoPendienteDesdeURL();
   } else {
     const idx = state.clientes.findIndex(x=>x.uid===data.uid);
     if(idx>=0) state.clientes[idx] = data; else state.clientes.push(data);
@@ -1510,6 +1552,9 @@ function onFirebaseReady(){
         }catch(e){}
       }
       manejarUsuarioGoogle(user);
+    } else if(!user && window._codigoPendienteDesdeURL){
+      toast('Escaneaste un código de cliente — iniciá sesión como comercio para validarlo');
+      showScreen('home');
     }
   });
 }
@@ -2199,7 +2244,7 @@ function generarCodigo(solicitudId){
   s.estado = 'con_codigo';
 
   document.getElementById('codigoTexto').textContent = codigo;
-  renderQR(document.getElementById('qrFake'), codigo);
+  renderQR(document.getElementById('qrFake'), construirLinkCodigo(codigo));
   document.getElementById('codigoDetalle').innerHTML = `
     <div class="field"><label>Cliente</label>${s.clienteNombre}</div>
     <div class="field"><label>Producto</label>${prod.nombre} — $${prod.precio.toLocaleString('es-AR')}</div>
@@ -2453,7 +2498,37 @@ function rechazarVenta(){
 
 /* ================= CLIENTE ================= */
 let rubroFiltro = 'Todos';
-function renderClienteBuscador(){
+async function renderMisCodigos(){
+  const cont = document.getElementById('clMisCodigos');
+  if(!cont) return;
+  if(!firebaseListo || !state.currentUser?.uid){
+    cont.innerHTML = `<div class="empty" style="padding:16px;"><div class="ic">🎟️</div><div class="t">Todavía no guardaste ningún código</div></div>`;
+    return;
+  }
+  try{
+    const snap = await db.collection('ventas').where('ownerUid','==',state.currentUser.uid).get();
+    if(snap.empty){
+      cont.innerHTML = `<div class="empty" style="padding:16px;"><div class="ic">🎟️</div><div class="t">Todavía no guardaste ningún código</div></div>`;
+      return;
+    }
+    cont.innerHTML = snap.docs.map(doc=>{
+      const v = doc.data();
+      const p = state.productos.find(x=>x.id===v.productoId);
+      const c = state.comercios.find(x=>x.id===v.comercioId);
+      const estadoTxt = v.estado==='confirmada' ? '✅ Retirado' : (v.estado==='no_realizada' ? '❌ No concretado' : '🕒 Pendiente de retiro');
+      return `<div class="list-row">
+        <div class="av" style="background:var(--navy)">🎟️</div>
+        <div class="main"><div class="t">${p?p.nombre:'Producto'} — ${v.codigo}</div><div class="s">${c?c.nombre:''} · ${estadoTxt}</div></div>
+      </div>`;
+    }).join('');
+  }catch(e){
+    console.error('No se pudieron cargar tus códigos:', e);
+    cont.innerHTML = `<div class="empty" style="padding:16px;"><div class="t">No pudimos cargar tus códigos ahora</div></div>`;
+  }
+}
+
+async function renderClienteBuscador(){
+  renderMisCodigos();
   const rubros = ['Todos', ...new Set(state.productos.map(p=>p.rubro))];
   document.getElementById('rubroChips').innerHTML = rubros.map(r=>
     `<button class="chip ${r===rubroFiltro?'active':''}" onclick="setRubroFiltro('${r}')">${r}</button>`
@@ -2831,22 +2906,84 @@ function abrirOferta(prodId){
   document.getElementById('ofPrecio').innerHTML = '$'+p.precio.toLocaleString('es-AR') + (badge ? ` <span class="oferta-badge" style="position:static; display:inline-block; margin-left:8px; vertical-align:middle;">${badge}</span>` : '');
   document.getElementById('ofComercio').textContent = c ? c.nombre : 'Comercio';
   document.getElementById('ofDireccion').textContent = c ? (c.direccion || 'La Paz, Entre Ríos') : '';
-  document.getElementById('ofAntes').classList.remove('hidden');
-  document.getElementById('ofDespues').classList.add('hidden');
+
+  // ¿Ya habíamos generado un código para este producto antes? Si el pedido sigue pendiente, lo mostramos
+  // de nuevo en vez de resetear la pantalla — así el cliente no lo "pierde" al salir y volver a entrar.
+  const ventaPrevia = buscarVentaPropiaGuardada(prodId);
+  if(ventaPrevia){
+    mostrarCodigoDeOferta(ventaPrevia);
+  } else {
+    document.getElementById('ofAntes').classList.remove('hidden');
+    document.getElementById('ofDespues').classList.add('hidden');
+  }
   showScreen('oferta');
+}
+
+// Guardamos en el navegador (localStorage) qué código le corresponde a cada producto,
+// para poder recuperarlo si el cliente cierra la pestaña o vuelve más tarde al mismo producto.
+function guardarVentaPropiaLocal(prodId, ventaId){
+  try{ localStorage.setItem('puente_venta_prod_' + prodId, ventaId); }catch(e){}
+}
+function buscarVentaPropiaGuardada(prodId){
+  let ventaId;
+  try{ ventaId = localStorage.getItem('puente_venta_prod_' + prodId); }catch(e){ return null; }
+  if(!ventaId) return null;
+  const venta = state.ventas.find(v=>v.id===ventaId);
+  // Si ya no existe, o ya fue confirmada/rechazada por el comercio, no tiene sentido seguir mostrándola:
+  // dejamos que pida un código nuevo (por ejemplo, si quiere comprar de nuevo).
+  if(!venta || venta.estado !== 'pendiente'){
+    try{ localStorage.removeItem('puente_venta_prod_' + prodId); }catch(e){}
+    return null;
+  }
+  return venta;
+}
+// Arma el link que va DENTRO del QR — así cualquier cámara de celular (sin abrir la app primero)
+// lo reconoce como un link normal y lo abre directo, sin necesitar nuestro lector interno.
+function construirLinkCodigo(codigo){
+  return location.origin + location.pathname + '?codigo=' + encodeURIComponent(codigo);
+}
+
+function mostrarCodigoDeOferta(venta){
+  document.getElementById('ofCodigo').textContent = venta.codigo;
+  renderQR(document.getElementById('ofQrFake'), construirLinkCodigo(venta.codigo));
+  document.getElementById('ofAntes').classList.add('hidden');
+  document.getElementById('ofDespues').classList.remove('hidden');
+  document.getElementById('ofGuardarBanner').classList.toggle('hidden', !!venta.ownerUid);
+}
+
+function guardarCompraComoCliente(){
+  const venta = buscarVentaPropiaGuardada(ofertaAbierta);
+  if(!venta){ toast('No encontramos el código a guardar'); return; }
+  window._ventaPendienteDeGuardar = venta.id;
+  rolPreElegido = 'cliente';
+  loginConGoogle();
+}
+
+// Se llama justo después de un login exitoso (nuevo o existente) si veníamos de "Guardar con Google".
+function vincularVentaConCliente(clienteData){
+  const venta = state.ventas.find(v=>v.id===window._ventaPendienteDeGuardar);
+  window._ventaPendienteDeGuardar = null;
+  if(!venta) return;
+  venta.ownerUid = clienteData.uid;
+  venta.clienteNombre = clienteData.nombre;
+  if(firebaseListo){
+    db.collection('ventas').doc(venta.id).set(venta, {merge:true}).catch(e=>console.error('No se pudo guardar el código en Firestore:', e));
+  }
+  toast('¡Guardado! Ya vas a poder verlo en "Mis códigos" desde cualquier dispositivo ✅');
+  document.getElementById('ofGuardarBanner').classList.add('hidden');
 }
 function quieroEstaOferta(){
   const p = state.productos.find(x=>x.id===ofertaAbierta);
   const c = state.comercios.find(x=>x.id===p.comercioId);
   const codigo = genCodigo();
-  state.ventas.push({
+  const clienteNombre = (state.role==='cliente' && state.currentUser?.nombre) ? state.currentUser.nombre : 'Cliente del feed';
+  const venta = {
     id: nextId('t'), codigo, vendedorId:null, productoId:p.id, comercioId:c.id,
-    clienteNombre:'Cliente del feed', estado:'pendiente', comisionMonto:0, origen:'oferta'
-  });
-  document.getElementById('ofCodigo').textContent = codigo;
-  renderQR(document.getElementById('ofQrFake'), codigo);
-  document.getElementById('ofAntes').classList.add('hidden');
-  document.getElementById('ofDespues').classList.remove('hidden');
+    clienteNombre, estado:'pendiente', comisionMonto:0, origen:'oferta'
+  };
+  state.ventas.push(venta);
+  guardarVentaPropiaLocal(p.id, venta.id);
+  mostrarCodigoDeOferta(venta);
   toast('¡Listo! Mostrá este código en ' + c.nombre + ' ✅');
 }
 function comoLlegarOferta(){
@@ -2948,6 +3085,26 @@ renderExploraCiudad();
 renderFeed();
 showScreen('feed');
 initFeedBannerSlider();
+manejarCodigoDesdeURL();
+
+// Si alguien escanea el QR de un código de retiro con la cámara nativa del celular (sin pasar por
+// nuestro lector interno), llega acá vía "?codigo=EP-1234". Guardamos el código pendiente; quién lo
+// procesa depende de si Firebase ya sabe (o no) que hay una sesión de comercio activa.
+function manejarCodigoDesdeURL(){
+  const params = new URLSearchParams(location.search);
+  const codigo = params.get('codigo');
+  if(!codigo) return;
+  history.replaceState({}, '', location.pathname);
+  window._codigoPendienteDesdeURL = codigo.toUpperCase();
+}
+
+function procesarCodigoPendienteDesdeURL(){
+  const codigo = window._codigoPendienteDesdeURL;
+  window._codigoPendienteDesdeURL = null;
+  if(!codigo) return;
+  document.getElementById('scanCodigo').value = codigo;
+  escanearCodigo();
+}
 </script>
 </body>
 </html>
