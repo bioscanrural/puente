@@ -836,16 +836,20 @@ input,select,textarea{font-family:inherit; font-size:14.5px;}
     <button class="cerrar-sesion-btn" onclick="confirmarCierreSesion()">👤 Cerrar sesión</button>
     <div class="kicker">Panel de comercio</div>
     <h1 class="page-title"><span id="cNombre">Tu comercio</span></h1>
-    <div class="btn-grid" style="margin-bottom:14px">
+    <div id="publicidadBox"></div>
+    <div class="btn-grid" style="margin-bottom:16px">
+      <button class="btn-tile btn-tile-coral" onclick="irNuevoProductoComercioSeguro()"><i class="ti ti-plus ic" aria-hidden="true"></i>Cargar producto</button>
+      <button class="btn-tile btn-tile-sage" onclick="showScreen('c-productos'); renderProductosPropios('cProductosPropiosPage');"><i class="ti ti-package ic" aria-hidden="true"></i>Productos</button>
       <button class="btn-tile btn-tile-gold" onclick="mostrarMiQR('comercio')"><i class="ti ti-qrcode ic" aria-hidden="true"></i>Mi código QR</button>
       <button class="btn-tile btn-tile-neutral" onclick="abrirEditarComercio()"><i class="ti ti-edit ic" aria-hidden="true"></i>Editar info</button>
     </div>
-    <div id="publicidadBox"></div>
     <p class="page-sub">Cuando un cliente te presente un código, escribilo acá para confirmar la entrega.</p>
     <div class="card">
       <div class="field"><label>Código presentado por el cliente</label><input id="scanCodigo" placeholder="Ej: EP-1042" style="text-transform:uppercase"></div>
-      <button class="btn btn-primary" style="margin-bottom:8px" onclick="escanearCodigo()">Verificar código escrito</button>
-      <button class="btn btn-ghost" onclick="escanearCodigoConCamara()">📷 Escanear con cámara</button>
+      <div class="btn-block-row">
+        <button class="btn btn-primary" onclick="escanearCodigo()">Verificar código</button>
+        <button class="btn btn-ghost" style="width:auto; padding:14px 18px;" onclick="escanearCodigoConCamara()" aria-label="Escanear con cámara"><i class="ti ti-camera" style="font-size:18px;" aria-hidden="true"></i></button>
+      </div>
     </div>
     <div class="divider"></div>
     <div class="page-sub" style="font-weight:700; color:var(--navy); margin-bottom:10px;">Vendedores vendiendo tus productos</div>
@@ -854,11 +858,17 @@ input,select,textarea{font-family:inherit; font-size:14.5px;}
     <div class="page-sub" style="font-weight:700; color:var(--navy); margin-bottom:10px;">📬 Pedidos de vendedores</div>
     <div id="cPedidosProducto" style="margin-bottom:8px;"></div>
     <div class="divider"></div>
-    <div class="page-sub" style="font-weight:700; color:var(--navy); margin-bottom:10px;">Tus productos propios</div>
-    <div id="cProductosPropios"></div>
-    <div class="divider"></div>
     <div class="page-sub" style="font-weight:700; color:var(--navy); margin-bottom:10px;">Historial de ventas confirmadas</div>
     <div id="cHistorial"></div>
+  </div>
+
+  <!-- ============ COMERCIO: TODOS LOS PRODUCTOS PROPIOS ============ -->
+  <div class="screen hidden" id="screen-c-productos">
+    <div class="link-back" onclick="showScreen('c-panel')">← Volver al panel</div>
+    <div class="kicker">Tu catálogo directo</div>
+    <h1 class="page-title">Tus productos</h1>
+    <p class="page-sub">Todos los productos que cargaste como venta directa desde tu comercio.</p>
+    <div id="cProductosPropiosPage"></div>
   </div>
 
   <!-- ============ COMERCIO: NUEVO PRODUCTO PROPIO ============ -->
@@ -1296,14 +1306,14 @@ function escanearCodigoConCamara(){
 /* ================= BOTTOM NAV ================= */
 const navByRole = {
   vendedor:[
-    {key:'v-catalogo', ic:'ti-home', action:"showScreen('v-catalogo')"},
-    {key:'feed', ic:'ti-search', action:"irInicio()"},
+    {key:'feed', ic:'ti-home', action:"irInicio()"},
+    {key:'v-catalogo', ic:'ti-building-store', action:"showScreen('v-catalogo')"},
     {key:'v-solicitudes', ic:'ti-bell', action:"showScreen('v-solicitudes')"},
     {key:'v-perfil', ic:'ti-user', action:"abrirEditarVendedor()"},
   ],
   comercio:[
-    {key:'c-panel', ic:'ti-home', action:"showScreen('c-panel')"},
-    {key:'feed', ic:'ti-search', action:"irInicio()"},
+    {key:'feed', ic:'ti-home', action:"irInicio()"},
+    {key:'c-panel', ic:'ti-building-store', action:"showScreen('c-panel')"},
     {key:'c-panel-actividad', ic:'ti-bell', action:"showScreen('c-panel')"},
     {key:'c-perfil', ic:'ti-user', action:"abrirEditarComercio()"},
   ],
@@ -1932,7 +1942,6 @@ function renderPublicidadBox(){
       <div class="pub-card activa">
         <div class="pub-title">⭐ Venta directa activa</div>
         <div class="pub-txt">Tenés tu propio catálogo activo, sumado al de tus vendedores — no lo reemplaza. Y tu local se destaca en Locales. Vence el ${vence}.</div>
-        <button class="btn btn-primary btn-sm" onclick="irNuevoProductoComercio()">+ Cargar producto propio</button>
       </div>`;
   } else {
     box.innerHTML = `
@@ -1952,8 +1961,8 @@ function activarPublicidad(){
   toast('Plan activado (simulado) — ya podés cargar productos propios ✅');
   renderPublicidadBox();
 }
-function renderProductosPropios(){
-  const box = document.getElementById('cProductosPropios');
+function renderProductosPropios(elId){
+  const box = document.getElementById(elId || 'cProductosPropiosPage');
   if(!box) return;
   const c = state.currentUser;
   const propios = state.productos.filter(p=>p.comercioId===c.id && p.origen==='comercio');
@@ -2074,6 +2083,14 @@ function irNuevoProductoComercio(){
   showScreen('c-nuevo-producto');
   const sel = document.getElementById('cnpRubro');
   if(sel && c.rubro){ sel.value = c.rubro; }
+}
+function irNuevoProductoComercioSeguro(){
+  const c = state.currentUser;
+  if(!publicidadActiva(c)){
+    toast('Activá la venta directa para poder cargar productos propios');
+    return;
+  }
+  irNuevoProductoComercio();
 }
 
 function crearProductoComercio(){
