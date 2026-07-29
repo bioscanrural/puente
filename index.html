@@ -1380,9 +1380,16 @@ function loginConGoogle(){
   const esMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
   if(esMobile){
-    // En celular, el popup falla o se pierde con mucha frecuencia (bloqueos del navegador,
-    // apps que abren en webview, etc.) — usamos redirección, que es lo que recomienda Firebase para mobile.
-    firebaseAuth.signInWithRedirect(provider);
+    // En celular usamos redirect — más confiable que popup en la mayoría de los browsers.
+    // Si falla (algunos webviews o modos PWA no lo soportan), caemos automáticamente a popup.
+    firebaseAuth.signInWithRedirect(provider).catch(()=>{
+      firebaseAuth.signInWithPopup(provider).then(result=>{
+        manejarUsuarioGoogle(result.user);
+      }).catch(err=>{
+        if(err.code !== 'auth/popup-closed-by-user')
+          toast('No pudimos completar el login con Google, probá de nuevo');
+      });
+    });
     return;
   }
   firebaseAuth.signInWithPopup(provider).then(result=>{
@@ -1512,14 +1519,28 @@ function entrarConDatosGuardados(rol, data){
 // Se llama automáticamente en cuanto Firebase termina de cargar (puede tardar un instante,
 // por eso no lo hacemos de forma síncrona apenas arranca la página).
 function onFirebaseReady(){
-  // Se ejecuta para CUALQUIER visitante (esté logueado o no): trae los comercios y productos
-  // reales cargados por otros, así el feed no muestra solo los datos demo del código.
   cargarDatosPublicosDeFirestore();
 
-  // Si veníamos de un login por redirección (mobile), Firebase procesa el resultado acá.
-  firebaseAuth.getRedirectResult().catch(err=>{
+  // En mobile usamos signInWithRedirect — cuando la página vuelve a cargar, el resultado
+  // viene acá. Lo procesamos ANTES de escuchar onAuthStateChanged para evitar condición de carrera.
+  firebaseAuth.getRedirectResult().then(result=>{
+    if(result && result.user){
+      // Recuperar el rol que guardamos antes de salir a la pantalla de Google
+      if(!rolPreElegido){
+        try{
+          const guardado = localStorage.getItem('puente_rolPreElegido');
+          if(guardado){ rolPreElegido = guardado; localStorage.removeItem('puente_rolPreElegido'); }
+        }catch(e){}
+      }
+      manejarUsuarioGoogle(result.user);
+    }
+  }).catch(err=>{
     console.error('Error volviendo del login con Google (redirect):', err);
+    if(err.code && err.code !== 'auth/null-user'){
+      toast('Hubo un problema al volver del login con Google. Intentá de nuevo.');
+    }
   });
+
   firebaseAuth.onAuthStateChanged(user=>{
     if(user && !state.currentUser){
       if(!rolPreElegido){
