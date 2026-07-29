@@ -74,6 +74,8 @@ input,select,textarea{font-family:inherit; font-size:14.5px;}
 .btn-tile-sage{background:#EAF0E6; color:var(--navy-2);}
 .btn-tile-gold{background:#FBF1DC; color:#93732A;}
 .btn-tile-neutral{background:#F1EEE5; color:var(--muted);}
+.btn-tile-rose{background:#FBE7F0; color:#A34C74;}
+.btn-tile-mint{background:#E3F3EA; color:#2F7A55;}
 
 /* ---- Cards / inputs ---- */
 .card{background:var(--paper); border:1px solid var(--line); border-radius:18px; padding:18px; margin-bottom:14px;}
@@ -100,8 +102,8 @@ input,select,textarea{font-family:inherit; font-size:14.5px;}
   background:white; border-top:1px solid var(--line); display:flex; z-index:30;
   padding:8px 6px calc(8px + env(safe-area-inset-bottom));
 }
-.navbtn{flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; padding:6px 2px; border-radius:10px; background:transparent; color:var(--muted); font-size:10.5px; font-weight:700;}
-.navbtn .ic{font-size:19px;}
+.navbtn{flex:1; display:flex; align-items:center; justify-content:center; padding:10px 2px; border-radius:10px; background:transparent; color:var(--muted);}
+.navbtn .ic{font-size:22px;}
 .navbtn.active{color:var(--navy);}
 
 /* ---- Product grid ---- */
@@ -673,6 +675,8 @@ input,select,textarea{font-family:inherit; font-size:14.5px;}
       <button class="btn-tile btn-tile-sage" onclick="showScreen('v-nuevo-comercio')"><i class="ti ti-building-store ic" aria-hidden="true"></i>Sumar comercio</button>
       <button class="btn-tile btn-tile-gold" onclick="mostrarMiQR('vendedor')"><i class="ti ti-qrcode ic" aria-hidden="true"></i>Mi código QR</button>
       <button class="btn-tile btn-tile-neutral" onclick="abrirEditarVendedor()"><i class="ti ti-edit ic" aria-hidden="true"></i>Editar info</button>
+      <button class="btn-tile btn-tile-rose" onclick="showScreen('v-solicitudes')"><i class="ti ti-message-2 ic" aria-hidden="true"></i>Pedidos</button>
+      <button class="btn-tile btn-tile-mint" onclick="showScreen('v-stats')"><i class="ti ti-chart-bar ic" aria-hidden="true"></i>Stats</button>
     </div>
     <div id="vProdList"></div>
   </div>
@@ -1292,15 +1296,22 @@ function escanearCodigoConCamara(){
 /* ================= BOTTOM NAV ================= */
 const navByRole = {
   vendedor:[
-    {key:'v-catalogo', ic:'🗂️', label:'Catálogo'},
-    {key:'v-solicitudes', ic:'💬', label:'Pedidos'},
-    {key:'v-stats', ic:'📊', label:'Stats'},
+    {key:'v-catalogo', ic:'ti-home', action:"showScreen('v-catalogo')"},
+    {key:'feed', ic:'ti-search', action:"irInicio()"},
+    {key:'v-solicitudes', ic:'ti-bell', action:"showScreen('v-solicitudes')"},
+    {key:'v-perfil', ic:'ti-user', action:"abrirEditarVendedor()"},
   ],
   comercio:[
-    {key:'c-panel', ic:'🏬', label:'Panel'},
+    {key:'c-panel', ic:'ti-home', action:"showScreen('c-panel')"},
+    {key:'feed', ic:'ti-search', action:"irInicio()"},
+    {key:'c-panel-actividad', ic:'ti-bell', action:"showScreen('c-panel')"},
+    {key:'c-perfil', ic:'ti-user', action:"abrirEditarComercio()"},
   ],
   cliente:[
-    {key:'cl-buscador', ic:'🔎', label:'Buscar'},
+    {key:'feed', ic:'ti-home', action:"irInicio()"},
+    {key:'cl-buscador', ic:'ti-search', action:"showScreen('cl-buscador')"},
+    {key:'cl-actividad', ic:'ti-bell', action:"toast('Todavía no tenés pedidos')"},
+    {key:'cl-perfil', ic:'ti-user', action:"toast('Próximamente')"},
   ]
 };
 function updateBottomNav(current){
@@ -1308,8 +1319,8 @@ function updateBottomNav(current){
   if(!state.role || !navByRole[state.role]){ nav.classList.add('hidden'); return; }
   nav.classList.remove('hidden');
   nav.innerHTML = navByRole[state.role].map(item=>`
-    <button class="navbtn ${current===item.key?'active':''}" onclick="showScreen('${item.key}')">
-      <span class="ic">${item.ic}</span><span>${item.label}</span>
+    <button class="navbtn ${current===item.key?'active':''}" onclick="${item.action}">
+      <i class="ti ${item.ic} ic" aria-hidden="true"></i>
     </button>`).join('');
 }
 
