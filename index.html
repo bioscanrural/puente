@@ -198,6 +198,13 @@ input,select,textarea{font-family:inherit; font-size:14.5px;}
   transition:background .15s ease, transform .1s ease;
 }
 .link-back:active{transform:scale(0.97); background:var(--cream);}
+.cerrar-sesion-btn{
+  font-size:12px; font-weight:700; color:#c23b3b; display:inline-flex; align-items:center; gap:6px;
+  margin-bottom:16px; background:white; border:1.5px solid #f0d0d0; padding:8px 14px;
+  border-radius:100px; cursor:pointer; user-select:none; float:right;
+  transition:background .15s ease, transform .1s ease;
+}
+.cerrar-sesion-btn:active{transform:scale(0.97); background:#fff0f0;}
 .two-col{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
 
 /* ---- Splash ---- */
@@ -647,7 +654,7 @@ input,select,textarea{font-family:inherit; font-size:14.5px;}
 
   <!-- ============ VENDEDOR: CATALOGO ============ -->
   <div class="screen hidden" id="screen-v-catalogo">
-    <div class="link-back" onclick="goHome()">← Salir</div>
+    <button class="cerrar-sesion-btn" onclick="confirmarCierreSesion()">👤 Cerrar sesión</button>
     <div class="kicker">Tu catálogo</div>
     <h1 class="page-title">Hola, <span id="vNombre">Vendedor</span></h1>
     <p class="page-sub">Estos son los productos que armaste. Compartilos por WhatsApp o generá un código cuando alguien quiera comprar.</p>
@@ -811,7 +818,7 @@ input,select,textarea{font-family:inherit; font-size:14.5px;}
 
   <!-- ============ COMERCIO: PANEL ============ -->
   <div class="screen hidden" id="screen-c-panel">
-    <div class="link-back" onclick="goHome()">← Salir</div>
+    <button class="cerrar-sesion-btn" onclick="confirmarCierreSesion()">👤 Cerrar sesión</button>
     <div class="kicker">Panel de comercio</div>
     <h1 class="page-title"><span id="cNombre">Tu comercio</span></h1>
     <button class="btn btn-ghost" style="margin-bottom:14px" onclick="mostrarMiQR('comercio')">Mostrar mi código QR</button>
@@ -990,7 +997,7 @@ input,select,textarea{font-family:inherit; font-size:14.5px;}
 
   <!-- ============ CLIENTE: BUSCADOR ============ -->
   <div class="screen hidden" id="screen-cl-buscador">
-    <div class="link-back" onclick="goHome()">← Salir</div>
+    <button class="cerrar-sesion-btn" onclick="confirmarCierreSesion()">👤 Cerrar sesión</button>
     <div class="kicker">Tu ciudad</div>
     <h1 class="page-title">Buscá vendedores o productos</h1>
 
@@ -1200,7 +1207,16 @@ function irInicio(){
   showScreen('feed');
 }
 function onRoleChipClick(){
-  if(!state.role) showScreen('home');
+  if(!state.role){ showScreen('home'); return; }
+  if(state.role==='vendedor') showScreen('v-catalogo');
+  else if(state.role==='comercio') showScreen('c-panel');
+  else if(state.role==='cliente') showScreen('cl-buscador');
+}
+
+function confirmarCierreSesion(){
+  if(confirm('¿Querés cerrar sesión?')){
+    goHome();
+  }
 }
 
 function nextId(prefix){ return prefix + '-' + (state.seq++); }
