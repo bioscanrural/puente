@@ -2141,6 +2141,7 @@ function agregarProductoAMiCatalogo(productoId){
   state.catalogoVendedor.push({id: nextId('sel'), vendedorId: state.currentUser.id, productoId});
   toast('¡Sumado a tu catálogo! ✅');
   renderVendedorStats();
+  renderVendedorCatalogo(); // así "Tu catálogo" ya queda al día apenas volvés a esa pantalla, vengas de donde vengas
   // Si estamos parados en la pantalla de "elegir productos de un comercio", la refrescamos ahí mismo.
   // Si el agregado vino desde el feed principal, simplemente volvemos a dibujar la grilla del feed.
   if(comercioElegido && document.getElementById('screen-v-elegir-producto') && !document.getElementById('screen-v-elegir-producto').classList.contains('hidden')){
