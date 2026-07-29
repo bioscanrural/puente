@@ -872,7 +872,7 @@ input,select,textarea{font-family:inherit; font-size:14.5px;}
       <div class="field"><label>Nombre del producto</label><input id="cnpNombre" placeholder="Ej: Combo desayuno x2"></div>
       <div class="two-col">
         <div class="field"><label>Precio</label><input id="cnpPrecio" type="number" placeholder="Ej: 8500"></div>
-        <div class="field"><label>Comisión para vendedores (%)</label><input id="cnpComision" type="number" min="0" max="100" placeholder="0 = sin vendedores"></div>
+        <div class="field"><label>Comisión para vendedores (%) *</label><input id="cnpComision" type="number" min="0" max="100" placeholder="Obligatorio — 0 si no querés vendedores"></div>
       </div>
       <div class="field">
         <label>Tipo de oferta</label>
@@ -2025,7 +2025,7 @@ function crearProductoComercio(){
   if(!publicidadActiva(c)){ toast('Necesitás tener la publicidad mensual activa para cargar productos propios'); return; }
   const nombre = document.getElementById('cnpNombre').value.trim();
   const precio = parseFloat(document.getElementById('cnpPrecio').value);
-  const comision = parseFloat(document.getElementById('cnpComision').value) || 0;
+  const comisionInput = document.getElementById('cnpComision').value;
   const rubro = document.getElementById('cnpRubro').value;
   const tipoOferta = document.getElementById('cnpTipoOferta').value;
   const descuento = parseFloat(document.getElementById('cnpDescuento').value) || null;
@@ -2034,6 +2034,9 @@ function crearProductoComercio(){
   if(!foto){ toast('Sacá o elegí una foto del producto para poder publicarlo'); return; }
   if(!nombre){ toast('Completá el nombre del producto'); return; }
   if(!precio){ toast('El precio es obligatorio'); return; }
+  if(comisionInput===''){ toast('Ingresá el % de comisión para vendedores (poné 0 si no querés vendedores)'); return; }
+  const comision = parseFloat(comisionInput);
+  if(isNaN(comision) || comision<0 || comision>100){ toast('La comisión tiene que ser un número entre 0 y 100'); return; }
   if(TIPOS_OFERTA[tipoOferta].descuento && !descuento){ toast('Ingresá el porcentaje de descuento'); return; }
 
   const p = {id: nextId('p'), comercioId:c.id, nombre, precio, comision, rubro, img:foto, origen:'comercio', tipoOferta, descuento};
@@ -2809,7 +2812,7 @@ function renderFeedGrid(origenTipo, chipsId, gridId, filtroActual, setFiltroFn){
     }
     const click = origenTipo==='comercio' ? `abrirOferta('${p.id}')` : `abrirCatalogoVendedor('${p._vendedorId}')`;
     const badge = etiquetaOferta(p);
-    const comisionBadge = p.comision>0 ? `<div class="feed-comision">💰 ${p.comision}% de comisión</div>` : '';
+    const comisionBadge = (state.role==='vendedor' && p.comision>0) ? `<div class="feed-comision">💰 ${p.comision}% de comisión</div>` : '';
     let botonVendedor = '';
     if(state.role==='vendedor' && p.comision>0){
       const yaEnCatalogo = state.catalogoVendedor.some(s=>s.vendedorId===state.currentUser.id && s.productoId===p.id);
@@ -3088,12 +3091,22 @@ function verProductosDeLocal(comercioId){
     grid.innerHTML = prods.map(p=>{
       const foto = p.img ? `<img src="${p.img}" alt="${p.nombre}">` : (p.foto||'📦');
       const badge = etiquetaOferta(p);
+      const comisionBadge = (state.role==='vendedor' && p.comision>0) ? `<div class="feed-comision">💰 ${p.comision}% de comisión</div>` : '';
+      let botonVendedor = '';
+      if(state.role==='vendedor' && p.comision>0){
+        const yaEnCatalogo = state.catalogoVendedor.some(s=>s.vendedorId===state.currentUser.id && s.productoId===p.id);
+        botonVendedor = yaEnCatalogo
+          ? `<button class="share-btn" disabled style="opacity:.55; cursor:default;" onclick="event.stopPropagation()">✅ En tu catálogo</button>`
+          : `<button class="share-btn" onclick="event.stopPropagation(); agregarProductoAMiCatalogo('${p.id}')">➕ Sumar a mi catálogo</button>`;
+      }
       return `
         <div class="feed-prod-card" onclick="abrirOferta('${p.id}')">
           <div class="prod-photo">${foto}${badge ? `<span class="oferta-badge">${badge}</span>` : ''}</div>
           <div class="prod-body">
             <div class="prod-name">${p.nombre}</div>
             <div class="prod-price">$${p.precio.toLocaleString('es-AR')}</div>
+            ${comisionBadge}
+            ${botonVendedor}
           </div>
         </div>`;
     }).join('');
