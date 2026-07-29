@@ -705,12 +705,12 @@ input,select,textarea{font-family:inherit; font-size:14.5px;}
     <div class="link-back" onclick="showScreen('v-catalogo')">← Volver al catálogo</div>
     <div class="kicker">Elegir productos</div>
     <h1 class="page-title">¿De qué comercio?</h1>
-    <p class="page-sub">Elegí uno de los comercios a los que estás sumado para ver su catálogo real (precio y comisión ya definidos por ellos).</p>
+    <p class="page-sub">Elegí un comercio de tu ciudad para ver su catálogo real (precio y comisión ya definidos por ellos).</p>
     <div id="vComerciosList"></div>
     <div class="empty hidden" id="vSinComercios">
       <div class="ic">🏬</div>
-      <div class="t">Todavía no estás sumado a ningún comercio</div>
-      <div class="s">Pedile a un comercio que te escanee con tu QR personal, o sumá uno nuevo.</div>
+      <div class="t">Todavía no hay comercios con productos disponibles</div>
+      <div class="s">En cuanto un comercio de tu ciudad cargue un producto con comisión, va a aparecer acá.</div>
     </div>
     <button class="btn btn-ghost" style="margin-top:10px" onclick="showScreen('v-nuevo-comercio')">🏬 Sumar comercio nuevo</button>
   </div>
@@ -823,22 +823,7 @@ input,select,textarea{font-family:inherit; font-size:14.5px;}
       <button class="btn btn-ghost" onclick="escanearCodigoConCamara()">📷 Escanear con cámara</button>
     </div>
     <div class="divider"></div>
-    <div class="page-sub" style="font-weight:700; color:var(--navy); margin-bottom:10px;">Sumar un vendedor</div>
-    <div class="card" style="text-align:center;">
-      <button class="btn btn-primary btn-sm" style="margin-bottom:12px; width:100%" onclick="escanearVendedorConCamara()">📷 Escanear QR del vendedor</button>
-      <div style="font-size:12px; color:var(--muted); margin-bottom:12px;">— o escribí su código manualmente —</div>
-      <div class="field" style="text-align:left;">
-        <label>Código de identidad del vendedor</label>
-        <input id="scanVendedorQR" placeholder="Ej: VQR-0001" style="text-transform:uppercase">
-      </div>
-      <button class="btn btn-green btn-sm" style="margin-bottom:16px" onclick="adherirPorQR()">Sumar con ese código</button>
-      <div class="field" style="margin-top:4px; text-align:left;">
-        <label>¿No tiene cuenta todavía? Cargalo vos</label>
-        <input id="addVendedorNombre" placeholder="Nombre del vendedor">
-      </div>
-      <button class="btn btn-primary btn-sm" onclick="crearVendedorPasivo()">Registrar vendedor</button>
-    </div>
-    <div class="page-sub" style="font-weight:700; color:var(--navy); margin-bottom:10px;">Vendedores adheridos</div>
+    <div class="page-sub" style="font-weight:700; color:var(--navy); margin-bottom:10px;">Vendedores vendiendo tus productos</div>
     <div id="cVendedoresList"></div>
     <div class="divider"></div>
     <div class="page-sub" style="font-weight:700; color:var(--navy); margin-bottom:10px;">📬 Pedidos de vendedores</div>
@@ -1267,13 +1252,6 @@ function escanearCodigoConCamara(){
   iniciarEscaneoCamara('Escaneá el código del cliente', (texto)=>{
     document.getElementById('scanCodigo').value = texto.trim().toUpperCase();
     escanearCodigo();
-  });
-}
-
-function escanearVendedorConCamara(){
-  iniciarEscaneoCamara('Escaneá el QR del vendedor', (texto)=>{
-    document.getElementById('scanVendedorQR').value = texto.trim().toUpperCase();
-    adherirPorQR();
   });
 }
 
@@ -2084,17 +2062,20 @@ async function cargarProductosGuardados(ownerUid){
 
 function renderVElegirComercio(){
   const a = estadoActividad(state.currentUser);
-  const misComercios = state.comercios.filter(c => (c.adheridos||[]).includes(state.currentUser.id));
+  // Ya no hace falta "sumarse" a un comercio: cualquier vendedor puede ver el catálogo
+  // de cualquier comercio de su ciudad que tenga productos con comisión para vendedores.
+  const idsConProductosVendibles = new Set(state.productos.filter(p=>p.comision>0).map(p=>p.comercioId));
+  const misComercios = state.comercios.filter(c => c.ciudad===state.currentUser.ciudad && idsConProductosVendibles.has(c.id));
   const list = document.getElementById('vComerciosList');
   document.getElementById('vSinComercios').classList.toggle('hidden', misComercios.length>0);
   list.innerHTML = misComercios.map(c=>{
-    const cantidad = state.productos.filter(p=>p.comercioId===c.id).length;
+    const cantidad = state.productos.filter(p=>p.comercioId===c.id && p.comision>0).length;
     return `
       <div class="guia-mini-card" style="cursor:pointer;" onclick="abrirComercioParaElegir('${c.id}')">
         <div class="ic-wrap">${c.img ? `<img src="${c.img}" style="width:100%;height:100%;object-fit:cover;border-radius:12px;">` : '🏬'}</div>
         <div class="info">
           <div class="nombre">${c.nombre}</div>
-          <div class="meta">${cantidad} producto${cantidad===1?'':'s'} en su catálogo</div>
+          <div class="meta">${cantidad} producto${cantidad===1?'':'s'} con comisión disponible</div>
         </div>
         <span style="color:var(--muted)">›</span>
       </div>`;
@@ -2347,24 +2328,22 @@ function renderComercioPanel(){
   renderPublicidadBox();
   renderProductosPropios();
   renderPedidosProducto();
-  if(!state.currentUser.adheridos) state.currentUser.adheridos = [];
   const misProds = state.productos.filter(p=>p.comercioId===state.currentUser.id);
   const misProdIds = new Set(misProds.map(p=>p.id));
 
-  // vendedores adheridos + los que ya eligieron algún producto de este comercio (por si acaso)
+  // Ya no hace falta "sumar" vendedores a mano: cualquiera que haya elegido vender
+  // un producto tuyo aparece acá automáticamente.
   const idsConSeleccion = [...new Set(state.catalogoVendedor.filter(s=>misProdIds.has(s.productoId)).map(s=>s.vendedorId))];
-  const todosIds = [...new Set([...state.currentUser.adheridos, ...idsConSeleccion])];
 
   const list = document.getElementById('cVendedoresList');
-  if(todosIds.length===0){
-    list.innerHTML = `<div class="empty"><div class="ic">🤝</div><div class="t">Todavía no tenés vendedores</div><div class="s">Escaneá el QR de un vendedor, o esperá a que un vendedor te agregue.</div></div>`;
+  if(idsConSeleccion.length===0){
+    list.innerHTML = `<div class="empty"><div class="ic">🤝</div><div class="t">Todavía ningún vendedor eligió tus productos</div><div class="s">En cuanto pongas comisión en un producto, va a estar disponible para que lo elijan.</div></div>`;
   } else {
-    list.innerHTML = todosIds.map(id=>{
+    list.innerHTML = idsConSeleccion.map(id=>{
       const v = state.vendedores.find(x=>x.id===id);
       const count = state.catalogoVendedor.filter(s=>s.vendedorId===id && misProdIds.has(s.productoId)).length;
-      const pendiente = v && v.pasivo;
       return `<div class="list-row"><div class="av" style="background:var(--green)">🛍️</div>
-        <div class="main"><div class="t">${v?v.nombre:'—'} ${pendiente?'<span class=\"pill pill-navy\" style=\"margin-left:6px\">Sin cuenta activa</span>':''}</div>
+        <div class="main"><div class="t">${v?v.nombre:'—'}</div>
         <div class="s">${count} producto(s) tuyos elegidos para vender</div></div></div>`;
     }).join('');
   }
@@ -2397,27 +2376,14 @@ function marcarPedidoAtendido(pedidoId){
   renderPedidosProducto();
 }
 
-function adherirPorQR(){
-  const codigo = document.getElementById('scanVendedorQR').value.trim().toUpperCase();
-  if(!codigo){ toast('Escaneá o ingresá el código del vendedor'); return; }
-  const v = state.vendedores.find(x=>x.qrPersonal === codigo);
-  if(!v){ toast('No encontramos ningún vendedor con ese código'); return; }
-  if(!state.currentUser.adheridos) state.currentUser.adheridos = [];
-  if(state.currentUser.adheridos.includes(v.id)){ toast(v.nombre + ' ya estaba sumado a tu comercio'); return; }
-  state.currentUser.adheridos.push(v.id);
-  document.getElementById('scanVendedorQR').value = '';
-  toast('¡'+v.nombre+' quedó vinculado con todos sus datos! ✅');
-  renderComercioPanel();
-}
-
 function mostrarMiQR(tipo){
   const u = state.currentUser;
   document.getElementById('miQrCodigo').textContent = u.qrPersonal;
   document.getElementById('miQrNombre').textContent = u.nombre + (u.usuario ? ' · @'+u.usuario : '');
   document.getElementById('miQrTitle').textContent = tipo==='vendedor' ? 'Tu QR de vendedor' : 'Tu QR de comercio';
   document.getElementById('miQrSub').textContent = tipo==='vendedor'
-    ? 'Mostrale este QR a cualquier comercio. Al escanearlo, te suma como vendedor con tus datos ya cargados — sin tener que tipear nada.'
-    : 'Mostrale este QR a cualquier vendedor que quiera sumarte a su catálogo. Con esto ya te identifica automáticamente.';
+    ? 'Este es tu código de identificación único en PuenT.'
+    : 'Este es el código de identificación único de tu comercio en PuenT.';
   renderQR(document.getElementById('miQrFake'), u.qrPersonal);
   window._qrVolverA = tipo==='vendedor' ? 'v-catalogo' : 'c-panel';
   showScreen('mi-qr');
@@ -2426,17 +2392,6 @@ function volverDeQR(){
   showScreen(window._qrVolverA || 'home');
 }
 
-function crearVendedorPasivo(){
-  const nombre = document.getElementById('addVendedorNombre').value.trim();
-  if(!nombre){ toast('Ingresá el nombre del vendedor'); return; }
-  const v = {id: nextId('v'), nombre, ciudad: state.currentUser.ciudad, zona:'A confirmar', pasivo:true};
-  state.vendedores.push(v);
-  if(!state.currentUser.adheridos) state.currentUser.adheridos = [];
-  state.currentUser.adheridos.push(v.id);
-  document.getElementById('addVendedorNombre').value = '';
-  toast('Vendedor cargado. Cuando se registre por su cuenta, va a ver este comercio disponible.');
-  renderComercioPanel();
-}
 function renderComercioHistorial(){
   const hist = state.ventas.filter(v=>v.comercioId===state.currentUser.id && v.estado==='confirmada');
   const el = document.getElementById('cHistorial');
@@ -3138,7 +3093,8 @@ function renderLocales(){
     return;
   }
   grid.innerHTML = locales.map(c=>{
-    const vendedores = (c.adheridos||[]).length;
+    const misProdIds = new Set(state.productos.filter(p=>p.comercioId===c.id).map(p=>p.id));
+    const vendedores = new Set(state.catalogoVendedor.filter(s=>misProdIds.has(s.productoId)).map(s=>s.vendedorId)).size;
     const productos = state.productos.filter(p=>p.comercioId===c.id).length;
     const cover = c.img ? `<img src="${c.img}" alt="${c.nombre}">` : '';
     const destacado = publicidadActiva(c);
