@@ -489,7 +489,8 @@ input,select,textarea{font-family:inherit; font-size:14.5px;}
     <div class="card" style="text-align:center;">
       <div class="prod-photo" style="height:150px; border-radius:14px; font-size:56px; margin-bottom:14px; overflow:hidden;" id="ofFoto">🎣</div>
       <h1 class="page-title" id="ofNombre" style="margin-bottom:4px;">Producto</h1>
-      <div class="prod-price" style="font-size:20px; margin-bottom:14px;" id="ofPrecio">$0</div>
+      <div class="prod-price" style="font-size:20px; margin-bottom:6px;" id="ofPrecio">$0</div>
+      <div id="ofStockInfo" style="margin-bottom:12px;"></div>
 
       <div class="card" style="background:var(--cream); text-align:left; margin-bottom:16px;">
         <div style="font-size:11px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.03em; margin-bottom:4px;">📍 Retirás en</div>
@@ -858,6 +859,10 @@ input,select,textarea{font-family:inherit; font-size:14.5px;}
       <div class="two-col">
         <div class="field"><label>Precio</label><input id="cnpPrecio" type="number" placeholder="Ej: 8500"></div>
         <div class="field"><label>Comisión para vendedores (%) *</label><input id="cnpComision" type="number" min="0" max="100" placeholder="Obligatorio — 0 si no querés vendedores"></div>
+      </div>
+      <div class="field">
+        <label>Stock disponible</label>
+        <input id="cnpStock" type="number" min="0" placeholder="Dejalo vacío si no querés limitar cantidad">
       </div>
       <div class="field">
         <label>Tipo de oferta</label>
@@ -1895,13 +1900,15 @@ function renderProductosPropios(){
   box.innerHTML = `<div class="prod-grid">` + propios.map(p=>{
     const foto = p.img ? `<img src="${p.img}" alt="${p.nombre}">` : p.foto;
     const badge = etiquetaOferta(p);
+    const stockInfo = stockBadge(p);
     return `
       <div class="prod-card">
-        <div class="prod-photo">${foto}${badge ? `<span class="oferta-badge">${badge}</span>` : ''}</div>
+        <div class="prod-photo">${foto}${badge ? `<span class="oferta-badge">${badge}</span>` : ''}${p.stock===0 ? '<span class="oferta-badge" style="background:#e05a5a;">Sin stock</span>' : ''}</div>
         <div class="prod-body">
           <div class="prod-name">${p.nombre}</div>
           <div class="prod-price">$${p.precio.toLocaleString('es-AR')}</div>
-          <div class="prod-tag">Venta directa del local</div>
+          ${p.comision>0 ? `<div class="feed-comision">💰 ${p.comision}% comisión</div>` : '<div class="prod-tag">Venta directa del local</div>'}
+          ${stockInfo}
         </div>
       </div>`;
   }).join('') + `</div>`;
@@ -1984,6 +1991,13 @@ function onTipoOfertaChange(){
   const tipo = document.getElementById('cnpTipoOferta').value;
   document.getElementById('cnpDescuentoBox').classList.toggle('hidden', !TIPOS_OFERTA[tipo].descuento);
 }
+function stockBadge(p){
+  if(p.stock === null || p.stock === undefined) return ''; // sin límite
+  if(p.stock === 0) return `<div style="font-size:10.5px; font-weight:700; color:#e05a5a; margin-top:4px;">❌ Sin stock disponible</div>`;
+  if(p.stock <= 3) return `<div style="font-size:10.5px; font-weight:700; color:#c47f00; margin-top:4px;">⚠️ Últimas ${p.stock} unidades</div>`;
+  return `<div style="font-size:10.5px; color:var(--muted); margin-top:4px;">📦 Stock: ${p.stock} unidades</div>`;
+}
+
 function etiquetaOferta(p){
   if(!p.tipoOferta || !TIPOS_OFERTA[p.tipoOferta] || p.tipoOferta==='normal') return null;
   const t = TIPOS_OFERTA[p.tipoOferta];
@@ -2017,11 +2031,14 @@ function crearProductoComercio(){
   if(isNaN(comision) || comision<0 || comision>100){ toast('La comisión tiene que ser un número entre 0 y 100'); return; }
   if(TIPOS_OFERTA[tipoOferta].descuento && !descuento){ toast('Ingresá el porcentaje de descuento'); return; }
 
-  const p = {id: nextId('p'), comercioId:c.id, nombre, precio, comision, rubro, img:foto, origen:'comercio', tipoOferta, descuento};
+  const stockInput = document.getElementById('cnpStock').value;
+  const stock = stockInput !== '' ? parseInt(stockInput) : null; // null = sin límite
+
+  const p = {id: nextId('p'), comercioId:c.id, nombre, precio, comision, rubro, img:foto, origen:'comercio', tipoOferta, descuento, stock, stockInicial: stock};
   state.productos.push(p);
   guardarProductoEnFirestore(p, c.uid);
   document.getElementById('cnpNombre').value=''; document.getElementById('cnpPrecio').value='';
-  document.getElementById('cnpComision').value='';
+  document.getElementById('cnpComision').value=''; document.getElementById('cnpStock').value='';
   document.getElementById('cnpDescuento').value=''; document.getElementById('cnpTipoOferta').value='unica';
   onTipoOfertaChange();
   document.getElementById('cnpFotoBox').innerHTML = `<div id="cnpFotoPreview" class="foto-upload-empty"><div class="foto-upload-ic">📷</div><div class="foto-upload-txt">Sacá una foto o elegí de la galería</div></div>`;
@@ -2442,8 +2459,15 @@ function confirmarVenta(){
   document.getElementById('scanCodigo').value='';
   const vend = state.vendedores.find(v=>v.id===venta.vendedorId);
   if(vend) vend.ultimaVenta = new Date().toISOString();
+  // Descontar del stock si el producto tiene límite
+  const prod = state.productos.find(p=>p.id===venta.productoId);
+  if(prod && prod.stock !== null && prod.stock !== undefined){
+    prod.stock = Math.max(0, prod.stock - 1);
+    guardarProductoEnFirestore(prod, state.currentUser.uid);
+  }
   toast(venta.sustituto ? 'Venta confirmada con reemplazo — comisión original acreditada ✅' : 'Venta confirmada — comisión acreditada ✅');
   renderComercioPanel();
+  renderFeed();
   showScreen('c-panel');
 }
 
@@ -2913,6 +2937,7 @@ function abrirOferta(prodId){
   document.getElementById('ofPrecio').innerHTML = '$'+p.precio.toLocaleString('es-AR') + (badge ? ` <span class="oferta-badge" style="position:static; display:inline-block; margin-left:8px; vertical-align:middle;">${badge}</span>` : '');
   document.getElementById('ofComercio').textContent = c ? c.nombre : 'Comercio';
   document.getElementById('ofDireccion').textContent = c ? (c.direccion || 'La Paz, Entre Ríos') : '';
+  document.getElementById('ofStockInfo').innerHTML = stockBadge(p);
 
   const banner = document.getElementById('ofVendedorBanner');
   if(state.role==='vendedor' && p.comision>0){
@@ -2938,7 +2963,14 @@ function abrirOferta(prodId){
   const ventaPrevia = buscarVentaPropiaGuardada(prodId);
   if(ventaPrevia){
     mostrarCodigoDeOferta(ventaPrevia);
+  } else if(p.stock !== null && p.stock !== undefined && p.stock <= 0){
+    document.getElementById('ofAntes').innerHTML = `<div style="text-align:center; padding:16px 0; color:#e05a5a; font-weight:700; font-size:14px;">😔 Este producto ya no tiene stock disponible</div>`;
+    document.getElementById('ofAntes').classList.remove('hidden');
+    document.getElementById('ofDespues').classList.add('hidden');
   } else {
+    document.getElementById('ofAntes').innerHTML = `
+      <p style="font-size:12.5px; color:var(--muted); margin-bottom:10px;">Si te sirve la ubicación, generá tu código y presentalo cuando llegues al local para retirarlo.</p>
+      <button class="btn btn-primary" onclick="quieroEstaOferta()">Quiero esta oferta — generar mi código</button>`;
     document.getElementById('ofAntes').classList.remove('hidden');
     document.getElementById('ofDespues').classList.add('hidden');
   }
@@ -3000,6 +3032,10 @@ function vincularVentaConCliente(clienteData){
 }
 function quieroEstaOferta(){
   const p = state.productos.find(x=>x.id===ofertaAbierta);
+  if(p.stock !== null && p.stock !== undefined && p.stock <= 0){
+    toast('Este producto ya no tiene stock disponible 😔');
+    return;
+  }
   const c = state.comercios.find(x=>x.id===p.comercioId);
   const codigo = genCodigo();
   const clienteNombre = (state.role==='cliente' && state.currentUser?.nombre) ? state.currentUser.nombre : 'Cliente del feed';
