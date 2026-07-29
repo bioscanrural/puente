@@ -875,10 +875,10 @@ input,select,textarea{font-family:inherit; font-size:14.5px;}
 
   <!-- ============ COMERCIO: NUEVO PRODUCTO PROPIO ============ -->
   <div class="screen hidden" id="screen-c-nuevo-producto">
-    <div class="link-back" onclick="showScreen('c-panel')">← Volver al panel</div>
+    <div class="link-back" onclick="showScreen(productoEditandoId?'c-productos':'c-panel')">← Volver</div>
     <div class="kicker">Publicidad ElPuente</div>
-    <h1 class="page-title">Cargar producto</h1>
-    <p class="page-sub">Vos decidís el precio y la comisión. Si ponés comisión, cualquier vendedor sumado a tu comercio va a poder elegir venderlo. Si la dejás en 0, queda como venta directa desde el feed, sin vendedores.</p>
+    <h1 class="page-title" id="cnpTitulo">Cargar producto</h1>
+    <p class="page-sub" id="cnpSub">Vos decidís el precio y la comisión. Si ponés comisión, cualquier vendedor sumado a tu comercio va a poder elegir venderlo. Si la dejás en 0, queda como venta directa desde el feed, sin vendedores.</p>
     <div class="card">
       <div class="field">
         <label>Foto del producto</label>
@@ -933,7 +933,8 @@ input,select,textarea{font-family:inherit; font-size:14.5px;}
         <p style="font-size:12.5px; color:var(--muted); line-height:1.5;">El cliente va a ver tu dirección y un botón "Cómo llegar" con Google Maps para venir a buscarlo.</p>
       </div>
     </div>
-    <button class="btn btn-primary" onclick="crearProductoComercio()">Publicar producto</button>
+    <button class="btn btn-primary" id="cnpBtnGuardar" onclick="crearProductoComercio()">Publicar producto</button>
+    <button class="btn btn-ghost hidden" id="cnpBtnEliminar" style="margin-top:10px; color:#B65B5B;" onclick="eliminarProductoPropio()">Eliminar producto</button>
   </div>
 
   <!-- ============ COMERCIO: EDITAR MI INFORMACIÓN ============ -->
@@ -2068,6 +2069,7 @@ function renderProductosPropios(elId){
           <div class="prod-price">$${p.precio.toLocaleString('es-AR')}</div>
           ${p.comision>0 ? `<div class="feed-comision">💰 ${p.comision}% comisión</div>` : '<div class="prod-tag">Venta directa del local</div>'}
           ${stockInfo}
+          <button class="btn btn-ghost btn-sm" style="width:100%; margin-top:8px;" onclick="abrirEditarProducto('${p.id}')"><i class="ti ti-edit" style="font-size:14px; vertical-align:-2px;" aria-hidden="true"></i> Editar</button>
         </div>
       </div>`;
   }).join('') + `</div>`;
@@ -2176,7 +2178,63 @@ function irNuevoProductoComercioSeguro(){
     toast('Activá la venta directa para poder cargar productos propios');
     return;
   }
+  abrirNuevoProducto();
+}
+
+let productoEditandoId = null;
+
+function abrirNuevoProducto(){
+  productoEditandoId = null;
+  document.getElementById('cnpTitulo').textContent = 'Cargar producto';
+  document.getElementById('cnpSub').textContent = 'Vos decidís el precio y la comisión. Si ponés comisión, cualquier vendedor sumado a tu comercio va a poder elegir venderlo. Si la dejás en 0, queda como venta directa desde el feed, sin vendedores.';
+  document.getElementById('cnpBtnGuardar').textContent = 'Publicar producto';
+  document.getElementById('cnpBtnEliminar').classList.add('hidden');
+  document.getElementById('cnpNombre').value=''; document.getElementById('cnpPrecio').value='';
+  document.getElementById('cnpComision').value=''; document.getElementById('cnpStock').value='';
+  document.getElementById('cnpDescuento').value=''; document.getElementById('cnpTipoOferta').value='unica';
+  onTipoOfertaChange();
+  document.getElementById('cnpFotoBox').innerHTML = `<div id="cnpFotoPreview" class="foto-upload-empty"><div class="foto-upload-ic">📷</div><div class="foto-upload-txt">Sacá una foto o elegí de la galería</div></div>`;
+  document.getElementById('cnpFotoEstado').textContent = '';
+  document.getElementById('cnpFotoEstado').className = 'foto-upload-estado';
+  delete fotosCargadas['cnp'];
   irNuevoProductoComercio();
+}
+
+function abrirEditarProducto(prodId){
+  const p = state.productos.find(x=>x.id===prodId);
+  if(!p) return;
+  productoEditandoId = prodId;
+  document.getElementById('cnpTitulo').textContent = 'Editar producto';
+  document.getElementById('cnpSub').textContent = 'Cambiá lo que necesites: precio, comisión, stock, foto o cualquier otro dato. Los cambios se aplican al instante.';
+  document.getElementById('cnpBtnGuardar').textContent = 'Guardar cambios';
+  document.getElementById('cnpBtnEliminar').classList.remove('hidden');
+  document.getElementById('cnpNombre').value = p.nombre;
+  document.getElementById('cnpPrecio').value = p.precio;
+  document.getElementById('cnpComision').value = p.comision;
+  document.getElementById('cnpStock').value = (p.stock===null || p.stock===undefined) ? '' : p.stock;
+  document.getElementById('cnpDescuento').value = p.descuento || '';
+  document.getElementById('cnpTipoOferta').value = p.tipoOferta || 'unica';
+  onTipoOfertaChange();
+  const sel = document.getElementById('cnpRubro');
+  if(p.rubro) sel.value = p.rubro;
+  fotosCargadas['cnp'] = p.img;
+  document.getElementById('cnpFotoBox').innerHTML = `<img src="${p.img}" alt="Foto del producto">`;
+  document.getElementById('cnpFotoEstado').textContent = '✅ Foto actual — tocá la imagen para cambiarla';
+  document.getElementById('cnpFotoEstado').className = 'foto-upload-estado';
+  showScreen('c-nuevo-producto');
+}
+
+function eliminarProductoPropio(){
+  if(!productoEditandoId) return;
+  if(!confirm('¿Eliminar este producto? Esta acción no se puede deshacer.')) return;
+  const idx = state.productos.findIndex(x=>x.id===productoEditandoId);
+  if(idx>=0) state.productos.splice(idx,1);
+  if(firebaseListo) db.collection('productos').doc(productoEditandoId).delete().catch(e=>console.error('No se pudo eliminar el producto:', e));
+  productoEditandoId = null;
+  toast('Producto eliminado');
+  renderProductosPropios();
+  renderFeed();
+  showScreen('c-productos');
 }
 
 function crearProductoComercio(){
@@ -2201,17 +2259,22 @@ function crearProductoComercio(){
   const stockInput = document.getElementById('cnpStock').value;
   const stock = stockInput !== '' ? parseInt(stockInput) : null; // null = sin límite
 
+  if(productoEditandoId){
+    const p = state.productos.find(x=>x.id===productoEditandoId);
+    if(!p){ toast('No se encontró el producto'); return; }
+    Object.assign(p, {nombre, precio, comision, rubro, img:foto, tipoOferta, descuento, stock});
+    guardarProductoEnFirestore(p, c.uid);
+    toast('Cambios guardados ✅');
+    productoEditandoId = null;
+    renderProductosPropios();
+    renderFeed();
+    showScreen('c-productos');
+    return;
+  }
+
   const p = {id: nextId('p'), comercioId:c.id, nombre, precio, comision, rubro, img:foto, origen:'comercio', tipoOferta, descuento, stock, stockInicial: stock};
   state.productos.push(p);
   guardarProductoEnFirestore(p, c.uid);
-  document.getElementById('cnpNombre').value=''; document.getElementById('cnpPrecio').value='';
-  document.getElementById('cnpComision').value=''; document.getElementById('cnpStock').value='';
-  document.getElementById('cnpDescuento').value=''; document.getElementById('cnpTipoOferta').value='unica';
-  onTipoOfertaChange();
-  document.getElementById('cnpFotoBox').innerHTML = `<div id="cnpFotoPreview" class="foto-upload-empty"><div class="foto-upload-ic">📷</div><div class="foto-upload-txt">Sacá una foto o elegí de la galería</div></div>`;
-  document.getElementById('cnpFotoEstado').textContent = '';
-  document.getElementById('cnpFotoEstado').className = 'foto-upload-estado';
-  delete fotosCargadas['cnp'];
   toast('Producto publicado en tu ficha y en el feed de La Paz ✅');
   renderProductosPropios();
   renderFeed();
