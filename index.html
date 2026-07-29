@@ -668,6 +668,7 @@ input,select,textarea{font-family:inherit; font-size:14.5px;}
     <button class="cerrar-sesion-btn" onclick="confirmarCierreSesion()">👤 Cerrar sesión</button>
     <div class="kicker">Tu catálogo</div>
     <h1 class="page-title">Hola, <span id="vNombre">Vendedor</span></h1>
+    <div id="vMiValoracion" style="margin:-8px 0 14px;"></div>
     <p class="page-sub">Estos son los productos que armaste. Compartilos por WhatsApp o generá un código cuando alguien quiera comprar.</p>
     <div id="actividadBox"></div>
     <div class="btn-grid" style="margin-bottom:16px">
@@ -836,6 +837,7 @@ input,select,textarea{font-family:inherit; font-size:14.5px;}
     <button class="cerrar-sesion-btn" onclick="confirmarCierreSesion()">👤 Cerrar sesión</button>
     <div class="kicker">Panel de comercio</div>
     <h1 class="page-title"><span id="cNombre">Tu comercio</span></h1>
+    <div id="cMiValoracion" style="margin:-8px 0 14px;"></div>
     <div id="publicidadBox"></div>
     <div class="btn-grid" style="margin-bottom:16px">
       <button class="btn-tile btn-tile-coral" onclick="irNuevoProductoComercioSeguro()"><i class="ti ti-plus ic" aria-hidden="true"></i>Cargar producto</button>
@@ -1075,6 +1077,23 @@ input,select,textarea{font-family:inherit; font-size:14.5px;}
 <div class="bottomnav hidden" id="bottomnav"></div>
 <div id="toast"></div>
 
+<!-- ============ MODAL: VALORAR ============ -->
+<div class="hidden" id="modalValorar" style="position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:200; display:flex; align-items:center; justify-content:center; padding:20px;">
+  <div class="card" style="width:100%; max-width:340px; margin:0; text-align:center;">
+    <div class="page-sub" style="margin-bottom:2px;">Calificar a</div>
+    <div class="page-title" style="font-size:18px; margin-bottom:14px;" id="valorarNombre">—</div>
+    <div id="valorarEstrellas" style="display:flex; justify-content:center; gap:6px; margin-bottom:14px;"></div>
+    <div class="field" style="text-align:left;">
+      <label>Comentario (opcional)</label>
+      <textarea id="valorarComentario" rows="2" placeholder="¿Cómo fue la experiencia?"></textarea>
+    </div>
+    <div class="btn-block-row" style="margin-top:10px;">
+      <button class="btn btn-ghost" onclick="cerrarModalValorar()">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarValoracion()">Enviar</button>
+    </div>
+  </div>
+</div>
+
 <!-- ================= LECTOR DE CÁMARA (QR) ================= -->
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 
@@ -1149,6 +1168,7 @@ let state = {
   pedidosProducto: [],    // {id, comercioId, vendedorId, vendedorNombre, nombreSugerido, nota, estado}
   solicitudes: [],
   ventas: [],
+  valoraciones: [], // {id, deUid, deRol, deNombre, paraUid, paraRol, estrellas, comentario, fecha, ventaId}
   seq: 1,
 };
 
@@ -1247,6 +1267,64 @@ function confirmarCierreSesion(){
 }
 
 function nextId(prefix){ return prefix + '-' + (state.seq++); }
+
+/* ================= VALORACIONES (comercio, vendedor y cliente se califican entre sí) ================= */
+function promedioDe(uid){
+  const propias = state.valoraciones.filter(v=>v.paraUid===uid);
+  if(propias.length===0) return {prom:0, total:0};
+  const suma = propias.reduce((a,v)=>a+v.estrellas, 0);
+  return {prom: suma/propias.length, total: propias.length};
+}
+function estrellasHtml(prom, total){
+  let out = '';
+  for(let i=1;i<=5;i++) out += `<i class="ti ${i<=Math.round(prom)?'ti-star-filled':'ti-star'}" style="font-size:14px; color:${i<=Math.round(prom)?'#D9A441':'var(--line)'}"></i>`;
+  return `<span style="display:inline-flex; align-items:center; gap:2px; vertical-align:middle;">${out}<span style="font-size:12px; color:var(--muted); margin-left:4px;">${total>0 ? prom.toFixed(1)+' ('+total+')' : 'Sin valoraciones'}</span></span>`;
+}
+let _valorandoDestino = null; // {uid, rol, nombre, ventaId}
+let _valorandoEstrellas = 0;
+function abrirModalValorar(paraUid, paraRol, paraNombre, ventaId){
+  if(!paraUid || paraUid===state.currentUser?.uid) return;
+  _valorandoDestino = {uid:paraUid, rol:paraRol, nombre:paraNombre, ventaId:ventaId||null};
+  _valorandoEstrellas = 0;
+  document.getElementById('valorarNombre').textContent = paraNombre;
+  document.getElementById('valorarComentario').value = '';
+  pintarEstrellasModal();
+  document.getElementById('modalValorar').classList.remove('hidden');
+}
+function cerrarModalValorar(){
+  document.getElementById('modalValorar').classList.add('hidden');
+}
+function elegirEstrella(n){
+  _valorandoEstrellas = n;
+  pintarEstrellasModal();
+}
+function pintarEstrellasModal(){
+  const cont = document.getElementById('valorarEstrellas');
+  cont.innerHTML = [1,2,3,4,5].map(n=>
+    `<i class="ti ${n<=_valorandoEstrellas?'ti-star-filled':'ti-star'}" style="font-size:30px; color:${n<=_valorandoEstrellas?'#D9A441':'var(--line)'}; cursor:pointer;" onclick="elegirEstrella(${n})"></i>`
+  ).join('');
+}
+function guardarValoracion(){
+  if(!_valorandoDestino || _valorandoEstrellas===0){ toast('Elegí de 1 a 5 estrellas'); return; }
+  const v = {
+    id: nextId('val'),
+    deUid: state.currentUser?.uid || state.currentUser?.id,
+    deRol: state.role,
+    deNombre: state.currentUser?.nombre || '—',
+    paraUid: _valorandoDestino.uid,
+    paraRol: _valorandoDestino.rol,
+    estrellas: _valorandoEstrellas,
+    comentario: document.getElementById('valorarComentario').value.trim(),
+    ventaId: _valorandoDestino.ventaId,
+    fecha: new Date().toISOString(),
+  };
+  state.valoraciones.push(v);
+  if(firebaseListo) db.collection('valoraciones').doc(v.id).set(v).catch(e=>console.error('No se pudo guardar la valoración:', e));
+  cerrarModalValorar();
+  toast('¡Gracias por tu valoración! ⭐');
+  if(state.role==='comercio') renderComercioPanel();
+  if(state.role==='vendedor') renderVElegirComercio();
+}
 function genCodigo(){ return 'EP-' + (1000 + Math.floor(Math.random()*8999)); }
 
 function renderQR(container, texto){
@@ -1615,9 +1693,10 @@ function onFirebaseReady(){
 async function cargarDatosPublicosDeFirestore(){
   if(!firebaseListo) return;
   try{
-    const [comerciosSnap, productosSnap] = await Promise.all([
+    const [comerciosSnap, productosSnap, valoracionesSnap] = await Promise.all([
       db.collection('comercios').get(),
-      db.collection('productos').get()
+      db.collection('productos').get(),
+      db.collection('valoraciones').get()
     ]);
     comerciosSnap.forEach(doc=>{
       const c = doc.data();
@@ -1626,6 +1705,10 @@ async function cargarDatosPublicosDeFirestore(){
     productosSnap.forEach(doc=>{
       const p = doc.data();
       if(!state.productos.some(x=>x.id===p.id)) state.productos.push(p);
+    });
+    valoracionesSnap.forEach(doc=>{
+      const v = doc.data();
+      if(!state.valoraciones.some(x=>x.id===v.id)) state.valoraciones.push(v);
     });
     renderFeed();
     renderFeedVendedores();
@@ -1847,6 +1930,9 @@ function misProductos(){
 }
 function renderVendedorCatalogo(){
   renderActividadCard();
+  if(state.currentUser?.uid){
+    document.getElementById('vMiValoracion').innerHTML = estrellasHtml(...Object.values(promedioDe(state.currentUser.uid)));
+  }
 
   const list = document.getElementById('vProdList');
   const productos = misProductos();
@@ -2168,14 +2254,16 @@ function renderVElegirComercio(){
   document.getElementById('vSinComercios').classList.toggle('hidden', misComercios.length>0);
   list.innerHTML = misComercios.map(c=>{
     const cantidad = state.productos.filter(p=>p.comercioId===c.id && p.comision>0).length;
+    const {prom, total} = c.uid ? promedioDe(c.uid) : {prom:0,total:0};
     return `
       <div class="guia-mini-card" style="cursor:pointer;" onclick="abrirComercioParaElegir('${c.id}')">
         <div class="ic-wrap">${c.img ? `<img src="${c.img}" style="width:100%;height:100%;object-fit:cover;border-radius:12px;">` : '🏬'}</div>
         <div class="info">
           <div class="nombre">${c.nombre}</div>
           <div class="meta">${cantidad} producto${cantidad===1?'':'s'} con comisión disponible</div>
+          <div style="margin-top:2px;">${estrellasHtml(prom, total)}</div>
         </div>
-        <span style="color:var(--muted)">›</span>
+        ${c.uid ? `<button class="btn btn-ghost btn-sm" style="flex-shrink:0;" onclick="event.stopPropagation(); abrirModalValorar('${c.uid}','comercio','${c.nombre}')">Calificar</button>` : ''}
       </div>`;
   }).join('');
 }
@@ -2426,6 +2514,9 @@ function renderComercioPanel(){
   renderPublicidadBox();
   renderProductosPropios();
   renderPedidosProducto();
+  if(state.currentUser?.uid){
+    document.getElementById('cMiValoracion').innerHTML = estrellasHtml(...Object.values(promedioDe(state.currentUser.uid)));
+  }
   const misProds = state.productos.filter(p=>p.comercioId===state.currentUser.id);
   const misProdIds = new Set(misProds.map(p=>p.id));
 
@@ -2440,9 +2531,13 @@ function renderComercioPanel(){
     list.innerHTML = idsConSeleccion.map(id=>{
       const v = state.vendedores.find(x=>x.id===id);
       const count = state.catalogoVendedor.filter(s=>s.vendedorId===id && misProdIds.has(s.productoId)).length;
+      const {prom, total} = v?.uid ? promedioDe(v.uid) : {prom:0,total:0};
       return `<div class="list-row"><div class="av" style="background:var(--green)">🛍️</div>
         <div class="main"><div class="t">${v?v.nombre:'—'}</div>
-        <div class="s">${count} producto(s) tuyos elegidos para vender</div></div></div>`;
+        <div class="s">${count} producto(s) tuyos elegidos para vender</div>
+        <div style="margin-top:2px;">${estrellasHtml(prom, total)}</div></div>
+        ${v?.uid ? `<button class="btn btn-ghost btn-sm" onclick="abrirModalValorar('${v.uid}','vendedor','${v.nombre}')">Calificar</button>` : ''}
+        </div>`;
     }).join('');
   }
   renderComercioHistorial();
@@ -2550,6 +2645,7 @@ function confirmarVenta(){
   renderComercioPanel();
   renderFeed();
   showScreen('c-panel');
+  if(vend && vend.uid) setTimeout(()=>abrirModalValorar(vend.uid, 'vendedor', vend.nombre, venta.id), 400);
 }
 
 const MOTIVOS_NO_VENTA = {
