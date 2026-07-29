@@ -1396,14 +1396,17 @@ function loginConGoogle(){
   const esMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
   if(esMobile){
-    // En celular usamos redirect — más confiable que popup en la mayoría de los browsers.
-    // Si falla (algunos webviews o modos PWA no lo soportan), caemos automáticamente a popup.
-    firebaseAuth.signInWithRedirect(provider).catch(()=>{
-      firebaseAuth.signInWithPopup(provider).then(result=>{
-        manejarUsuarioGoogle(result.user);
-      }).catch(err=>{
-        if(err.code !== 'auth/popup-closed-by-user')
-          toast('No pudimos completar el login con Google, probá de nuevo');
+    // En celular probamos primero popup: signInWithRedirect depende de que sessionStorage
+    // sobreviva a la ida y vuelta a Google, y eso falla en Safari con "Prevenir rastreo
+    // entre sitios", en PWA instalada (modo standalone) y en webviews in-app (Instagram/
+    // Facebook), tirando "missing initial state". El popup no navega la página, así que
+    // evita ese problema. Si el popup falla (bloqueado, no soportado), caemos a redirect.
+    firebaseAuth.signInWithPopup(provider).then(result=>{
+      manejarUsuarioGoogle(result.user);
+    }).catch(err=>{
+      if(err.code === 'auth/popup-closed-by-user') return;
+      firebaseAuth.signInWithRedirect(provider).catch(()=>{
+        toast('No pudimos completar el login con Google, probá de nuevo');
       });
     });
     return;
