@@ -227,6 +227,7 @@ input,select,textarea{font-family:inherit; font-size:14.5px;}
 .feed-prod-card .prod-photo{height:110px;}
 .feed-vendor{display:flex; align-items:center; gap:6px; font-size:10.5px; color:var(--navy-2); font-weight:700; margin-top:6px;}
 .feed-vendor .dot{width:6px; height:6px; border-radius:50%; background:var(--green); flex-shrink:0;}
+.feed-comision{display:inline-block; background:#fff4d6; color:#8a5a00; font-size:10.5px; font-weight:700; padding:3px 8px; border-radius:100px; margin-top:6px;}
 .share-btn{
   width:100%; margin-top:8px; padding:8px; border-radius:10px; background:#F9E6E6; color:var(--green);
   font-size:12px; font-weight:700; display:flex; align-items:center; justify-content:center; gap:6px;
@@ -494,6 +495,11 @@ input,select,textarea{font-family:inherit; font-size:14.5px;}
         <div style="font-size:11px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.03em; margin-bottom:4px;">📍 Retirás en</div>
         <div class="page-sub" id="ofComercio" style="font-weight:700; color:var(--navy); margin-bottom:2px; font-size:15px;">Comercio</div>
         <div class="page-sub" id="ofDireccion" style="margin-bottom:0;">Dirección</div>
+      </div>
+
+      <div id="ofVendedorBanner" class="hidden card" style="background:#fff4d6; text-align:left; margin-bottom:16px;">
+        <div style="font-size:13px; font-weight:700; color:#8a5a00; margin-bottom:8px;" id="ofVendedorComision">💰 Comisión: 0%</div>
+        <button class="btn btn-primary btn-sm" style="width:100%" id="ofVendedorBtn" onclick="agregarProductoAMiCatalogo(ofertaAbierta)">➕ Sumar a mi catálogo</button>
       </div>
 
       <div id="ofAntes">
@@ -2131,8 +2137,14 @@ function agregarProductoAMiCatalogo(productoId){
   if(yaExiste){ toast('Ya tenías este producto en tu catálogo'); return; }
   state.catalogoVendedor.push({id: nextId('sel'), vendedorId: state.currentUser.id, productoId});
   toast('¡Sumado a tu catálogo! ✅');
-  abrirComercioParaElegir(comercioElegido);
   renderVendedorStats();
+  // Si estamos parados en la pantalla de "elegir productos de un comercio", la refrescamos ahí mismo.
+  // Si el agregado vino desde el feed principal, simplemente volvemos a dibujar la grilla del feed.
+  if(comercioElegido && document.getElementById('screen-v-elegir-producto') && !document.getElementById('screen-v-elegir-producto').classList.contains('hidden')){
+    abrirComercioParaElegir(comercioElegido);
+  } else {
+    renderFeed();
+  }
 }
 
 function irPedirProducto(){
@@ -2797,13 +2809,23 @@ function renderFeedGrid(origenTipo, chipsId, gridId, filtroActual, setFiltroFn){
     }
     const click = origenTipo==='comercio' ? `abrirOferta('${p.id}')` : `abrirCatalogoVendedor('${p._vendedorId}')`;
     const badge = etiquetaOferta(p);
+    const comisionBadge = p.comision>0 ? `<div class="feed-comision">💰 ${p.comision}% de comisión</div>` : '';
+    let botonVendedor = '';
+    if(state.role==='vendedor' && p.comision>0){
+      const yaEnCatalogo = state.catalogoVendedor.some(s=>s.vendedorId===state.currentUser.id && s.productoId===p.id);
+      botonVendedor = yaEnCatalogo
+        ? `<button class="share-btn" disabled style="opacity:.55; cursor:default;" onclick="event.stopPropagation()">✅ En tu catálogo</button>`
+        : `<button class="share-btn" onclick="event.stopPropagation(); agregarProductoAMiCatalogo('${p.id}')">➕ Sumar a mi catálogo</button>`;
+    }
     return `
       <div class="feed-prod-card" onclick="${click}">
         <div class="prod-photo">${foto}${badge ? `<span class="oferta-badge">${badge}</span>` : ''}</div>
         <div class="prod-body">
           <div class="prod-name">${p.nombre}</div>
           <div class="prod-price">$${p.precio.toLocaleString('es-AR')}</div>
+          ${comisionBadge}
           <div class="feed-vendor"><span class="dot"></span>${etiqueta}</div>
+          ${botonVendedor}
         </div>
       </div>`;
   }).join('');
@@ -2932,6 +2954,25 @@ function abrirOferta(prodId){
   document.getElementById('ofPrecio').innerHTML = '$'+p.precio.toLocaleString('es-AR') + (badge ? ` <span class="oferta-badge" style="position:static; display:inline-block; margin-left:8px; vertical-align:middle;">${badge}</span>` : '');
   document.getElementById('ofComercio').textContent = c ? c.nombre : 'Comercio';
   document.getElementById('ofDireccion').textContent = c ? (c.direccion || 'La Paz, Entre Ríos') : '';
+
+  const banner = document.getElementById('ofVendedorBanner');
+  if(state.role==='vendedor' && p.comision>0){
+    const yaEnCatalogo = state.catalogoVendedor.some(s=>s.vendedorId===state.currentUser.id && s.productoId===p.id);
+    document.getElementById('ofVendedorComision').textContent = `💰 Este comercio ofrece ${p.comision}% de comisión`;
+    const btn = document.getElementById('ofVendedorBtn');
+    if(yaEnCatalogo){
+      btn.textContent = '✅ Ya está en tu catálogo';
+      btn.disabled = true;
+      btn.style.opacity = '.6';
+    } else {
+      btn.textContent = '➕ Sumar a mi catálogo';
+      btn.disabled = false;
+      btn.style.opacity = '1';
+    }
+    banner.classList.remove('hidden');
+  } else {
+    banner.classList.add('hidden');
+  }
 
   // ¿Ya habíamos generado un código para este producto antes? Si el pedido sigue pendiente, lo mostramos
   // de nuevo en vez de resetear la pantalla — así el cliente no lo "pierde" al salir y volver a entrar.
