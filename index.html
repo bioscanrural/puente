@@ -254,6 +254,11 @@ input,select,textarea{font-family:inherit; font-size:14.5px;}
 /* ---- Feed tabs ---- */
 .feed-tabs{display:flex; gap:6px; margin-bottom:16px; overflow-x:auto; -webkit-overflow-scrolling:touch;}
 .feed-tabs::-webkit-scrollbar{display:none;}
+.feed-tab-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:18px;}
+.feed-tab-tile{display:flex; align-items:center; gap:10px; padding:15px 14px; border-radius:16px; border:none; font-weight:700; font-size:13.5px; text-align:left; transition:transform .1s, box-shadow .1s;}
+.feed-tab-tile:active{transform:scale(0.97);}
+.feed-tab-tile .ic{font-size:20px; flex-shrink:0;}
+.feed-tab-tile.active{box-shadow:inset 0 0 0 2px currentColor;}
 .feed-tab{flex:1 1 auto; white-space:nowrap; text-align:center; padding:10px 12px; border-radius:12px; background:white; border:1.5px solid var(--line); font-size:12px; font-weight:700; color:var(--muted);}
 .feed-tab.active{background:var(--navy); color:white; border-color:var(--navy);}
 
@@ -430,25 +435,26 @@ input,select,textarea{font-family:inherit; font-size:14.5px;}
       <div class="feed-title hidden" id="feedHeroTitle">Todo tu pueblo, en un solo lugar</div>
       <div class="feed-sub hidden" id="feedHeroSub">PuenT reúne a todos los comercios y locales de la ciudad — y las mejores ofertas del día.</div>
     </div>
+    <div class="topbar-search" id="buscadorFeedBox" style="margin-bottom:18px; padding:11px 14px;">
+      <span class="topbar-search-ic">🔎</span>
+      <input id="buscadorTop" placeholder="Buscar productos, comercios o vendedores…" oninput="onBuscadorInput(this.value)">
+    </div>
+
     <div class="explora-ciudad">
       <div class="section-title">Comercios de la ciudad</div>
       <div class="explora-grid" id="exploraRow"></div>
     </div>
 
-    <div class="feed-tabs">
-      <button class="feed-tab active" id="tabProductos" onclick="setFeedTab('productos')">🔥 Ofertas del día</button>
-      <button class="feed-tab" id="tabVendedores" onclick="setFeedTab('vendedores')">🛍️ Vendedores</button>
-      <button class="feed-tab" id="tabLocales" onclick="setFeedTab('locales')">📍 Locales</button>
-      <button class="feed-tab" id="tabUtil" onclick="setFeedTab('util')">📖 Guía / Útil</button>
+    <div class="feed-tab-grid">
+      <button class="feed-tab-tile btn-tile-coral active" id="tabProductos" onclick="setFeedTab('productos')"><i class="ti ti-flame ic" aria-hidden="true"></i>Ofertas del día</button>
+      <button class="feed-tab-tile btn-tile-sage" id="tabVendedores" onclick="setFeedTab('vendedores')"><i class="ti ti-shopping-bag ic" aria-hidden="true"></i>Vendedores</button>
+      <button class="feed-tab-tile btn-tile-gold" id="tabLocales" onclick="setFeedTab('locales')"><i class="ti ti-map-pin ic" aria-hidden="true"></i>Locales</button>
+      <button class="feed-tab-tile btn-tile-neutral" id="tabUtil" onclick="setFeedTab('util')"><i class="ti ti-book-2 ic" aria-hidden="true"></i>Guía útil</button>
     </div>
 
     <div id="feedProductosView">
       <div class="feed-toolbar-row">
         <div class="chiprow" id="feedChips"></div>
-        <div class="topbar-search feed-search-inline">
-          <span class="topbar-search-ic">🔎</span>
-          <input id="buscadorTop" placeholder="Buscar productos…" oninput="onBuscadorInput(this.value)">
-        </div>
       </div>
       <div class="prod-grid" id="feedGrid"></div>
     </div>
@@ -912,11 +918,17 @@ input,select,textarea{font-family:inherit; font-size:14.5px;}
         <select id="cnpTipoOferta" onchange="onTipoOfertaChange()">
           <option value="unica">Oferta única</option>
           <option value="tiempo">Oferta por tiempo limitado</option>
+          <option value="h24">Oferta 24hs 🕐 — potenciá tu comercio</option>
           <option value="normal">Precio normal</option>
           <option value="ddp">Descuento DDP — Día del Padre</option>
           <option value="ddm">Descuento DDM — Día de la Madre</option>
           <option value="ddn">Descuento DDN — Día del Niño</option>
         </select>
+      </div>
+      <div class="field" id="cnpHoraBox">
+        <label>Hora de inicio de la oferta</label>
+        <input id="cnpHoraInicio" type="time">
+        <p style="font-size:12px; color:var(--muted); margin-top:4px;">La oferta se activa a esa hora y dura 24hs — aparece destacada en el feed durante ese lapso, una forma de darle más visibilidad a tu comercio.</p>
       </div>
       <div class="field" id="cnpDescuentoBox">
         <label>Porcentaje de descuento</label>
@@ -2158,6 +2170,7 @@ function subirFotoAFirebase(prefix, dataUrl){
 const TIPOS_OFERTA = {
   unica: {label:'🎯 Oferta única', descuento:false},
   tiempo: {label:'⏳ Oferta por tiempo limitado', descuento:false},
+  h24: {label:'🕐 Oferta 24hs', descuento:false, hora:true},
   normal: {label:'Precio normal', descuento:false},
   ddp: {label:'👔 Descuento Día del Padre', descuento:true},
   ddm: {label:'💐 Descuento Día de la Madre', descuento:true},
@@ -2166,6 +2179,7 @@ const TIPOS_OFERTA = {
 function onTipoOfertaChange(){
   const tipo = document.getElementById('cnpTipoOferta').value;
   document.getElementById('cnpDescuentoBox').classList.toggle('hidden', !TIPOS_OFERTA[tipo].descuento);
+  document.getElementById('cnpHoraBox').classList.toggle('hidden', !TIPOS_OFERTA[tipo].hora);
 }
 function stockBadge(p){
   if(p.stock === null || p.stock === undefined) return ''; // sin límite
@@ -2177,6 +2191,7 @@ function stockBadge(p){
 function etiquetaOferta(p){
   if(!p.tipoOferta || !TIPOS_OFERTA[p.tipoOferta] || p.tipoOferta==='normal') return null;
   const t = TIPOS_OFERTA[p.tipoOferta];
+  if(t.hora && p.horaInicio) return `${t.label} desde las ${p.horaInicio}`;
   if(t.descuento && p.descuento) return `${t.label} -${p.descuento}%`;
   return t.descuento ? null : t.label;
 }
@@ -2207,6 +2222,7 @@ function abrirNuevoProducto(){
   document.getElementById('cnpNombre').value=''; document.getElementById('cnpPrecio').value='';
   document.getElementById('cnpComision').value=''; document.getElementById('cnpStock').value='';
   document.getElementById('cnpDescuento').value=''; document.getElementById('cnpTipoOferta').value='unica';
+  document.getElementById('cnpHoraInicio').value='';
   onTipoOfertaChange();
   document.getElementById('cnpFotoBox').innerHTML = `<div id="cnpFotoPreview" class="foto-upload-empty"><div class="foto-upload-ic">📷</div><div class="foto-upload-txt">Sacá una foto o elegí de la galería</div></div>`;
   document.getElementById('cnpFotoEstado').textContent = '';
@@ -2229,6 +2245,7 @@ function abrirEditarProducto(prodId){
   document.getElementById('cnpStock').value = (p.stock===null || p.stock===undefined) ? '' : p.stock;
   document.getElementById('cnpDescuento').value = p.descuento || '';
   document.getElementById('cnpTipoOferta').value = p.tipoOferta || 'unica';
+  document.getElementById('cnpHoraInicio').value = p.horaInicio || '';
   onTipoOfertaChange();
   const sel = document.getElementById('cnpRubro');
   if(p.rubro) sel.value = p.rubro;
@@ -2270,6 +2287,8 @@ function crearProductoComercio(){
   const comision = parseFloat(comisionInput);
   if(isNaN(comision) || comision<0 || comision>100){ toast('La comisión tiene que ser un número entre 0 y 100'); return; }
   if(TIPOS_OFERTA[tipoOferta].descuento && !descuento){ toast('Ingresá el porcentaje de descuento'); return; }
+  const horaInicio = document.getElementById('cnpHoraInicio').value;
+  if(TIPOS_OFERTA[tipoOferta].hora && !horaInicio){ toast('Ingresá la hora de inicio de la oferta 24hs'); return; }
 
   const stockInput = document.getElementById('cnpStock').value;
   const stock = stockInput !== '' ? parseInt(stockInput) : null; // null = sin límite
@@ -2277,7 +2296,7 @@ function crearProductoComercio(){
   if(productoEditandoId){
     const p = state.productos.find(x=>x.id===productoEditandoId);
     if(!p){ toast('No se encontró el producto'); return; }
-    Object.assign(p, {nombre, precio, comision, rubro, img:foto, tipoOferta, descuento, stock});
+    Object.assign(p, {nombre, precio, comision, rubro, img:foto, tipoOferta, descuento, stock, horaInicio: horaInicio || null});
     guardarProductoEnFirestore(p, c.uid);
     toast('Cambios guardados ✅');
     productoEditandoId = null;
@@ -2287,7 +2306,7 @@ function crearProductoComercio(){
     return;
   }
 
-  const p = {id: nextId('p'), comercioId:c.id, nombre, precio, comision, rubro, img:foto, origen:'comercio', tipoOferta, descuento, stock, stockInicial: stock};
+  const p = {id: nextId('p'), comercioId:c.id, nombre, precio, comision, rubro, img:foto, origen:'comercio', tipoOferta, descuento, stock, stockInicial: stock, horaInicio: horaInicio || null};
   state.productos.push(p);
   guardarProductoEnFirestore(p, c.uid);
   toast('Producto publicado en tu ficha y en el feed de La Paz ✅');
