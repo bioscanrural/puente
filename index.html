@@ -949,7 +949,7 @@ input,select,textarea{font-family:inherit; font-size:14.5px;}
         <select id="cnpTipoOferta" onchange="onTipoOfertaChange()">
           <option value="unica">Oferta única</option>
           <option value="tiempo">Oferta por tiempo limitado</option>
-          <option value="h24">Oferta 24hs 🕐 — potenciá tu comercio</option>
+          <option value="h24">⚡ Oferta relámpago — potenciá tu comercio</option>
           <option value="normal">Precio normal</option>
           <option value="ddp">Descuento DDP — Día del Padre</option>
           <option value="ddm">Descuento DDM — Día de la Madre</option>
@@ -957,12 +957,18 @@ input,select,textarea{font-family:inherit; font-size:14.5px;}
         </select>
       </div>
       <div class="field" id="cnpHoraBox">
-        <label>Fecha y hora de lanzamiento</label>
+        <label>¿Cuándo se larga?</label>
         <div class="two-col">
           <input id="cnpFechaInicio" type="date">
           <input id="cnpHoraInicio" type="time">
         </div>
-        <p style="font-size:12px; color:var(--muted); margin-top:4px;">La oferta se activa ese día a esa hora y dura 24hs — aparece en ⚡ Rayo Ofertas para que la gente sepa cuándo se larga, y destacada en el feed mientras esté vigente.</p>
+        <label style="margin-top:10px; display:block;">Duración de la oferta</label>
+        <select id="cnpDuracion">
+          <option value="1">1 hora</option>
+          <option value="12">12 horas</option>
+          <option value="24" selected>24 horas</option>
+        </select>
+        <p style="font-size:12px; color:var(--muted); margin-top:4px;">Se activa ese día a esa hora y dura lo que elijas — aparece en ⚡ Rayo Ofertas para que la gente sepa cuándo se larga, y destacada en el feed mientras esté vigente.</p>
       </div>
       <div class="field" id="cnpDescuentoBox">
         <label>Porcentaje de descuento</label>
@@ -2221,7 +2227,7 @@ function subirFotoAFirebase(prefix, dataUrl){
 const TIPOS_OFERTA = {
   unica: {label:'🎯 Oferta única', descuento:false},
   tiempo: {label:'⏳ Oferta por tiempo limitado', descuento:false},
-  h24: {label:'🕐 Oferta 24hs', descuento:false, hora:true},
+  h24: {label:'⚡ Oferta relámpago', descuento:false, hora:true},
   normal: {label:'Precio normal', descuento:false},
   ddp: {label:'👔 Descuento Día del Padre', descuento:true},
   ddm: {label:'💐 Descuento Día de la Madre', descuento:true},
@@ -2248,7 +2254,8 @@ function estadoRayo(p){
   if(!p.fechaInicio || !p.horaInicio) return null;
   const inicio = new Date(`${p.fechaInicio}T${p.horaInicio}`);
   if(isNaN(inicio)) return null;
-  const fin = new Date(inicio.getTime() + 24*3600*1000);
+  const horas = p.duracionHoras || 24;
+  const fin = new Date(inicio.getTime() + horas*3600*1000);
   const ahora = new Date();
   if(ahora < inicio) return 'programada';
   if(ahora <= fin) return 'activa';
@@ -2274,8 +2281,8 @@ function renderRayoOfertas(){
   box.innerHTML = lista.map(({p, estado})=>{
     const c = state.comercios.find(x=>x.id===p.comercioId);
     const chip = estado==='activa'
-      ? `<span style="background:#fbe7e7; color:#B65B5B; font-size:11px; font-weight:800; padding:3px 9px; border-radius:100px;">🔴 En vivo ahora</span>`
-      : `<span style="background:#EAF0E6; color:var(--navy); font-size:11px; font-weight:800; padding:3px 9px; border-radius:100px;">🕐 Se larga el ${fechaCorta(p.fechaInicio)} a las ${p.horaInicio}hs</span>`;
+      ? `<span style="background:#fbe7e7; color:#B65B5B; font-size:11px; font-weight:800; padding:3px 9px; border-radius:100px;">🔴 En vivo ahora — dura ${p.duracionHoras||24}hs</span>`
+      : `<span style="background:#EAF0E6; color:var(--navy); font-size:11px; font-weight:800; padding:3px 9px; border-radius:100px;">🕐 Se larga el ${fechaCorta(p.fechaInicio)} a las ${p.horaInicio}hs (${p.duracionHoras||24}hs)</span>`;
     return `<div class="list-row">
       <div class="av" style="background:var(--green)">⚡</div>
       <div class="main"><div class="t">${p.nombre}</div>
@@ -2287,7 +2294,7 @@ function renderRayoOfertas(){
 function etiquetaOferta(p){
   if(!p.tipoOferta || !TIPOS_OFERTA[p.tipoOferta] || p.tipoOferta==='normal') return null;
   const t = TIPOS_OFERTA[p.tipoOferta];
-  if(t.hora && p.horaInicio) return `${t.label} ${fechaCorta(p.fechaInicio)} ${p.horaInicio}hs`;
+  if(t.hora && p.horaInicio) return `${t.label} (${p.duracionHoras||24}hs) ${fechaCorta(p.fechaInicio)} ${p.horaInicio}hs`;
   if(t.descuento && p.descuento) return `${t.label} -${p.descuento}%`;
   return t.descuento ? null : t.label;
 }
@@ -2320,6 +2327,7 @@ function abrirNuevoProducto(){
   document.getElementById('cnpDescuento').value=''; document.getElementById('cnpTipoOferta').value='unica';
   document.getElementById('cnpHoraInicio').value='';
   document.getElementById('cnpFechaInicio').value='';
+  document.getElementById('cnpDuracion').value='24';
   onTipoOfertaChange();
   document.getElementById('cnpFotoBox').innerHTML = `<div id="cnpFotoPreview" class="foto-upload-empty"><div class="foto-upload-ic">📷</div><div class="foto-upload-txt">Sacá una foto o elegí de la galería</div></div>`;
   document.getElementById('cnpFotoEstado').textContent = '';
@@ -2344,6 +2352,7 @@ function abrirEditarProducto(prodId){
   document.getElementById('cnpTipoOferta').value = p.tipoOferta || 'unica';
   document.getElementById('cnpHoraInicio').value = p.horaInicio || '';
   document.getElementById('cnpFechaInicio').value = p.fechaInicio || '';
+  document.getElementById('cnpDuracion').value = p.duracionHoras || '24';
   onTipoOfertaChange();
   const sel = document.getElementById('cnpRubro');
   if(p.rubro) sel.value = p.rubro;
@@ -2387,7 +2396,8 @@ function crearProductoComercio(){
   if(TIPOS_OFERTA[tipoOferta].descuento && !descuento){ toast('Ingresá el porcentaje de descuento'); return; }
   const horaInicio = document.getElementById('cnpHoraInicio').value;
   const fechaInicio = document.getElementById('cnpFechaInicio').value;
-  if(TIPOS_OFERTA[tipoOferta].hora && (!horaInicio || !fechaInicio)){ toast('Elegí la fecha y la hora en que se larga la oferta 24hs'); return; }
+  const duracionHoras = parseInt(document.getElementById('cnpDuracion').value);
+  if(TIPOS_OFERTA[tipoOferta].hora && (!horaInicio || !fechaInicio)){ toast('Elegí la fecha, la hora y la duración en que se larga la oferta'); return; }
 
   const stockInput = document.getElementById('cnpStock').value;
   const stock = stockInput !== '' ? parseInt(stockInput) : null; // null = sin límite
@@ -2395,7 +2405,7 @@ function crearProductoComercio(){
   if(productoEditandoId){
     const p = state.productos.find(x=>x.id===productoEditandoId);
     if(!p){ toast('No se encontró el producto'); return; }
-    Object.assign(p, {nombre, precio, comision, rubro, img:foto, tipoOferta, descuento, stock, horaInicio: horaInicio || null, fechaInicio: fechaInicio || null});
+    Object.assign(p, {nombre, precio, comision, rubro, img:foto, tipoOferta, descuento, stock, horaInicio: horaInicio || null, fechaInicio: fechaInicio || null, duracionHoras: TIPOS_OFERTA[tipoOferta].hora ? duracionHoras : null});
     guardarProductoEnFirestore(p, c.uid);
     toast('Cambios guardados ✅');
     productoEditandoId = null;
@@ -2405,7 +2415,7 @@ function crearProductoComercio(){
     return;
   }
 
-  const p = {id: nextId('p'), comercioId:c.id, nombre, precio, comision, rubro, img:foto, origen:'comercio', tipoOferta, descuento, stock, stockInicial: stock, horaInicio: horaInicio || null, fechaInicio: fechaInicio || null};
+  const p = {id: nextId('p'), comercioId:c.id, nombre, precio, comision, rubro, img:foto, origen:'comercio', tipoOferta, descuento, stock, stockInicial: stock, horaInicio: horaInicio || null, fechaInicio: fechaInicio || null, duracionHoras: TIPOS_OFERTA[tipoOferta].hora ? duracionHoras : null};
   state.productos.push(p);
   guardarProductoEnFirestore(p, c.uid);
   toast('Producto publicado en tu ficha y en el feed de La Paz ✅');
