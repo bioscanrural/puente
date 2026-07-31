@@ -2398,6 +2398,14 @@ function crearProductoComercio(){
   const fechaInicio = document.getElementById('cnpFechaInicio').value;
   const duracionHoras = parseInt(document.getElementById('cnpDuracion').value);
   if(TIPOS_OFERTA[tipoOferta].hora && (!horaInicio || !fechaInicio)){ toast('Elegí la fecha, la hora y la duración en que se larga la oferta'); return; }
+  if(TIPOS_OFERTA[tipoOferta].hora){
+    const inicioCheck = new Date(`${fechaInicio}T${horaInicio}`);
+    const finCheck = new Date(inicioCheck.getTime() + duracionHoras*3600*1000);
+    if(!isNaN(inicioCheck) && finCheck < new Date()){
+      toast('Esa fecha/hora con esa duración ya estaría vencida — elegí un horario que todavía no haya pasado');
+      return;
+    }
+  }
 
   const stockInput = document.getElementById('cnpStock').value;
   const stock = stockInput !== '' ? parseInt(stockInput) : null; // null = sin límite
