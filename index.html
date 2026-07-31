@@ -568,6 +568,7 @@ input,select,textarea{font-family:inherit; font-size:14.5px;}
           <div class="code-text" id="ofCodigo">EP-0000</div>
           <div class="code-label">Presentalo en el local para retirarlo</div>
         </div>
+        <div id="ofVencePickup" class="hidden" style="text-align:center; font-size:12.5px; font-weight:700; color:#c47f00; margin:-8px 0 14px;"></div>
 
         <div id="ofGuardarBanner" class="card" style="background:var(--cream); text-align:left; margin-bottom:14px;">
           <div style="font-size:13px; font-weight:700; color:var(--navy); margin-bottom:4px;">💡 ¿Querés guardar este código?</div>
@@ -957,18 +958,13 @@ input,select,textarea{font-family:inherit; font-size:14.5px;}
         </select>
       </div>
       <div class="field" id="cnpHoraBox">
-        <label>¿Cuándo se larga?</label>
+        <label>¿Entre qué horario se puede reservar?</label>
+        <input id="cnpFechaInicio" type="date" style="margin-bottom:8px;">
         <div class="two-col">
-          <input id="cnpFechaInicio" type="date">
           <input id="cnpHoraInicio" type="time">
+          <input id="cnpHoraHasta" type="time">
         </div>
-        <label style="margin-top:10px; display:block;">Duración de la oferta</label>
-        <select id="cnpDuracion">
-          <option value="1">1 hora</option>
-          <option value="12">12 horas</option>
-          <option value="24" selected>24 horas</option>
-        </select>
-        <p style="font-size:12px; color:var(--muted); margin-top:4px;">Se activa ese día a esa hora y dura lo que elijas — aparece en ⚡ Rayo Ofertas para que la gente sepa cuándo se larga, y destacada en el feed mientras esté vigente.</p>
+        <p style="font-size:12px; color:var(--muted); margin-top:4px;">Entre esas dos horas, los clientes pueden reservarla — según el stock que cargues abajo. Si se agota antes de esa hora, les va a aparecer "Agotado". Aparece en ⚡ Rayo Ofertas.</p>
       </div>
       <div class="field" id="cnpDescuentoBox">
         <label>Porcentaje de descuento</label>
@@ -1047,7 +1043,20 @@ input,select,textarea{font-family:inherit; font-size:14.5px;}
         <div class="field"><label>Teléfono alternativo</label><input id="editCTelefonoAlt" type="tel" placeholder="Opcional"></div>
       </div>
       <div class="field"><label>Correo electrónico</label><input id="editCEmail" type="email" placeholder="local@ejemplo.com"></div>
-      <div class="field"><label>Horario de atención</label><input id="editCHorario" placeholder="Ej: Lun a Vie 9 a 18hs"></div>
+      <div class="field">
+        <label>Turno mañana</label>
+        <div class="two-col">
+          <input id="editCTurnoManDesde" type="time">
+          <input id="editCTurnoManHasta" type="time">
+        </div>
+      </div>
+      <div class="field">
+        <label>Turno tarde <span style="font-weight:400; color:var(--muted);">(vacío si trabajás corrido o no abrís a la tarde)</span></label>
+        <div class="two-col">
+          <input id="editCTurnoTarDesde" type="time">
+          <input id="editCTurnoTarHasta" type="time">
+        </div>
+      </div>
     </div>
     <button class="btn btn-primary" onclick="guardarEdicionComercio()">Guardar cambios</button>
   </div>
@@ -1337,6 +1346,47 @@ function confirmarCierreSesion(){
 }
 
 function nextId(prefix){ return prefix + '-' + (state.seq++); }
+
+/* ================= TURNOS DE ATENCIÓN DEL COMERCIO ================= */
+function leerTurnosForm(prefix){
+  const g = id => document.getElementById(prefix+id)?.value || '';
+  const t = {
+    manDesde: g('TurnoManDesde'), manHasta: g('TurnoManHasta'),
+    tarDesde: g('TurnoTarDesde'), tarHasta: g('TurnoTarHasta'),
+  };
+  return t;
+}
+function textoTurnos(t){
+  if(!t) return '';
+  const partes = [];
+  if(t.manDesde && t.manHasta) partes.push(`${t.manDesde} a ${t.manHasta}`);
+  if(t.tarDesde && t.tarHasta) partes.push(`${t.tarDesde} a ${t.tarHasta}`);
+  return partes.length ? partes.join(' y ') + 'hs' : '';
+}
+// Dado un comercio y un momento (por defecto ahora), devuelve el Date del final del turno vigente o el próximo turno que abre.
+function finDeProximoTurno(comercio, desde){
+  desde = desde || new Date();
+  const t = (comercio && comercio.turnos) || {};
+  const armarHoy = (hhmm, offsetDias) => {
+    if(!hhmm) return null;
+    const d = new Date(desde);
+    d.setDate(d.getDate() + (offsetDias||0));
+    const [h,m] = hhmm.split(':').map(Number);
+    d.setHours(h, m, 0, 0);
+    return d;
+  };
+  // Candidatos de cierre de turno, hoy y mañana, en orden.
+  const candidatos = [
+    armarHoy(t.manHasta, 0),
+    armarHoy(t.tarHasta, 0),
+    armarHoy(t.manHasta, 1),
+    armarHoy(t.tarHasta, 1),
+  ].filter(Boolean);
+  for(const fin of candidatos){
+    if(fin > desde) return fin;
+  }
+  return null; // el comercio no cargó turnos
+}
 
 /* ================= VALORACIONES (comercio, vendedor y cliente se califican entre sí) ================= */
 function promedioDe(uid){
@@ -1912,7 +1962,20 @@ function goRegister(role){
           <div class="field"><label>Teléfono alternativo</label><input id="rTelefonoAlt" type="tel" placeholder="Opcional"></div>
         </div>
         <div class="field"><label>Correo electrónico</label><input id="rEmail" type="email" placeholder="local@ejemplo.com"></div>
-        <div class="field"><label>Horario de atención</label><input id="rHorario" placeholder="Ej: Lun a Vie 9 a 18hs"></div>
+        <div class="field">
+          <label>Turno mañana</label>
+          <div class="two-col">
+            <input id="rTurnoManDesde" type="time" value="08:00">
+            <input id="rTurnoManHasta" type="time" value="12:00">
+          </div>
+        </div>
+        <div class="field">
+          <label>Turno tarde <span style="font-weight:400; color:var(--muted);">(dejalo vacío si trabajás corrido o no abrís a la tarde)</span></label>
+          <div class="two-col">
+            <input id="rTurnoTarDesde" type="time" value="17:00">
+            <input id="rTurnoTarHasta" type="time" value="21:00">
+          </div>
+        </div>
         <div class="field" style="display:flex; align-items:flex-start; gap:10px;">
           <input type="checkbox" id="rTyc" style="width:auto; margin-top:3px;">
           <label style="font-weight:500; font-size:12.5px; color:var(--muted);" for="rTyc">Acepto los Términos y Condiciones y el tratamiento de mis datos.</label>
@@ -1972,7 +2035,8 @@ function submitRegister(){
     const telefono = document.getElementById('rTelefono').value.trim();
     const telefonoAlt = document.getElementById('rTelefonoAlt').value.trim();
     const email = document.getElementById('rEmail').value.trim();
-    const horario = document.getElementById('rHorario').value.trim();
+    const turnos = leerTurnosForm('r');
+    const horario = textoTurnos(turnos);
     const tyc = document.getElementById('rTyc').checked;
 
     if(!razonSocial || !direccion || !telefono || !email){
@@ -1982,7 +2046,7 @@ function submitRegister(){
     if(nombreOcupado){ toast('Ya existe un comercio registrado con ese nombre, elegí otro'); return; }
     if(!tyc){ toast('Necesitás aceptar los Términos y Condiciones'); return; }
 
-    const c = {id: nextId('c'), nombre, razonSocial, cuit, direccion, ciudad, rubro, telefono, telefonoAlt, email, horario, adheridos:[], lat: registroLatLng?.lat, lng: registroLatLng?.lng, img: fotosCargadas['rLogo'] || null, publicidadActiva:true, publicidadVence:diasAtras(-30)};
+    const c = {id: nextId('c'), nombre, razonSocial, cuit, direccion, ciudad, rubro, telefono, telefonoAlt, email, horario, turnos, adheridos:[], lat: registroLatLng?.lat, lng: registroLatLng?.lng, img: fotosCargadas['rLogo'] || null, publicidadActiva:true, publicidadVence:diasAtras(-30)};
     c.qrPersonal = 'CQR-' + c.id.split('-')[1].padStart(4,'0');
     state.comercios.push(c);
     state.currentUser = c; state.role='comercio';
@@ -2239,10 +2303,11 @@ function onTipoOfertaChange(){
   document.getElementById('cnpHoraBox').classList.toggle('hidden', !TIPOS_OFERTA[tipo].hora);
 }
 function stockBadge(p){
-  if(p.stock === null || p.stock === undefined) return ''; // sin límite
-  if(p.stock === 0) return `<div style="font-size:10.5px; font-weight:700; color:#e05a5a; margin-top:4px;">❌ Sin stock disponible</div>`;
-  if(p.stock <= 3) return `<div style="font-size:10.5px; font-weight:700; color:#c47f00; margin-top:4px;">⚠️ Últimas ${p.stock} unidades</div>`;
-  return `<div style="font-size:10.5px; color:var(--muted); margin-top:4px;">📦 Stock: ${p.stock} unidades</div>`;
+  const disp = stockDisponible(p);
+  if(disp === null) return ''; // sin límite
+  if(disp === 0) return `<div style="font-size:10.5px; font-weight:700; color:#e05a5a; margin-top:4px;">❌ Sin stock disponible</div>`;
+  if(disp <= 3) return `<div style="font-size:10.5px; font-weight:700; color:#c47f00; margin-top:4px;">⚠️ Últimas ${disp} unidades</div>`;
+  return `<div style="font-size:10.5px; color:var(--muted); margin-top:4px;">📦 Stock: ${disp} unidades</div>`;
 }
 
 function fechaCorta(iso){
@@ -2250,19 +2315,31 @@ function fechaCorta(iso){
   const [y,m,d] = iso.split('-');
   return `${d}/${m}`;
 }
+// Cuántas unidades quedan realmente disponibles: el stock cargado, menos las reservas pendientes (aún no confirmadas ni vencidas).
+function stockDisponible(p){
+  if(p.stock === null || p.stock === undefined) return null; // sin límite
+  const reservadas = state.ventas.filter(v=>v.productoId===p.id && v.estado==='pendiente' && !reservaVencida(v)).length;
+  return Math.max(0, p.stock - reservadas);
+}
+function reservaVencida(venta){
+  if(!venta.vencePickup) return false;
+  return new Date() > new Date(venta.vencePickup);
+}
+// Estado de una oferta relámpago: 'antes' | 'abierta' | 'agotada' | 'cerrada'
 function estadoRayo(p){
-  if(!p.fechaInicio || !p.horaInicio) return null;
+  if(!p.fechaInicio || !p.horaInicio || !p.horaHasta) return null;
   const inicio = new Date(`${p.fechaInicio}T${p.horaInicio}`);
-  if(isNaN(inicio)) return null;
-  const horas = p.duracionHoras || 24;
-  const fin = new Date(inicio.getTime() + horas*3600*1000);
+  const fin = new Date(`${p.fechaInicio}T${p.horaHasta}`);
+  if(isNaN(inicio) || isNaN(fin)) return null;
   const ahora = new Date();
-  if(ahora < inicio) return 'programada';
-  if(ahora <= fin) return 'activa';
-  return 'vencida';
+  if(ahora < inicio) return 'antes';
+  if(ahora > fin) return 'cerrada';
+  const disp = stockDisponible(p);
+  if(disp !== null && disp <= 0) return 'agotada';
+  return 'abierta';
 }
 function ofertasRayoVigentes(){
-  return state.productos.filter(p=>p.tipoOferta==='h24').map(p=>({p, estado:estadoRayo(p)})).filter(x=>x.estado && x.estado!=='vencida');
+  return state.productos.filter(p=>p.tipoOferta==='h24').map(p=>({p, estado:estadoRayo(p)})).filter(x=>x.estado && x.estado!=='cerrada');
 }
 function actualizarBadgeRayo(){
   const badge = document.getElementById('rayoOfertasBadge');
@@ -2281,9 +2358,12 @@ function renderRayoOfertas(){
   box.innerHTML = `<div class="prod-grid">` + lista.map(({p, estado})=>{
     const c = state.comercios.find(x=>x.id===p.comercioId);
     const foto = p.img ? `<img src="${p.img}" alt="${p.nombre}">` : '⚡';
-    const chip = estado==='activa'
-      ? `<span style="position:absolute; top:8px; left:8px; background:#e0453f; color:#fff; font-size:10.5px; font-weight:800; padding:3px 8px; border-radius:100px;">🔴 En vivo</span>`
-      : `<span style="position:absolute; top:8px; left:8px; background:rgba(43,58,74,0.9); color:#fff; font-size:10.5px; font-weight:800; padding:3px 8px; border-radius:100px;">🕐 ${fechaCorta(p.fechaInicio)} ${p.horaInicio}hs</span>`;
+    const chips = {
+      antes: `<span style="position:absolute; top:8px; left:8px; background:rgba(43,58,74,0.9); color:#fff; font-size:10.5px; font-weight:800; padding:3px 8px; border-radius:100px;">🕐 Se larga a las ${p.horaInicio}hs</span>`,
+      abierta: `<span style="position:absolute; top:8px; left:8px; background:#e0453f; color:#fff; font-size:10.5px; font-weight:800; padding:3px 8px; border-radius:100px;">🔴 Reservá ya — hasta ${p.horaHasta}hs</span>`,
+      agotada: `<span style="position:absolute; top:8px; left:8px; background:#8a8a8a; color:#fff; font-size:10.5px; font-weight:800; padding:3px 8px; border-radius:100px;">🚫 Agotado</span>`,
+    };
+    const chip = chips[estado] || '';
     return `
       <div class="prod-card" style="cursor:pointer;" onclick="abrirOferta('${p.id}')">
         <div class="prod-photo" style="position:relative;">${foto}${chip}</div>
@@ -2298,7 +2378,7 @@ function renderRayoOfertas(){
 function etiquetaOferta(p){
   if(!p.tipoOferta || !TIPOS_OFERTA[p.tipoOferta] || p.tipoOferta==='normal') return null;
   const t = TIPOS_OFERTA[p.tipoOferta];
-  if(t.hora && p.horaInicio) return `${t.label} (${p.duracionHoras||24}hs) ${fechaCorta(p.fechaInicio)} ${p.horaInicio}hs`;
+  if(t.hora && p.horaInicio && p.horaHasta) return `${t.label} entre ${p.horaInicio} y ${p.horaHasta}hs`;
   if(t.descuento && p.descuento) return `${t.label} -${p.descuento}%`;
   return t.descuento ? null : t.label;
 }
@@ -2330,8 +2410,8 @@ function abrirNuevoProducto(){
   document.getElementById('cnpComision').value=''; document.getElementById('cnpStock').value='';
   document.getElementById('cnpDescuento').value=''; document.getElementById('cnpTipoOferta').value='unica';
   document.getElementById('cnpHoraInicio').value='';
+  document.getElementById('cnpHoraHasta').value='';
   document.getElementById('cnpFechaInicio').value='';
-  document.getElementById('cnpDuracion').value='24';
   onTipoOfertaChange();
   document.getElementById('cnpFotoBox').innerHTML = `<div id="cnpFotoPreview" class="foto-upload-empty"><div class="foto-upload-ic">📷</div><div class="foto-upload-txt">Sacá una foto o elegí de la galería</div></div>`;
   document.getElementById('cnpFotoEstado').textContent = '';
@@ -2355,8 +2435,8 @@ function abrirEditarProducto(prodId){
   document.getElementById('cnpDescuento').value = p.descuento || '';
   document.getElementById('cnpTipoOferta').value = p.tipoOferta || 'unica';
   document.getElementById('cnpHoraInicio').value = p.horaInicio || '';
+  document.getElementById('cnpHoraHasta').value = p.horaHasta || '';
   document.getElementById('cnpFechaInicio').value = p.fechaInicio || '';
-  document.getElementById('cnpDuracion').value = p.duracionHoras || '24';
   onTipoOfertaChange();
   const sel = document.getElementById('cnpRubro');
   if(p.rubro) sel.value = p.rubro;
@@ -2399,25 +2479,26 @@ function crearProductoComercio(){
   if(isNaN(comision) || comision<0 || comision>100){ toast('La comisión tiene que ser un número entre 0 y 100'); return; }
   if(TIPOS_OFERTA[tipoOferta].descuento && !descuento){ toast('Ingresá el porcentaje de descuento'); return; }
   const horaInicio = document.getElementById('cnpHoraInicio').value;
+  const horaHasta = document.getElementById('cnpHoraHasta').value;
   const fechaInicio = document.getElementById('cnpFechaInicio').value;
-  const duracionHoras = parseInt(document.getElementById('cnpDuracion').value);
-  if(TIPOS_OFERTA[tipoOferta].hora && (!horaInicio || !fechaInicio)){ toast('Elegí la fecha, la hora y la duración en que se larga la oferta'); return; }
+  if(TIPOS_OFERTA[tipoOferta].hora && (!horaInicio || !horaHasta || !fechaInicio)){ toast('Elegí la fecha y el rango de horario (desde / hasta) en que se puede reservar'); return; }
+  if(TIPOS_OFERTA[tipoOferta].hora && horaHasta <= horaInicio){ toast('La hora "hasta" tiene que ser después de la hora "desde"'); return; }
   if(TIPOS_OFERTA[tipoOferta].hora){
-    const inicioCheck = new Date(`${fechaInicio}T${horaInicio}`);
-    const finCheck = new Date(inicioCheck.getTime() + duracionHoras*3600*1000);
-    if(!isNaN(inicioCheck) && finCheck < new Date()){
-      toast('Esa fecha/hora con esa duración ya estaría vencida — elegí un horario que todavía no haya pasado');
+    const finCheck = new Date(`${fechaInicio}T${horaHasta}`);
+    if(!isNaN(finCheck) && finCheck < new Date()){
+      toast('Ese rango horario ya pasó — elegí uno que todavía no haya cerrado');
       return;
     }
   }
 
   const stockInput = document.getElementById('cnpStock').value;
   const stock = stockInput !== '' ? parseInt(stockInput) : null; // null = sin límite
+  if(TIPOS_OFERTA[tipoOferta].hora && (stock===null || stock<=0)){ toast('Para una oferta relámpago necesitás cargar cuántas unidades hay disponibles (stock)'); return; }
 
   if(productoEditandoId){
     const p = state.productos.find(x=>x.id===productoEditandoId);
     if(!p){ toast('No se encontró el producto'); return; }
-    Object.assign(p, {nombre, precio, comision, rubro, img:foto, tipoOferta, descuento, stock, horaInicio: horaInicio || null, fechaInicio: fechaInicio || null, duracionHoras: TIPOS_OFERTA[tipoOferta].hora ? duracionHoras : null});
+    Object.assign(p, {nombre, precio, comision, rubro, img:foto, tipoOferta, descuento, stock, horaInicio: horaInicio || null, horaHasta: horaHasta || null, fechaInicio: fechaInicio || null});
     guardarProductoEnFirestore(p, c.uid);
     toast('Cambios guardados ✅');
     productoEditandoId = null;
@@ -2427,7 +2508,7 @@ function crearProductoComercio(){
     return;
   }
 
-  const p = {id: nextId('p'), comercioId:c.id, nombre, precio, comision, rubro, img:foto, origen:'comercio', tipoOferta, descuento, stock, stockInicial: stock, horaInicio: horaInicio || null, fechaInicio: fechaInicio || null, duracionHoras: TIPOS_OFERTA[tipoOferta].hora ? duracionHoras : null};
+  const p = {id: nextId('p'), comercioId:c.id, nombre, precio, comision, rubro, img:foto, origen:'comercio', tipoOferta, descuento, stock, stockInicial: stock, horaInicio: horaInicio || null, horaHasta: horaHasta || null, fechaInicio: fechaInicio || null};
   state.productos.push(p);
   guardarProductoEnFirestore(p, c.uid);
   toast('Producto publicado en tu ficha y en el feed de La Paz ✅');
@@ -2669,7 +2750,11 @@ function abrirEditarComercio(){
   document.getElementById('editCTelefono').value = c.telefono || '';
   document.getElementById('editCTelefonoAlt').value = c.telefonoAlt || '';
   document.getElementById('editCEmail').value = c.email || '';
-  document.getElementById('editCHorario').value = c.horario || '';
+  const t = c.turnos || {};
+  document.getElementById('editCTurnoManDesde').value = t.manDesde || '';
+  document.getElementById('editCTurnoManHasta').value = t.manHasta || '';
+  document.getElementById('editCTurnoTarDesde').value = t.tarDesde || '';
+  document.getElementById('editCTurnoTarHasta').value = t.tarHasta || '';
   document.getElementById('editLogoFotoBox').innerHTML = c.img
     ? `<img src="${c.img}" alt="">`
     : `<div id="editLogoFotoPreview" class="logo-upload-empty"><div class="ic">📷</div></div>`;
@@ -2688,7 +2773,8 @@ function guardarEdicionComercio(){
   c.telefono = document.getElementById('editCTelefono').value.trim();
   c.telefonoAlt = document.getElementById('editCTelefonoAlt').value.trim();
   c.email = document.getElementById('editCEmail').value.trim();
-  c.horario = document.getElementById('editCHorario').value.trim();
+  c.turnos = leerTurnosForm('editC');
+  c.horario = textoTurnos(c.turnos);
   if(fotosCargadas['editLogo']) c.img = fotosCargadas['editLogo'];
 
   document.getElementById('cNombre').textContent = c.nombre;
@@ -2820,6 +2906,7 @@ function escanearCodigo(){
   const venta = state.ventas.find(v=>v.codigo===codigo && v.comercioId===state.currentUser.id);
   if(!venta){ toast('Código no encontrado para tu comercio'); return; }
   if(venta.estado==='confirmada'){ toast('Este código ya fue confirmado antes'); return; }
+  if(reservaVencida(venta)){ toast('⏰ Esta reserva venció su plazo de retiro — el cliente tendría que sacar un código nuevo'); return; }
 
   const prod = state.productos.find(p=>p.id===venta.productoId);
   const vend = venta.vendedorId ? state.vendedores.find(v=>v.id===venta.vendedorId) : null;
@@ -3362,6 +3449,22 @@ function abrirOferta(prodId){
   const ventaPrevia = buscarVentaPropiaGuardada(prodId);
   if(ventaPrevia){
     mostrarCodigoDeOferta(ventaPrevia);
+  } else if(p.tipoOferta==='h24'){
+    const estado = estadoRayo(p);
+    let html;
+    if(estado==='antes'){
+      html = `<div style="text-align:center; padding:16px 0; color:var(--navy); font-weight:700; font-size:14px;">🕐 Todavía no arrancó<br><span style="font-weight:500; font-size:12.5px; color:var(--muted);">Se larga a las ${p.horaInicio}hs</span></div>`;
+    } else if(estado==='cerrada'){
+      html = `<div style="text-align:center; padding:16px 0; color:var(--muted); font-weight:700; font-size:14px;">Esta oferta ya cerró</div>`;
+    } else if(estado==='agotada'){
+      html = `<div style="text-align:center; padding:16px 0; color:#e05a5a; font-weight:700; font-size:14px;">🚫 Agotado — ya se reservó todo</div>`;
+    } else {
+      html = `<p style="font-size:12.5px; color:var(--muted); margin-bottom:10px;">⚡ Quedan ${stockDisponible(p)} disponibles hasta las ${p.horaHasta}hs. Reservá ahora y generás tu código al toque.</p>
+        <button class="btn btn-primary" onclick="quieroEstaOferta()">Reservar — generar mi código</button>`;
+    }
+    document.getElementById('ofAntes').innerHTML = html;
+    document.getElementById('ofAntes').classList.remove('hidden');
+    document.getElementById('ofDespues').classList.add('hidden');
   } else if(p.stock !== null && p.stock !== undefined && p.stock <= 0){
     document.getElementById('ofAntes').innerHTML = `<div style="text-align:center; padding:16px 0; color:#e05a5a; font-weight:700; font-size:14px;">😔 Este producto ya no tiene stock disponible</div>`;
     document.getElementById('ofAntes').classList.remove('hidden');
@@ -3386,9 +3489,9 @@ function buscarVentaPropiaGuardada(prodId){
   try{ ventaId = localStorage.getItem('puente_venta_prod_' + prodId); }catch(e){ return null; }
   if(!ventaId) return null;
   const venta = state.ventas.find(v=>v.id===ventaId);
-  // Si ya no existe, o ya fue confirmada/rechazada por el comercio, no tiene sentido seguir mostrándola:
-  // dejamos que pida un código nuevo (por ejemplo, si quiere comprar de nuevo).
-  if(!venta || venta.estado !== 'pendiente'){
+  // Si ya no existe, ya fue confirmada/rechazada por el comercio, o venció el plazo de retiro,
+  // no tiene sentido seguir mostrándola: dejamos que pida un código nuevo.
+  if(!venta || venta.estado !== 'pendiente' || reservaVencida(venta)){
     try{ localStorage.removeItem('puente_venta_prod_' + prodId); }catch(e){}
     return null;
   }
@@ -3406,6 +3509,14 @@ function mostrarCodigoDeOferta(venta){
   document.getElementById('ofAntes').classList.add('hidden');
   document.getElementById('ofDespues').classList.remove('hidden');
   document.getElementById('ofGuardarBanner').classList.toggle('hidden', !!venta.ownerUid);
+  const venceBox = document.getElementById('ofVencePickup');
+  if(venta.vencePickup){
+    const v = new Date(venta.vencePickup);
+    venceBox.textContent = `⏰ Retiralo antes de las ${v.toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'})}hs del ${v.toLocaleDateString('es-AR')}`;
+    venceBox.classList.remove('hidden');
+  } else {
+    venceBox.classList.add('hidden');
+  }
 }
 
 function guardarCompraComoCliente(){
@@ -3431,21 +3542,31 @@ function vincularVentaConCliente(clienteData){
 }
 function quieroEstaOferta(){
   const p = state.productos.find(x=>x.id===ofertaAbierta);
-  if(p.stock !== null && p.stock !== undefined && p.stock <= 0){
+  if(p.tipoOferta==='h24'){
+    const estado = estadoRayo(p);
+    if(estado!=='abierta'){
+      toast(estado==='agotada' ? 'Se acaba de agotar 😔' : 'Esta oferta no está disponible para reservar ahora mismo');
+      abrirOferta(p.id);
+      return;
+    }
+  } else if(p.stock !== null && p.stock !== undefined && p.stock <= 0){
     toast('Este producto ya no tiene stock disponible 😔');
     return;
   }
   const c = state.comercios.find(x=>x.id===p.comercioId);
   const codigo = genCodigo();
   const clienteNombre = (state.role==='cliente' && state.currentUser?.nombre) ? state.currentUser.nombre : 'Cliente del feed';
+  const vencePickup = p.tipoOferta==='h24' ? finDeProximoTurno(c) : null;
   const venta = {
     id: nextId('t'), codigo, vendedorId:null, productoId:p.id, comercioId:c.id,
-    clienteNombre, estado:'pendiente', comisionMonto:0, origen:'oferta'
+    clienteNombre, estado:'pendiente', comisionMonto:0, origen:'oferta',
+    vencePickup: vencePickup ? vencePickup.toISOString() : null
   };
   state.ventas.push(venta);
   guardarVentaPropiaLocal(p.id, venta.id);
   mostrarCodigoDeOferta(venta);
-  toast('¡Listo! Mostrá este código en ' + c.nombre + ' ✅');
+  const avisoRetiro = vencePickup ? ` Tenés hasta las ${vencePickup.toLocaleString('es-AR',{hour:'2-digit',minute:'2-digit'})} del ${vencePickup.toLocaleDateString('es-AR')} para retirarlo.` : '';
+  toast('¡Listo! Mostrá este código en ' + c.nombre + ' ✅' + avisoRetiro);
 }
 function comoLlegarOferta(){
   const p = state.productos.find(x=>x.id===ofertaAbierta);
