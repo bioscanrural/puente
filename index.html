@@ -259,6 +259,18 @@ input,select,textarea{font-family:inherit; font-size:14.5px;}
 .feed-tab-tile:active{transform:scale(0.97);}
 .feed-tab-tile .ic{font-size:20px; flex-shrink:0;}
 .feed-tab-tile.active{box-shadow:inset 0 0 0 2px currentColor;}
+.rayo-ofertas-btn{
+  position:relative; width:100%; display:flex; align-items:center; justify-content:center; gap:8px;
+  padding:15px; border-radius:16px; border:none; margin-bottom:18px;
+  background:linear-gradient(135deg, #2b3a4a, #445b73); color:#fff; font-weight:800; font-size:15px;
+  box-shadow:0 4px 14px rgba(43,58,74,0.28); transition:transform .1s;
+}
+.rayo-ofertas-btn:active{transform:scale(0.98);}
+.rayo-badge{
+  position:absolute; top:-8px; right:-8px; background:#e0453f; color:#fff; font-size:12px; font-weight:800;
+  min-width:22px; height:22px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+  padding:0 5px; border:2px solid var(--bg, #fff);
+}
 .feed-tab{flex:1 1 auto; white-space:nowrap; text-align:center; padding:10px 12px; border-radius:12px; background:white; border:1.5px solid var(--line); font-size:12px; font-weight:700; color:var(--muted);}
 .feed-tab.active{background:var(--navy); color:white; border-color:var(--navy);}
 
@@ -435,10 +447,15 @@ input,select,textarea{font-family:inherit; font-size:14.5px;}
       <div class="feed-title hidden" id="feedHeroTitle">Todo tu pueblo, en un solo lugar</div>
       <div class="feed-sub hidden" id="feedHeroSub">PuenT reúne a todos los comercios y locales de la ciudad — y las mejores ofertas del día.</div>
     </div>
-    <div class="topbar-search" id="buscadorFeedBox" style="margin-bottom:18px; padding:11px 14px;">
+    <div class="topbar-search" id="buscadorFeedBox" style="margin-bottom:14px; padding:11px 14px;">
       <span class="topbar-search-ic">🔎</span>
       <input id="buscadorTop" placeholder="Buscar productos, comercios o vendedores…" oninput="onBuscadorInput(this.value)">
     </div>
+
+    <button class="rayo-ofertas-btn" id="rayoOfertasBtn" onclick="renderRayoOfertas(); showScreen('rayo-ofertas')">
+      <span class="rayo-badge hidden" id="rayoOfertasBadge">0</span>
+      ⚡ Rayo Ofertas
+    </button>
 
     <div class="explora-ciudad">
       <div class="section-title">Comercios de la ciudad</div>
@@ -508,6 +525,15 @@ input,select,textarea{font-family:inherit; font-size:14.5px;}
     <div class="divider"></div>
     <button class="btn btn-primary" onclick="showScreen('home')">Ingresar / Registrarme</button>
     <p style="text-align:center; font-size:12px; color:var(--muted); margin-top:10px;">Vendedores, comercios y clientes entran desde acá.</p>
+  </div>
+
+  <!-- ============ RAYO OFERTAS: LISTADO DE 24HS PROGRAMADAS/ACTIVAS ============ -->
+  <div class="screen hidden" id="screen-rayo-ofertas">
+    <div class="link-back" onclick="showScreen('feed')">← Volver</div>
+    <div class="kicker">⚡ Rayo Ofertas</div>
+    <h1 class="page-title">Ofertas 24hs</h1>
+    <p class="page-sub">Acá aparecen todas las ofertas relámpago programadas por los comercios — cuándo se largan y cuáles ya están activas.</p>
+    <div id="rayoOfertasList"></div>
   </div>
 
   <!-- ============ OFERTA DEL DIA: DETALLE PUBLICO ============ -->
@@ -931,9 +957,12 @@ input,select,textarea{font-family:inherit; font-size:14.5px;}
         </select>
       </div>
       <div class="field" id="cnpHoraBox">
-        <label>Hora de inicio de la oferta</label>
-        <input id="cnpHoraInicio" type="time">
-        <p style="font-size:12px; color:var(--muted); margin-top:4px;">La oferta se activa a esa hora y dura 24hs — aparece destacada en el feed durante ese lapso, una forma de darle más visibilidad a tu comercio.</p>
+        <label>Fecha y hora de lanzamiento</label>
+        <div class="two-col">
+          <input id="cnpFechaInicio" type="date">
+          <input id="cnpHoraInicio" type="time">
+        </div>
+        <p style="font-size:12px; color:var(--muted); margin-top:4px;">La oferta se activa ese día a esa hora y dura 24hs — aparece en ⚡ Rayo Ofertas para que la gente sepa cuándo se larga, y destacada en el feed mientras esté vigente.</p>
       </div>
       <div class="field" id="cnpDescuentoBox">
         <label>Porcentaje de descuento</label>
@@ -2210,10 +2239,55 @@ function stockBadge(p){
   return `<div style="font-size:10.5px; color:var(--muted); margin-top:4px;">📦 Stock: ${p.stock} unidades</div>`;
 }
 
+function fechaCorta(iso){
+  if(!iso) return '';
+  const [y,m,d] = iso.split('-');
+  return `${d}/${m}`;
+}
+function estadoRayo(p){
+  if(!p.fechaInicio || !p.horaInicio) return null;
+  const inicio = new Date(`${p.fechaInicio}T${p.horaInicio}`);
+  if(isNaN(inicio)) return null;
+  const fin = new Date(inicio.getTime() + 24*3600*1000);
+  const ahora = new Date();
+  if(ahora < inicio) return 'programada';
+  if(ahora <= fin) return 'activa';
+  return 'vencida';
+}
+function ofertasRayoVigentes(){
+  return state.productos.filter(p=>p.tipoOferta==='h24').map(p=>({p, estado:estadoRayo(p)})).filter(x=>x.estado && x.estado!=='vencida');
+}
+function actualizarBadgeRayo(){
+  const badge = document.getElementById('rayoOfertasBadge');
+  if(!badge) return;
+  const n = ofertasRayoVigentes().length;
+  badge.textContent = n;
+  badge.classList.toggle('hidden', n===0);
+}
+function renderRayoOfertas(){
+  const lista = ofertasRayoVigentes().sort((a,b)=> new Date(`${a.p.fechaInicio}T${a.p.horaInicio}`) - new Date(`${b.p.fechaInicio}T${b.p.horaInicio}`));
+  const box = document.getElementById('rayoOfertasList');
+  if(lista.length===0){
+    box.innerHTML = `<div class="empty"><div class="ic">⚡</div><div class="t">Todavía no hay ofertas 24hs programadas</div><div class="s">Cuando un comercio active una, va a aparecer acá con fecha y hora.</div></div>`;
+    return;
+  }
+  box.innerHTML = lista.map(({p, estado})=>{
+    const c = state.comercios.find(x=>x.id===p.comercioId);
+    const chip = estado==='activa'
+      ? `<span style="background:#fbe7e7; color:#B65B5B; font-size:11px; font-weight:800; padding:3px 9px; border-radius:100px;">🔴 En vivo ahora</span>`
+      : `<span style="background:#EAF0E6; color:var(--navy); font-size:11px; font-weight:800; padding:3px 9px; border-radius:100px;">🕐 Se larga el ${fechaCorta(p.fechaInicio)} a las ${p.horaInicio}hs</span>`;
+    return `<div class="list-row">
+      <div class="av" style="background:var(--green)">⚡</div>
+      <div class="main"><div class="t">${p.nombre}</div>
+      <div class="s">${c ? c.nombre : '—'} — $${p.precio.toLocaleString('es-AR')}</div>
+      <div style="margin-top:4px;">${chip}</div></div>
+    </div>`;
+  }).join('');
+}
 function etiquetaOferta(p){
   if(!p.tipoOferta || !TIPOS_OFERTA[p.tipoOferta] || p.tipoOferta==='normal') return null;
   const t = TIPOS_OFERTA[p.tipoOferta];
-  if(t.hora && p.horaInicio) return `${t.label} desde las ${p.horaInicio}`;
+  if(t.hora && p.horaInicio) return `${t.label} ${fechaCorta(p.fechaInicio)} ${p.horaInicio}hs`;
   if(t.descuento && p.descuento) return `${t.label} -${p.descuento}%`;
   return t.descuento ? null : t.label;
 }
@@ -2245,6 +2319,7 @@ function abrirNuevoProducto(){
   document.getElementById('cnpComision').value=''; document.getElementById('cnpStock').value='';
   document.getElementById('cnpDescuento').value=''; document.getElementById('cnpTipoOferta').value='unica';
   document.getElementById('cnpHoraInicio').value='';
+  document.getElementById('cnpFechaInicio').value='';
   onTipoOfertaChange();
   document.getElementById('cnpFotoBox').innerHTML = `<div id="cnpFotoPreview" class="foto-upload-empty"><div class="foto-upload-ic">📷</div><div class="foto-upload-txt">Sacá una foto o elegí de la galería</div></div>`;
   document.getElementById('cnpFotoEstado').textContent = '';
@@ -2268,6 +2343,7 @@ function abrirEditarProducto(prodId){
   document.getElementById('cnpDescuento').value = p.descuento || '';
   document.getElementById('cnpTipoOferta').value = p.tipoOferta || 'unica';
   document.getElementById('cnpHoraInicio').value = p.horaInicio || '';
+  document.getElementById('cnpFechaInicio').value = p.fechaInicio || '';
   onTipoOfertaChange();
   const sel = document.getElementById('cnpRubro');
   if(p.rubro) sel.value = p.rubro;
@@ -2310,7 +2386,8 @@ function crearProductoComercio(){
   if(isNaN(comision) || comision<0 || comision>100){ toast('La comisión tiene que ser un número entre 0 y 100'); return; }
   if(TIPOS_OFERTA[tipoOferta].descuento && !descuento){ toast('Ingresá el porcentaje de descuento'); return; }
   const horaInicio = document.getElementById('cnpHoraInicio').value;
-  if(TIPOS_OFERTA[tipoOferta].hora && !horaInicio){ toast('Ingresá la hora de inicio de la oferta 24hs'); return; }
+  const fechaInicio = document.getElementById('cnpFechaInicio').value;
+  if(TIPOS_OFERTA[tipoOferta].hora && (!horaInicio || !fechaInicio)){ toast('Elegí la fecha y la hora en que se larga la oferta 24hs'); return; }
 
   const stockInput = document.getElementById('cnpStock').value;
   const stock = stockInput !== '' ? parseInt(stockInput) : null; // null = sin límite
@@ -2318,7 +2395,7 @@ function crearProductoComercio(){
   if(productoEditandoId){
     const p = state.productos.find(x=>x.id===productoEditandoId);
     if(!p){ toast('No se encontró el producto'); return; }
-    Object.assign(p, {nombre, precio, comision, rubro, img:foto, tipoOferta, descuento, stock, horaInicio: horaInicio || null});
+    Object.assign(p, {nombre, precio, comision, rubro, img:foto, tipoOferta, descuento, stock, horaInicio: horaInicio || null, fechaInicio: fechaInicio || null});
     guardarProductoEnFirestore(p, c.uid);
     toast('Cambios guardados ✅');
     productoEditandoId = null;
@@ -2328,7 +2405,7 @@ function crearProductoComercio(){
     return;
   }
 
-  const p = {id: nextId('p'), comercioId:c.id, nombre, precio, comision, rubro, img:foto, origen:'comercio', tipoOferta, descuento, stock, stockInicial: stock, horaInicio: horaInicio || null};
+  const p = {id: nextId('p'), comercioId:c.id, nombre, precio, comision, rubro, img:foto, origen:'comercio', tipoOferta, descuento, stock, stockInicial: stock, horaInicio: horaInicio || null, fechaInicio: fechaInicio || null};
   state.productos.push(p);
   guardarProductoEnFirestore(p, c.uid);
   toast('Producto publicado en tu ficha y en el feed de La Paz ✅');
@@ -3119,6 +3196,7 @@ function v_ciudadOk(vendedorId){
 
 function renderFeed(){
   renderFeedGrid('comercio', 'feedChips', 'feedGrid', feedRubroFiltro, 'setFeedRubro');
+  actualizarBadgeRayo();
 }
 function setFeedRubro(r){ feedRubroFiltro = r; renderFeed(); }
 
