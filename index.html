@@ -895,13 +895,18 @@ input,select,textarea{font-family:inherit; font-size:14.5px;}
     <div class="card">
       <div class="field">
         <label>Foto del producto</label>
-        <div class="foto-upload" id="cnpFotoBox" onclick="document.getElementById('cnpFotoInput').click()">
+        <div class="foto-upload" id="cnpFotoBox">
           <div id="cnpFotoPreview" class="foto-upload-empty">
             <div class="foto-upload-ic">📷</div>
-            <div class="foto-upload-txt">Sacá una foto o elegí de la galería</div>
+            <div class="foto-upload-txt">Agregá una foto del producto</div>
           </div>
-          <input type="file" id="cnpFotoInput" accept="image/*" capture="environment" style="display:none" onchange="onFotoSeleccionada(this, 'cnp')">
         </div>
+        <div class="btn-block-row" style="margin-top:8px;">
+          <button type="button" class="btn btn-ghost btn-sm" style="flex:1" onclick="document.getElementById('cnpFotoInputCam').click()">📷 Sacar foto</button>
+          <button type="button" class="btn btn-ghost btn-sm" style="flex:1" onclick="document.getElementById('cnpFotoInputGal').click()">🖼️ Elegir de galería</button>
+        </div>
+        <input type="file" id="cnpFotoInputCam" accept="image/*" capture="environment" style="display:none" onchange="onFotoSeleccionada(this, 'cnp')">
+        <input type="file" id="cnpFotoInputGal" accept="image/*" style="display:none" onchange="onFotoSeleccionada(this, 'cnp')">
         <div id="cnpFotoEstado" class="foto-upload-estado"></div>
       </div>
       <div class="field"><label>Nombre del producto</label><input id="cnpNombre" placeholder="Ej: Combo desayuno x2"></div>
@@ -969,12 +974,17 @@ input,select,textarea{font-family:inherit; font-size:14.5px;}
       <div class="field">
         <label>Logo o foto del comercio</label>
         <div class="logo-upload-row">
-          <div class="logo-upload" id="editLogoFotoBox" onclick="document.getElementById('editLogoFotoInput').click()">
+          <div class="logo-upload" id="editLogoFotoBox">
             <div id="editLogoFotoPreview" class="logo-upload-empty"><div class="ic">📷</div></div>
-            <input type="file" id="editLogoFotoInput" accept="image/*" capture="environment" style="display:none" onchange="onFotoSeleccionada(this, 'editLogo')">
           </div>
           <div class="logo-upload-info">
-            <div class="t">Tocá para cambiar la foto</div>
+            <div class="t">Tocá una opción para cambiar la foto</div>
+            <div class="btn-block-row" style="margin:4px 0;">
+              <button type="button" class="btn btn-ghost btn-sm" style="flex:1" onclick="document.getElementById('editLogoFotoInputCam').click()">📷 Foto</button>
+              <button type="button" class="btn btn-ghost btn-sm" style="flex:1" onclick="document.getElementById('editLogoFotoInputGal').click()">🖼️ Galería</button>
+            </div>
+            <input type="file" id="editLogoFotoInputCam" accept="image/*" capture="environment" style="display:none" onchange="onFotoSeleccionada(this, 'editLogo')">
+            <input type="file" id="editLogoFotoInputGal" accept="image/*" style="display:none" onchange="onFotoSeleccionada(this, 'editLogo')">
             <div class="foto-upload-estado" id="editLogoFotoEstado" style="margin-bottom:0;">Se muestra en tu ficha y en tus productos.</div>
           </div>
         </div>
@@ -1820,14 +1830,19 @@ function goRegister(role){
         <div class="field">
           <label>Logo o foto del comercio</label>
           <div class="logo-upload-row">
-            <div class="logo-upload" id="rLogoFotoBox" onclick="document.getElementById('rLogoFotoInput').click()">
+            <div class="logo-upload" id="rLogoFotoBox">
               <div id="rLogoFotoPreview" class="logo-upload-empty">
                 <div class="ic">📷</div>
               </div>
-              <input type="file" id="rLogoFotoInput" accept="image/*" capture="environment" style="display:none" onchange="onFotoSeleccionada(this, 'rLogo')">
             </div>
             <div class="logo-upload-info">
               <div class="t">Subí el logo o una foto del local</div>
+              <div class="btn-block-row" style="margin:4px 0;">
+                <button type="button" class="btn btn-ghost btn-sm" style="flex:1" onclick="document.getElementById('rLogoFotoInputCam').click()">📷 Foto</button>
+                <button type="button" class="btn btn-ghost btn-sm" style="flex:1" onclick="document.getElementById('rLogoFotoInputGal').click()">🖼️ Galería</button>
+              </div>
+              <input type="file" id="rLogoFotoInputCam" accept="image/*" capture="environment" style="display:none" onchange="onFotoSeleccionada(this, 'rLogo')">
+              <input type="file" id="rLogoFotoInputGal" accept="image/*" style="display:none" onchange="onFotoSeleccionada(this, 'rLogo')">
               <div class="foto-upload-estado" id="rLogoFotoEstado" style="margin-bottom:0;">Se va a usar como presentación en tu ficha y en los productos que subas. Opcional, pero recomendado.</div>
             </div>
           </div>
