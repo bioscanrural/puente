@@ -2278,18 +2278,22 @@ function renderRayoOfertas(){
     box.innerHTML = `<div class="empty"><div class="ic">⚡</div><div class="t">Todavía no hay ofertas 24hs programadas</div><div class="s">Cuando un comercio active una, va a aparecer acá con fecha y hora.</div></div>`;
     return;
   }
-  box.innerHTML = lista.map(({p, estado})=>{
+  box.innerHTML = `<div class="prod-grid">` + lista.map(({p, estado})=>{
     const c = state.comercios.find(x=>x.id===p.comercioId);
+    const foto = p.img ? `<img src="${p.img}" alt="${p.nombre}">` : '⚡';
     const chip = estado==='activa'
-      ? `<span style="background:#fbe7e7; color:#B65B5B; font-size:11px; font-weight:800; padding:3px 9px; border-radius:100px;">🔴 En vivo ahora — dura ${p.duracionHoras||24}hs</span>`
-      : `<span style="background:#EAF0E6; color:var(--navy); font-size:11px; font-weight:800; padding:3px 9px; border-radius:100px;">🕐 Se larga el ${fechaCorta(p.fechaInicio)} a las ${p.horaInicio}hs (${p.duracionHoras||24}hs)</span>`;
-    return `<div class="list-row">
-      <div class="av" style="background:var(--green)">⚡</div>
-      <div class="main"><div class="t">${p.nombre}</div>
-      <div class="s">${c ? c.nombre : '—'} — $${p.precio.toLocaleString('es-AR')}</div>
-      <div style="margin-top:4px;">${chip}</div></div>
-    </div>`;
-  }).join('');
+      ? `<span style="position:absolute; top:8px; left:8px; background:#e0453f; color:#fff; font-size:10.5px; font-weight:800; padding:3px 8px; border-radius:100px;">🔴 En vivo</span>`
+      : `<span style="position:absolute; top:8px; left:8px; background:rgba(43,58,74,0.9); color:#fff; font-size:10.5px; font-weight:800; padding:3px 8px; border-radius:100px;">🕐 ${fechaCorta(p.fechaInicio)} ${p.horaInicio}hs</span>`;
+    return `
+      <div class="prod-card" style="cursor:pointer;" onclick="abrirOferta('${p.id}')">
+        <div class="prod-photo" style="position:relative;">${foto}${chip}</div>
+        <div class="prod-body">
+          <div class="prod-name">${p.nombre}</div>
+          <div class="prod-price">$${p.precio.toLocaleString('es-AR')}</div>
+          <div class="prod-tag">${c ? c.nombre : '—'}</div>
+        </div>
+      </div>`;
+  }).join('') + `</div>`;
 }
 function etiquetaOferta(p){
   if(!p.tipoOferta || !TIPOS_OFERTA[p.tipoOferta] || p.tipoOferta==='normal') return null;
