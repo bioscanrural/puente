@@ -431,7 +431,6 @@ input,select,textarea{font-family:inherit; font-size:14.5px;}
       <div class="feed-banner-slider" id="feedBannerSlider">
         <img src="https://raw.githubusercontent.com/bioscanrural/puente/refs/heads/main/imagenes/banner1.png" class="active" alt="">
         <img src="https://raw.githubusercontent.com/bioscanrural/puente/refs/heads/main/imagenes/banner2.png" alt="">
-        <img src="https://raw.githubusercontent.com/bioscanrural/puente/refs/heads/main/imagenes/banner31.png" alt="">
       </div>
       <div class="feed-title hidden" id="feedHeroTitle">Todo tu pueblo, en un solo lugar</div>
       <div class="feed-sub hidden" id="feedHeroSub">PuenT reúne a todos los comercios y locales de la ciudad — y las mejores ofertas del día.</div>
@@ -1525,11 +1524,13 @@ function elegirRolParaRegistro(rol){
   loginConGoogle();
 }
 
+let loginIniciadoPorUsuario = false;
 function loginConGoogle(){
   if(!firebaseListo){
     toast('No pudimos conectar con Google ahora mismo. Revisá tu conexión y volvé a intentar.');
     return;
   }
+  loginIniciadoPorUsuario = true;
   const provider = new firebase.auth.GoogleAuthProvider();
   const esMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
@@ -1580,6 +1581,11 @@ async function manejarUsuarioGoogle(user){
   if(rolPreElegido){
     crearCuentaDesdeGoogle(rolPreElegido, user);
     rolPreElegido = null;
+    return;
+  }
+  if(!loginIniciadoPorUsuario){
+    // Sesión vieja de Google detectada solo al abrir la app (sin cuenta en Firestore) —
+    // no interrumpimos con la pantalla de registro, se queda tranquilo viendo el home.
     return;
   }
   pendingGoogleUser = user;
