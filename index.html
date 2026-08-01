@@ -1332,10 +1332,10 @@ function seed(){
   state.comercios.push({id:'c-demo4', nombre:'Almacén La Costanera', ciudad:'La Paz', rubro:'Alimentos y bebidas', qrPersonal:'CQR-DEM4', rating:4.7, lat:-30.744, lng:-59.637, adheridos:['v-demo2'], direccion:'Costanera Norte 45', horario:'Todos los días 8 a 21hs', img:'https://picsum.photos/seed/almacencostanera/500/320', verificado:true, publicidadActiva:true, publicidadVence:diasAtras(-9)});
   state.comercios.push({id:'c-demo5', nombre:'TecnoHogar', ciudad:'La Paz', rubro:'Tecnología', qrPersonal:'CQR-DEM5', rating:4.5, lat:-30.7525, lng:-59.6401, adheridos:['v-demo3'], direccion:'Belgrano 210', horario:'Lun a Sáb 9 a 13 y 16 a 20hs', img:'https://picsum.photos/seed/tecnohogar/500/320', verificado:true, publicidadActiva:true, publicidadVence:diasAtras(-25)});
   state.comercios.push({id:'c-demo6', nombre:'Deco Hogar Norte', ciudad:'La Paz', rubro:'Hogar y decoración', qrPersonal:'CQR-DEM6', rating:4.9, lat:-30.748, lng:-59.644, adheridos:['v-demo3'], direccion:'Barrio Norte, Ruta 11 km 3', horario:'Lun a Sáb 9 a 20hs', img:'https://picsum.photos/seed/decohogar/500/320', verificado:true, publicidadActiva:true, publicidadVence:diasAtras(-15)});
-  state.comercios.push({id:'c-demo7', nombre:'Consultorio Dr. Ibáñez (Clínica Médica)', ciudad:'La Paz', rubro:'Salud', qrPersonal:'CQR-DEM7', rating:4.8, lat:-30.7495, lng:-59.6388, adheridos:[], direccion:'San Martín 610', horario:'Lun a Vie 8 a 12 y 16 a 19hs', telefono:'343 415-0011', img:'https://picsum.photos/seed/consultorio/500/320', verificado:true});
-  state.comercios.push({id:'c-demo8', nombre:'Centro Odontológico La Paz', ciudad:'La Paz', rubro:'Salud', qrPersonal:'CQR-DEM8', rating:4.7, lat:-30.7518, lng:-59.6379, adheridos:[], direccion:'Alberdi 220', horario:'Lun a Vie 8 a 13 y 17 a 20hs', telefono:'343 415-0022', img:'https://picsum.photos/seed/odontologia/500/320', verificado:true});
-  state.comercios.push({id:'c-demo9', nombre:'Taller Mecánico Hnos. Roldán', ciudad:'La Paz', rubro:'Mecánica del Automotor', qrPersonal:'CQR-DEM9', rating:4.6, lat:-30.7469, lng:-59.6421, adheridos:[], direccion:'Ruta 11 km 2', horario:'Lun a Sáb 8 a 12 y 15 a 19hs', telefono:'343 415-0033', img:'https://picsum.photos/seed/tallerroldan/500/320', verificado:true});
-  state.comercios.push({id:'c-demo10', nombre:'Gomería y Mecánica El Pibe', ciudad:'La Paz', rubro:'Mecánica del Automotor', qrPersonal:'CQR-DEM10', rating:4.5, lat:-30.7533, lng:-59.6405, adheridos:[], direccion:'Av. 9 de Julio 1420', horario:'Todos los días 8 a 20hs', telefono:'343 415-0044', img:'https://picsum.photos/seed/gomeriapibe/500/320', verificado:true});
+  state.comercios.push({id:'c-demo7', nombre:'Consultorio Dr. Ibáñez (Clínica Médica)', ciudad:'La Paz', rubro:'Salud y farmacia', qrPersonal:'CQR-DEM7', rating:4.8, lat:-30.7495, lng:-59.6388, adheridos:[], direccion:'San Martín 610', horario:'Lun a Vie 8 a 12 y 16 a 19hs', telefono:'343 415-0011', img:'https://picsum.photos/seed/consultorio/500/320', verificado:true});
+  state.comercios.push({id:'c-demo8', nombre:'Centro Odontológico La Paz', ciudad:'La Paz', rubro:'Salud y farmacia', qrPersonal:'CQR-DEM8', rating:4.7, lat:-30.7518, lng:-59.6379, adheridos:[], direccion:'Alberdi 220', horario:'Lun a Vie 8 a 13 y 17 a 20hs', telefono:'343 415-0022', img:'https://picsum.photos/seed/odontologia/500/320', verificado:true});
+  state.comercios.push({id:'c-demo9', nombre:'Taller Mecánico Hnos. Roldán', ciudad:'La Paz', rubro:'Repuestos y automotor', qrPersonal:'CQR-DEM9', rating:4.6, lat:-30.7469, lng:-59.6421, adheridos:[], direccion:'Ruta 11 km 2', horario:'Lun a Sáb 8 a 12 y 15 a 19hs', telefono:'343 415-0033', img:'https://picsum.photos/seed/tallerroldan/500/320', verificado:true});
+  state.comercios.push({id:'c-demo10', nombre:'Gomería y Mecánica El Pibe', ciudad:'La Paz', rubro:'Repuestos y automotor', qrPersonal:'CQR-DEM10', rating:4.5, lat:-30.7533, lng:-59.6405, adheridos:[], direccion:'Av. 9 de Julio 1420', horario:'Todos los días 8 a 20hs', telefono:'343 415-0044', img:'https://picsum.photos/seed/gomeriapibe/500/320', verificado:true});
 
   state.productos.push({id:'p1', comercioId:'c-demo2', nombre:'Caña de pescar 2.10m', precio:24000, comision:4, rubro:'Deportes y aire libre', foto:'🎣', img:'https://picsum.photos/seed/canapesca/400/400'});
   state.productos.push({id:'p2', comercioId:'c-demo1', nombre:'Taladro percutor 1/2"', precio:38500, comision:3, rubro:'Ferretería y construcción', foto:'🔧', img:'https://picsum.photos/seed/taladro/400/400'});
@@ -1889,30 +1889,32 @@ function onFirebaseReady(){
 // a los datos demo que ya tenemos en memoria, para que todos los visitantes los vean sin recargar a mano.
 async function cargarDatosPublicosDeFirestore(){
   if(!firebaseListo) return;
-  try{
-    const [comerciosSnap, productosSnap, valoracionesSnap] = await Promise.all([
-      db.collection('comercios').get(),
-      db.collection('productos').get(),
-      db.collection('valoraciones').get()
-    ]);
-    comerciosSnap.forEach(doc=>{
+  const [comerciosR, productosR, valoracionesR] = await Promise.allSettled([
+    db.collection('comercios').get(),
+    db.collection('productos').get(),
+    db.collection('valoraciones').get()
+  ]);
+  if(comerciosR.status==='fulfilled'){
+    comerciosR.value.forEach(doc=>{
       const c = doc.data();
       if(c.uid && !state.comercios.some(x=>x.uid===c.uid)) state.comercios.push(c);
     });
-    productosSnap.forEach(doc=>{
+  } else console.error('No se pudieron cargar los comercios de Firestore:', comerciosR.reason);
+  if(productosR.status==='fulfilled'){
+    productosR.value.forEach(doc=>{
       const p = doc.data();
       if(!state.productos.some(x=>x.id===p.id)) state.productos.push(p);
     });
-    valoracionesSnap.forEach(doc=>{
+  } else console.error('No se pudieron cargar los productos de Firestore:', productosR.reason);
+  if(valoracionesR.status==='fulfilled'){
+    valoracionesR.value.forEach(doc=>{
       const v = doc.data();
       if(!state.valoraciones.some(x=>x.id===v.id)) state.valoraciones.push(v);
     });
-    renderFeed();
-    renderFeedVendedores();
-    renderExploraCiudad();
-  }catch(e){
-    console.error('No se pudieron cargar los datos públicos de Firestore:', e);
-  }
+  } else console.error('No se pudieron cargar las valoraciones de Firestore:', valoracionesR.reason);
+  renderFeed();
+  renderFeedVendedores();
+  renderExploraCiudad();
 }
 // Por si Firebase ya había terminado de cargar antes de que este script se ejecutara.
 if(firebaseListo) onFirebaseReady();
