@@ -1763,9 +1763,11 @@ function entrarConDatosGuardados(rol, data){
     state.currentUser = data; state.role='vendedor';
     setRoleChip('🛍️ Vendedor', false);
     document.getElementById('vNombre').textContent = data.nombre;
-    toast('¡Bienvenido de nuevo!');
     renderVendedorCatalogo(); renderVendedorSolicitudes(); renderVendedorStats();
-    showScreen('v-catalogo'); updateBottomNav('v-catalogo');
+    if(loginIniciadoPorUsuario){
+      toast('¡Bienvenido de nuevo!');
+      showScreen('v-catalogo'); updateBottomNav('v-catalogo');
+    }
   } else if(rol==='comercio'){
     // Cuentas de comercio creadas antes de este arreglo no tenían publicidad de prueba activa
     // (por eso no podían publicar productos) — se la damos ahora, una sola vez.
@@ -1779,17 +1781,23 @@ function entrarConDatosGuardados(rol, data){
     state.currentUser = data; state.role='comercio';
     setRoleChip('🏬 Comercio', false);
     document.getElementById('cNombre').textContent = data.nombre;
-    toast('¡Bienvenido de nuevo!');
-    renderComercioPanel(); showScreen('c-panel'); updateBottomNav('c-panel');
+    renderComercioPanel();
     cargarProductosGuardados(data.uid);
     if(window._codigoPendienteDesdeURL) procesarCodigoPendienteDesdeURL();
+    if(loginIniciadoPorUsuario){
+      toast('¡Bienvenido de nuevo!');
+      showScreen('c-panel'); updateBottomNav('c-panel');
+    }
   } else {
     const idx = state.clientes.findIndex(x=>x.uid===data.uid);
     if(idx>=0) state.clientes[idx] = data; else state.clientes.push(data);
     state.currentUser = data; state.role='cliente';
     setRoleChip('🙋 Cliente', false);
-    toast('¡Bienvenido de nuevo!');
-    renderClienteBuscador(); showScreen('cl-buscador'); updateBottomNav('cl-buscador');
+    renderClienteBuscador();
+    if(loginIniciadoPorUsuario){
+      toast('¡Bienvenido de nuevo!');
+      showScreen('cl-buscador'); updateBottomNav('cl-buscador');
+    }
   }
 }
 
