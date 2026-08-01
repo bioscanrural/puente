@@ -284,6 +284,16 @@ input,select,textarea{font-family:inherit; font-size:14.5px;}
   min-width:22px; height:22px; border-radius:50%; display:flex; align-items:center; justify-content:center;
   padding:0 5px; border:2px solid var(--bg, #fff);
 }
+.sumar-negocio-btn{
+  width:100%; display:flex; align-items:center; gap:12px; text-align:left;
+  padding:13px 14px; border-radius:16px; margin-bottom:18px; border:1.5px dashed var(--navy);
+  background:#EAF0E6;
+}
+.sumar-negocio-btn .ic{font-size:20px; flex-shrink:0;}
+.sumar-negocio-btn .txt{flex:1; min-width:0;}
+.sumar-negocio-btn .t{font-weight:800; font-size:13.5px; color:var(--navy);}
+.sumar-negocio-btn .s{font-size:11.5px; color:var(--muted); margin-top:1px;}
+.sumar-negocio-btn .chev{color:var(--navy); font-size:18px; flex-shrink:0;}
 .feed-tab{flex:1 1 auto; white-space:nowrap; text-align:center; padding:10px 12px; border-radius:12px; background:white; border:1.5px solid var(--line); font-size:12px; font-weight:700; color:var(--muted);}
 .feed-tab.active{background:var(--navy); color:white; border-color:var(--navy);}
 
@@ -470,6 +480,12 @@ input,select,textarea{font-family:inherit; font-size:14.5px;}
       ⚡ Rayo Ofertas
     </button>
 
+    <button class="sumar-negocio-btn" onclick="showScreen('bienvenida-comercio')">
+      <span class="ic">➕</span>
+      <div class="txt"><div class="t">Sumá tu negocio a PuenT</div><div class="s">Aparecé gratis en el feed de la ciudad</div></div>
+      <span class="chev">›</span>
+    </button>
+
     <div class="explora-ciudad">
       <div class="section-title">Comercios de la ciudad</div>
       <div class="explora-grid" id="exploraRow"></div>
@@ -538,6 +554,45 @@ input,select,textarea{font-family:inherit; font-size:14.5px;}
     <div class="divider"></div>
     <button class="btn btn-primary" onclick="showScreen('home')">Ingresar / Registrarme</button>
     <p style="text-align:center; font-size:12px; color:var(--muted); margin-top:10px;">Vendedores, comercios y clientes entran desde acá.</p>
+  </div>
+
+  <!-- ============ BIENVENIDA: SUMÁ TU COMERCIO ============ -->
+  <div class="screen hidden" id="screen-bienvenida-comercio">
+    <div class="link-back" onclick="showScreen('feed')">← Volver</div>
+    <div class="kicker">Para comercios</div>
+    <h1 class="page-title">¿Qué es PuenT?</h1>
+    <p class="page-sub">PuenT conecta a los comercios de la ciudad con vendedores independientes y con vecinos que buscan qué comprar — todo en una sola app, sin costo de publicidad para vos.</p>
+
+    <div class="card" style="margin-bottom:12px;">
+      <div class="page-sub" style="font-weight:700; color:var(--navy); margin-bottom:10px;">Cómo funciona para tu comercio</div>
+      <div style="display:flex; flex-direction:column; gap:14px;">
+        <div style="display:flex; gap:12px; align-items:flex-start;">
+          <span style="font-size:22px;">📸</span>
+          <div><div style="font-weight:700; font-size:13.5px;">1. Cargás tus productos</div><div style="font-size:12.5px; color:var(--muted);">Foto, precio y, si querés, un % de comisión para vendedores.</div></div>
+        </div>
+        <div style="display:flex; gap:12px; align-items:flex-start;">
+          <span style="font-size:22px;">🔎</span>
+          <div><div style="font-weight:700; font-size:13.5px;">2. Aparecés en el feed de la ciudad</div><div style="font-size:12.5px; color:var(--muted);">La gente te encuentra buscando por rubro, ofertas del día o cerca suyo.</div></div>
+        </div>
+        <div style="display:flex; gap:12px; align-items:flex-start;">
+          <span style="font-size:22px;">🤝</span>
+          <div><div style="font-weight:700; font-size:13.5px;">3. Sumás vendedores si querés</div><div style="font-size:12.5px; color:var(--muted);">Vendedores independientes pueden ofrecer tus productos y vos ganás ventas sin mover un dedo.</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:12px;">
+      <div class="page-sub" style="font-weight:700; color:var(--navy); margin-bottom:10px;">Por qué conviene</div>
+      <div style="display:flex; flex-direction:column; gap:8px; font-size:13px;">
+        <div>✅ No pagás publicidad aparte — la vidriera digital ya está</div>
+        <div>✅ Vos decidís el precio y la comisión de cada producto</div>
+        <div>✅ Podés pausar o dar de baja cuando quieras, sin ataduras</div>
+        <div>✅ Sumar vendedores es opcional, no obligatorio</div>
+      </div>
+    </div>
+
+    <button class="btn btn-primary" onclick="elegirRolParaRegistro('comercio')">Registrar mi comercio</button>
+    <p style="text-align:center; font-size:12px; color:var(--muted); margin-top:10px;">Es gratis empezar. Te lleva un par de minutos.</p>
   </div>
 
   <!-- ============ RAYO OFERTAS: LISTADO DE 24HS PROGRAMADAS/ACTIVAS ============ -->
